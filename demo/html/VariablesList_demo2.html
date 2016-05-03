@@ -1,0 +1,161 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>VariablesList_demo2</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-12-08"><meta name="DC.source" content="VariablesList_demo2.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Create a cell array containing variable names</a></li><li><a href="#3">Create a numberOfVaribles-by-2 matrix containing the lower and upper</a></li><li><a href="#4">bounds of the variables</a></li><li><a href="#5">Create a numberOfVariables-by-1 column vector containing the nominal</a></li><li><a href="#6">values of the variables</a></li><li><a href="#7">Create a <tt>VariableList</tt> object</a></li><li><a href="#8">Verify the class of varList1</a></li><li><a href="#9">Verify varList1 consists of three variables</a></li><li><a href="#10">Append a VariableList to another VariableList</a></li><li><a href="#11">Create a sample by latin-hypercube design in the variable space</a></li><li><a href="#12">Conclusion</a></li><li><a href="#13">Attribution</a></li></ul></div><pre class="codeinput"><span class="comment">% This is a demo showing how to create a B2BDC.B2Bvariables.VariableList</span>
+<span class="comment">% object and its commonly used methods.</span>
+
+<span class="comment">%  Created: Nov 1, 2015     Wenyu Li</span>
+</pre><h2>Create a cell array containing variable names<a name="2"></a></h2><pre class="codeinput">varNames = {<span class="string">'pressure'</span>,<span class="string">'temperature'</span>,<span class="string">'rate'</span>};
+</pre><h2>Create a numberOfVaribles-by-2 matrix containing the lower and upper<a name="3"></a></h2><h2>bounds of the variables<a name="4"></a></h2><pre class="codeinput">bounds <span class="string">of</span> <span class="string">the</span> <span class="string">variables</span>
+varBounds = repmat([-1,1],[3,1]);
+</pre><pre class="codeoutput error">Undefined function 'bounds' for input arguments of type 'char'.
+
+Error in VariablesList_demo2 (line 10)
+bounds of the variables
+</pre><h2>Create a numberOfVariables-by-1 column vector containing the nominal<a name="5"></a></h2><h2>values of the variables<a name="6"></a></h2><pre class="codeinput">varNominalVals = zeros(3,1);
+</pre><h2>Create a <tt>VariableList</tt> object<a name="7"></a></h2><pre class="codeinput">varList1 = generateVar(varNames,varBounds,varNominalVals);
+</pre><h2>Verify the class of varList1<a name="8"></a></h2><pre class="codeinput">class(varList1)
+</pre><h2>Verify varList1 consists of three variables<a name="9"></a></h2><pre class="codeinput">varList1.Length
+</pre><h2>Append a VariableList to another VariableList<a name="10"></a></h2><p>The function <tt>addList</tt> can append a <tt>VariableList</tt> object to another one Create another <tt>VariableList</tt> object</p><pre class="codeinput">varNames = {<span class="string">'time'</span>,<span class="string">'length'</span>};
+varBounds = repmat([-2,2],[2,1]);
+
+<span class="comment">% If no nominal value input is provided in |generateVar|, we will</span>
+<span class="comment">% automatically calculate the mean of variable lower and upper bounds</span>
+<span class="comment">% as the nominal value</span>
+varList2 = generateVar(varNames,varBounds);
+
+<span class="comment">% Append varList2 to varList1</span>
+varList3 = varList1.addList(varList2);
+
+<span class="comment">% Verify varList3 consists of five variables</span>
+varList3.Length
+</pre><h2>Create a sample by latin-hypercube design in the variable space<a name="11"></a></h2><p>This function creates a nSample-by-nVar matrix that samples the parameter space by latin-hypercube-design method</p><pre class="codeinput">nSample = 20;
+varSample = varList3.makeLHSsample(nSample);
+
+<span class="comment">% varSample is 20-by-5</span>
+size(varSample)
+</pre><h2>Conclusion<a name="12"></a></h2><p>In this demo, we saw how to create a <tt>VariableList</tt> object and how to appened another <tt>VariableList</tt> object together.  We also saw how to sample the domain defined by the <tt>VariableList</tt> object. More information can be found with <tt>help</tt>.</p><pre class="codeinput">help <span class="string">generateVar</span>
+</pre><h2>Attribution<a name="13"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% This is a demo showing how to create a B2BDC.B2Bvariables.VariableList
+% object and its commonly used methods.
+
+%  Created: Nov 1, 2015     Wenyu Li
+
+%% Create a cell array containing variable names
+varNames = {'pressure','temperature','rate'};
+%% Create a numberOfVaribles-by-2 matrix containing the lower and upper 
+%% bounds of the variables
+bounds of the variables
+varBounds = repmat([-1,1],[3,1]);
+%% Create a numberOfVariables-by-1 column vector containing the nominal 
+%% values of the variables
+varNominalVals = zeros(3,1);
+%% Create a |VariableList| object
+varList1 = generateVar(varNames,varBounds,varNominalVals);
+%% Verify the class of varList1
+class(varList1)
+%% Verify varList1 consists of three variables
+varList1.Length
+%% Append a VariableList to another VariableList
+% The function |addList| can append a |VariableList| object to another one
+% Create another |VariableList| object
+varNames = {'time','length'};
+varBounds = repmat([-2,2],[2,1]);
+
+% If no nominal value input is provided in |generateVar|, we will
+% automatically calculate the mean of variable lower and upper bounds 
+% as the nominal value
+varList2 = generateVar(varNames,varBounds);
+
+% Append varList2 to varList1
+varList3 = varList1.addList(varList2);
+
+% Verify varList3 consists of five variables
+varList3.Length
+
+%% Create a sample by latin-hypercube design in the variable space
+% This function creates a nSample-by-nVar matrix that samples the
+% parameter space by latin-hypercube-design method
+nSample = 20;
+varSample = varList3.makeLHSsample(nSample);
+
+% varSample is 20-by-5
+size(varSample)
+
+%% Conclusion
+% In this demo, we saw how to create a |VariableList| object and how to 
+% appened another |VariableList| object together.  We also saw how to 
+% sample the domain defined by the |VariableList| object. 
+% More information can be found with |help|. 
+help generateVar
+
+%% Attribution
+% UC Berkeley, PSAAP team.  Fall 2015
+##### SOURCE END #####
+--></body></html>

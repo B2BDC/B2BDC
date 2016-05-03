@@ -1,0 +1,427 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>B2BDC example: Performing B2BDC analysis on a dataset</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="GRIMech_demo2.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>B2BDC example: Performing B2BDC analysis on a dataset</h1><!--introduction--><p>In this example, we demonstrate a B2BDC analysis, i.e. <b>dataset consistency</b> and <b>prediction</b>, on the GRI-Mech 3.0 dataset.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Loading GRI-Mech 3.0 dataset</a></li><li><a href="#3">Analyzing the consistency of a <tt>Dataset</tt> object</a></li><li><a href="#11">Prediction on a consistent dataset</a></li><li><a href="#12">Example: Posterior bounds on model variables</a></li><li><a href="#14">Example: Posterior bounds on dataset QOIs (prediction)</a></li><li><a href="#16">Example: Predicted bounds on unmeasured QOIs</a></li><li><a href="#18">Example: Sampling the feasible set</a></li><li><a href="#19">Example: Predicting eQOIs on sampled feasible points</a></li><li><a href="#20">Attribution</a></li></ul></div><pre class="codeinput">format <span class="string">compact</span>
+currentFolder = pwd;
+str = genpath([currentFolder <span class="string">'\GriExample'</span>]);
+addpath(str);
+</pre><h2>Loading GRI-Mech 3.0 dataset<a name="2"></a></h2><p>The GRI-Mech 3.0 <tt>Dataset</tt> object <tt>dsGRI</tt> is constructed from an Excel spreadsheet and a MATLAB .mat file.  For a detailed walkthrough of these steps, please refer to <tt>GRIMech_demo1.m</tt>.</p><pre class="codeinput">[~,~,experimentData] = xlsread(<span class="string">'GRIMech_expdata.xls'</span>);
+s = load(<span class="string">'GRIMech_modeldata.mat'</span>);
+modelData = s.GRIMech_modeldata;
+dsGRI = generateDataset(<span class="string">'GRI Mech 3.0'</span>);
+dsGRI = addData(dsGRI,experimentData,modelData);
+</pre><h2>Analyzing the consistency of a <tt>Dataset</tt> object<a name="3"></a></h2><p>A dataset is comprised of several dataset units, each of which contains:</p><div><ul><li>A surrogate model: <img src="GRIMech_demo2_eq09862779967732464640.png" alt="$M_i(x)$"> on <img src="GRIMech_demo2_eq17566526636423986857.png" alt="$x \in \mathcal{H}$"></li><li>A set of observed bounds: <img src="GRIMech_demo2_eq06176752306644791280.png" alt="$\{L_i,U_i\}$"></li></ul></div><p>Note, the i-th unit is defined on a domain of <b>active variables</b> stored in a <tt>VariableList</tt>.  E.g. the active variables of the first experimental quantity of interest (eQOI) can be found by <tt>dsGRI.DatasetUnits.Values(1).VariableList</tt>.</p><pre class="codeinput">dsGRI.DatasetUnits.Values(1).VariableList
+</pre><pre class="codeoutput">ans = 
+  VariableList with properties:
+
+    Length: 10
+    Values: [1x10 B2BDC.B2Bvariables.ModelVariable]
+</pre><p>By appropriately expanding and padding it's coefficient matrix with zeros, any surrogate model can be equivalently defined on the dataset's full <tt>VariableList</tt>(e.g. <tt>dsGRI.Variables</tt>).  The complete <tt>VariableList</tt> for a dataset can be accessed as follows:</p><pre class="codeinput">dsGRI.Variables
+</pre><pre class="codeoutput">ans = 
+  VariableList with properties:
+
+    Length: 102
+    Values: [1x102 B2BDC.B2Bvariables.ModelVariable]
+</pre><p>A dataset is said to be <b>consistent</b> if there exists a vector of variables <img src="GRIMech_demo2_eq12428413953531653171.png" alt="$x$">, indexed according to the full <tt>VariableList</tt>, such that each surrogate model evaluated at <img src="GRIMech_demo2_eq12428413953531653171.png" alt="$x$"> is in agreement with its corresponding observed bounds :</p><p><img src="GRIMech_demo2_eq17496684010239053994.png" alt="$$ L_i \leq M_i(x) \leq U_i $$ for $$i = 1,..,N$$"></p><p>The consistency measure is defined as the solution of the following optimization problem.</p><p><img src="GRIMech_demo2_eq15562681667154035155.png" alt="$$ C_D = \max_{\gamma,x \in \mathcal{H}}&#xA;\gamma : L_i + |L_i| \gamma \leq M_i(x) \leq U_i - |U_i| \gamma$$, for&#xA;$$i=1,...,N$$"></p><p>If <img src="GRIMech_demo2_eq06316267819785485564.png" alt="$C_D \geq 0$">, the bounds can be tightened and the dataset is consistent.  If <img src="GRIMech_demo2_eq10928469247176710260.png" alt="$C_D < 0$">, the bounds must be relaxed and the dataset is therefore inconsistent.  With quadratic and rational quadratic models, the computation of the consistency measure is NP-Hard.  Oftentimes, however, we can efficiently develop tight bounds using convex relaxations and generalized solvers, i.e.</p><p><img src="GRIMech_demo2_eq04327526588350337278.png" alt="$$ \underbar{C}_D \leq C_D \leq \bar{C}_D $$">,</p><p>Hence, a dataset is consistent if <img src="GRIMech_demo2_eq02706552612139793464.png" alt="$\underbar{C}_D \geq 0$"> and inconsistent if <img src="GRIMech_demo2_eq13711944532884729818.png" alt="$\bar{C}_D < 0$">.</p><p>The method <tt>isConsistent</tt> brackets the consistency measure of a given dataset between upper and lower bounds.  The following code evaluates the consistency of the <tt>dsGRI</tt> dataset.</p><pre class="codeinput">dsGRI.isConsistent;
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: -0.37248
+Consistency UB: -0.30389
+The dataset is inconsistent
+</pre><p>As indicated by the negative upper bound, the <tt>dsGRI</tt> dataset is inconsistent.  No configuration of variables exists that satisfies the models and the corresponding observations. In order to proceed with the analysis, the source of this inconsistency must be identified and fixed.  Performing sensitivity analysis shows the relative impact that changing a variable or an observed bound would have on the consistency measure.</p><pre class="codeinput">dsGRI.plotConsistencySensitivity
+</pre><img vspace="5" hspace="5" src="GRIMech_demo2_01.png" alt=""> <p>The consistency measure is most sensitive to eQOIs 36 and 37, suggesting that the corresponding observations may be suspect.  Using the <tt>deleteUnit</tt> command, eQOIs 36 and 37 can be removed from the dataset.  Here, we store the deleted eQOIs in a|datasetUnit| array named <tt>deletedUnits</tt> for later use.</p><pre class="codeinput">deletedUnits = dsGRI.deleteUnit([36,37]);
+</pre><p>With the above dataset units removed, <tt>dsGRI</tt> is consistent.</p><pre class="codeinput">dsGRI.isConsistent
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: 0.12642
+Consistency UB: 0.23245
+The dataset is consistent
+ans =
+     1
+</pre><p>Additionally, note that computing the consistency measure returns a feasible point, i.e. a vector of variables that satisfies all of the models and observations.  This point can be accessed by <tt>dsGRI.FeasiblePoint</tt>. We can check if an arbitrary set of point is feasible by running the <tt>isFeasiblePoint</tt> command, which takes an <tt>nPoints-by-nVar</tt> matrix of points as an input, where <tt>nPoints</tt> number of points in the variable space to be checked and <tt>nVar</tt> is the number of variables/dimensionality of each point. <tt>isFeasiblePoint</tt> returns an <tt>nPoints-by-1</tt> vector with elements of 0 (false, is not feasible) or 1 (true, is feasible).</p><pre class="codeinput">xFeas = dsGRI.FeasiblePoint;
+dsGRI.isFeasiblePoint(xFeas')
+</pre><pre class="codeoutput">ans =
+     1
+</pre><h2>Prediction on a consistent dataset<a name="11"></a></h2><p>If a dataset is consistent, there exists at least one feasible point. We denote the feasible set as the collection of all such feasible points, i.e.</p><p><img src="GRIMech_demo2_eq11572959119453083112.png" alt="$$ \mathcal{F}_N = \{x \in \mathcal{H}: L_i \leq M_i(x) \leq U_i $$ for $$i&#xA;= 1,..,N \}$$"></p><p>where <img src="GRIMech_demo2_eq04477639831299557762.png" alt="$\mathcal{H}$"> is defined by the dataset's full <tt>VariableList</tt> and specifies our prior knowledge of the variables.  The feasible set represents the updated state of knowledge after <img src="GRIMech_demo2_eq03672095713503266041.png" alt="$N$"> eQOI models and observations have been incorporated into the dataset.  Note, any point belonging to the feasible set is an equivalent explanation of the eQOIs within their observed uncertainty.</p><p>By performing dataset prediction with B2BDC, i.e. minimizing and maximizing a prediction quantity of interest (pQOI) over the feasible set, one can establish a posterior range for the pQOI which includes both the prior information from <img src="GRIMech_demo2_eq04477639831299557762.png" alt="$\mathcal{H}$"> as well as the information acquired from data (models and observations).  The pQOI and prediction calculation can take many forms:</p><div><ul><li>Posterior bounds on j-th model variables (<img src="GRIMech_demo2_eq18173674061671651538.png" alt="$pQOI = x_j$">)</li></ul></div><p><img src="GRIMech_demo2_eq16083474922310843353.png" alt="$$ [ \min_{x} x_j : x \in \mathcal{F}_N, \max_{x} x_j : x \in \mathcal{F}_N] $$"></p><div><ul><li>Posterior bounds on the j-th measured QOI ( <img src="GRIMech_demo2_eq12420732774495869167.png" alt="$pQOI = M_j (x), j \in [1,...,N]$">)</li></ul></div><p><img src="GRIMech_demo2_eq12195735421122650511.png" alt="$$ [ \min_{x} M_j(x) : x \in \mathcal{F}_N, \max_{x} M_j(x) : x \in \mathcal{F}_N] $$"></p><div><ul><li>Prediction bounds on an unmeasured QOI (<img src="GRIMech_demo2_eq13193716644094969495.png" alt="$pQOI = M_{N+1}(x)$">)</li></ul></div><p><img src="GRIMech_demo2_eq14111915085594919248.png" alt="$$ [ \min_{x} M_{N+1}(x) : x \in \mathcal{F}_N, \max_{x} M_{N+1}(x) : x \in \mathcal{F}_N] $$"></p><p>In general, prediction corresponds to solving:</p><p><img src="GRIMech_demo2_eq11838176575500052012.png" alt="$$ [ \min_{x} pQOI(x) : x \in \mathcal{F}, \max_{x} pQOI(x) : x \in \mathcal{F}] $$"></p><p>With quadratic and rational quadratic models, these optimizations cannot be solved exactly.  Instead, we can efficiently bracket both optimization problems with inner and outer bounds.  Taking just the outer bounds leads to a prediction range guarenteed to contain the true pQOI range.</p><h2>Example: Posterior bounds on model variables<a name="12"></a></h2><p>In this example, the posterior bounds for variables 20 and 33 of <tt>dsGRI</tt> are calculated using <tt>calVarBounds</tt>, which takes a <tt>nIndex-by-1</tt> vector of variable indices, where <tt>nIndex</tt>  is the number of indices, and a <tt>B2BDC.Option</tt> file as inputs and returns an <tt>nIndex-by-2</tt> matrix.  The j-th row of the returned array contains the lower bound approximiation of the posterior minimum followed by the upper bound approximation of the posterior maximum.  Therefore, the true posterior range is guarenteed to be contained between these quantities.</p><pre class="codeinput">Opt = generateOpt(<span class="string">'Display'</span>,false);
+i1 = [20, 33]; <span class="comment">%i1 = [1:nVars];</span>
+varBndsPosterior = dsGRI.calVarBounds(i1,Opt);
+</pre><p>The prior on variables 20 and 33 can be extracted from the <tt>dsGRI</tt> <tt>VariableList</tt>. The function <tt>plotBounds</tt> takes inputs in the following order:</p><div><ul><li>prior bounds: an <tt>nIndex-by-2</tt> array of lower and upper bounds</li><li>posterior bounds: an <tt>nIndex-by-2</tt> array of lower and upper bounds</li><li>names: an <tt>nIndex-by-1</tt> cell array of names</li></ul></div><pre class="codeinput">varBndsPrior = [dsGRI.Variables.Values(i1).LowerBound; dsGRI.Variables.Values(i1).UpperBound]';
+varBndName = {dsGRI.Variables.Values(i1).Name};
+figure;
+plotBounds(varBndsPrior, varBndsPosterior, varBndName)
+</pre><img vspace="5" hspace="5" src="GRIMech_demo2_02.png" alt=""> <h2>Example: Posterior bounds on dataset QOIs (prediction)<a name="14"></a></h2><p>In this example, the posterior bounds for eQOIs 15 and 30 are calculated using <tt>calQOIBounds</tt>, which takes a <tt>nIndex-by-1</tt> vector of QOI indices and a <tt>B2BDC.Option</tt> file as inputs and returns an <tt>nIndex-by-2</tt> matrix.  Much as before, the j-th row of the returned array contains the lower bound approximiation of the posterior minimum followed by the upper bound approximation of the posterior maximum.  The true posterior range is guarenteed to be contained between these quantities.</p><pre class="codeinput">i2 = [15, 30]; <span class="comment">%i2 = [1:nQOI]</span>
+qoiBndsPosterior = dsGRI.calQOIBounds(i2,Opt);
+</pre><p>The method <tt>calBound</tt> returns an <tt>nQOI-by-2</tt> array of lower bounds and upper bounds associated with the eQOIs of <tt>dsGRI</tt>.  The <tt>plotBounds</tt> function is used again to display the posterior range improvement over the prior.</p><pre class="codeinput">allqoiBnds = dsGRI.calBound;
+qoiBndsPrior = allqoiBnds(i2,:);
+qoiNames = {dsGRI.DatasetUnits.Values(i2).Name};
+figure;
+plotBounds(qoiBndsPrior, qoiBndsPosterior, qoiNames);
+</pre><img vspace="5" hspace="5" src="GRIMech_demo2_03.png" alt=""> <h2>Example: Predicted bounds on unmeasured QOIs<a name="16"></a></h2><p>Recall, <tt>deletedUnits</tt> is the array of dataset units, which were removed earlier from the dataset <tt>dsGRI</tt>.  The function <tt>predictQOI</tt> takes a <tt>Model</tt> object (surrogate model representing the pQOI) and a <tt>B2BDC.Option</tt> file as inputs and returns:</p><div><ul><li>A structure containing the outer and inner bounds for both the minimization and maximization of the pQOI.</li><li>An <tt>nVar-by-2</tt> matrix where each column is the vector of variables that corresponds to the inner bound calculation.</li><li>A structure containing the sensitivities associated with both the minimization and maximization of the pQOI.</li></ul></div><pre class="codeinput">nUnits = length(deletedUnits);
+<span class="keyword">for</span> i3 = 1:nUnits
+    xi = deletedUnits(i3).SurrogateModel;
+    [QOIRange, ~, QOISensitivity] = dsGRI.predictQOI(xi,Opt);
+    delBndsPosterior(i3,:) = [QOIRange.min(1) QOIRange.max(2)];
+<span class="keyword">end</span>
+</pre><p>The <tt>plotBounds</tt> function plots the observation bounds of pQOIs vs. their prediction ranges on the feasible set.  Recall, the pQOIs in this example were removed from the dataset <tt>dsGRI</tt> as they caused inconsistency.</p><pre class="codeinput">deletedBndsPrior = [deletedUnits.LowerBound; deletedUnits.UpperBound]';
+deletedNames = {deletedUnits.Name};
+figure;
+plotBounds(deletedBndsPrior, delBndsPosterior, deletedNames);
+legend(<span class="string">'Observation'</span>,<span class="string">'Prediction'</span>)
+</pre><img vspace="5" hspace="5" src="GRIMech_demo2_04.png" alt=""> <h2>Example: Sampling the feasible set<a name="18"></a></h2><p>The <tt>collectSamples</tt> method takes a <tt>Dataset</tt> object and a specification on how many samples are desired as inputs and returns an <tt>nSamp-by-nVars</tt> matrix with feasible points as rows.  See <tt>help plotmatrix</tt> for MATLAB's documentation on scatter plots of matrices.</p><pre class="codeinput">nSamp = 1000;
+xVals = collectSamples(dsGRI,nSamp);
+figure;
+[h,ax]= plotmatrix(xVals(:,1:10));
+[ax.XLim] = deal([-1,1]);
+[ax.YLim] = deal([-1,1]);
+</pre><img vspace="5" hspace="5" src="GRIMech_demo2_05.png" alt=""> <h2>Example: Predicting eQOIs on sampled feasible points<a name="19"></a></h2><p>The dataset <tt>eval</tt> method takes an <tt>nSamp-by-nVars</tt> matrix of points in the variable space and a vector of indices as inputs and returns an <tt>nSample-by-nIndex</tt> matrix where the (i,j)-th entry corresponds to the eQOI with j-th input index evaluated at the i-th point.  In this section, we return the predicted values of QOIs 15 and 30 at the 1000 sampled feasible points.</p><pre class="codeinput">i2 = [15, 30];
+yPred = dsGRI.eval(xVals,i2);
+</pre><h2>Attribution<a name="20"></a></h2><p>UC Berkeley, Spring 2016, B2BDC team</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% B2BDC example: Performing B2BDC analysis on a dataset
+% In this example, we demonstrate a B2BDC analysis, i.e. *dataset
+% consistency* and *prediction*, on the GRI-Mech 3.0 dataset. 
+
+%% 
+format compact
+currentFolder = pwd;
+str = genpath([currentFolder '\GriExample']);
+addpath(str);
+
+%% Loading GRI-Mech 3.0 dataset 
+% The GRI-Mech 3.0 |Dataset| object |dsGRI| is constructed from an Excel 
+% spreadsheet and a MATLAB .mat file.  For a detailed walkthrough of these
+% steps, please refer to |GRIMech_demo1.m|.
+
+[~,~,experimentData] = xlsread('GRIMech_expdata.xls');
+s = load('GRIMech_modeldata.mat');
+modelData = s.GRIMech_modeldata;
+dsGRI = generateDataset('GRI Mech 3.0');
+dsGRI = addData(dsGRI,experimentData,modelData);
+
+%% Analyzing the consistency of a |Dataset| object
+% A dataset is comprised of several dataset units, each of which contains: 
+%
+% * A surrogate model: $M_i(x)$ on $x \in \mathcal{H}$  
+% * A set of observed bounds: $\{L_i,U_i\}$
+%
+% Note, the i-th unit is defined on a domain of *active variables* stored in
+% a |VariableList|.  E.g. the active variables of the first experimental 
+% quantity of interest (eQOI) can be found by 
+% |dsGRI.DatasetUnits.Values(1).VariableList|.
+
+dsGRI.DatasetUnits.Values(1).VariableList
+
+%%
+% By appropriately expanding and padding it's coefficient matrix with zeros, 
+% any surrogate model can be equivalently defined on the dataset's full 
+% |VariableList|(e.g. |dsGRI.Variables|).  The complete |VariableList| for a
+% dataset can be accessed as follows:
+
+dsGRI.Variables
+
+%%
+% A dataset is said to be *consistent* if there exists a vector of variables 
+% $x$, indexed according to the full |VariableList|, such that 
+% each surrogate model evaluated at $x$ is in agreement with its 
+% corresponding observed bounds :
+%
+% $$ L_i \leq M_i(x) \leq U_i $$ for $$i = 1,..,N$$
+%
+% The consistency measure is defined as the solution of the following
+% optimization problem.
+%
+% $$ C_D = \max_{\gamma,x \in \mathcal{H}} 
+% \gamma : L_i + |L_i| \gamma \leq M_i(x) \leq U_i - |U_i| \gamma$$, for
+% $$i=1,...,N$$
+%
+% If $C_D \geq 0$, the bounds can be tightened and the dataset is
+% consistent.  If $C_D < 0$, the bounds must be relaxed and the dataset is
+% therefore inconsistent.  With quadratic and rational quadratic models, the
+% computation of the consistency measure is NP-Hard.  Oftentimes, however, 
+% we can efficiently develop tight bounds using convex relaxations and 
+% generalized solvers, i.e. 
+% 
+% $$ \underbar{C}_D \leq C_D \leq \bar{C}_D $$,
+%
+% Hence, a dataset is consistent if $\underbar{C}_D \geq 0$ and
+% inconsistent if $\bar{C}_D < 0$. 
+
+%%
+% The method |isConsistent| brackets the consistency measure of a given 
+% dataset between upper and lower bounds.  The following code evaluates the 
+% consistency of the |dsGRI| dataset. 
+
+dsGRI.isConsistent;
+
+%% 
+% As indicated by the negative upper bound, the |dsGRI| dataset is 
+% inconsistent.  No configuration of variables exists that satisfies 
+% the models and the corresponding observations.   
+% In order to proceed with the analysis, the source of this 
+% inconsistency must be identified and fixed.  Performing sensitivity 
+% analysis shows the relative impact that changing a variable or an observed
+% bound would have on the consistency measure.
+
+dsGRI.plotConsistencySensitivity
+
+%% 
+% The consistency measure is most sensitive to eQOIs 36 and 37, suggesting
+% that the corresponding observations may be suspect.  Using the |deleteUnit|
+% command, eQOIs 36 and 37 can be removed from the dataset.  Here, we store 
+% the deleted eQOIs in a|datasetUnit| array named |deletedUnits| for later 
+% use. 
+
+deletedUnits = dsGRI.deleteUnit([36,37]);
+
+%% 
+% With the above dataset units removed, |dsGRI| is consistent. 
+
+dsGRI.isConsistent
+
+%%
+% Additionally, note that computing the consistency measure returns a
+% feasible point, i.e. a vector of variables that satisfies all of the 
+% models and observations.  This point can be accessed by |dsGRI.FeasiblePoint|. 
+% We can check if an arbitrary set of point is feasible by running the
+% |isFeasiblePoint| command, which takes an |nPoints-by-nVar| matrix of 
+% points as an input, where |nPoints| number of points in the variable space
+% to be checked and |nVar| is the number of variables/dimensionality of each point. 
+% |isFeasiblePoint| returns an |nPoints-by-1| vector with elements of 
+% 0 (false, is not feasible) or 1 (true, is feasible). 
+
+xFeas = dsGRI.FeasiblePoint;
+dsGRI.isFeasiblePoint(xFeas')
+
+%% Prediction on a consistent dataset 
+% If a dataset is consistent, there exists at least one feasible point.
+% We denote the feasible set as the collection of all such feasible points, 
+% i.e.
+%
+% $$ \mathcal{F}_N = \{x \in \mathcal{H}: L_i \leq M_i(x) \leq U_i $$ for $$i
+% = 1,..,N \}$$ 
+%
+% where $\mathcal{H}$ is defined by the dataset's full |VariableList| and
+% specifies our prior knowledge of the variables.  The feasible set
+% represents the updated state of knowledge after $N$ eQOI models and observations
+% have been incorporated into the dataset.  Note, any point belonging to the 
+% feasible set is an equivalent explanation of the eQOIs within 
+% their observed uncertainty.
+%
+% By performing dataset prediction with B2BDC, i.e. minimizing and maximizing 
+% a prediction quantity of interest (pQOI) over the feasible set, one can 
+% establish a posterior range for the pQOI which includes both the prior information from 
+% $\mathcal{H}$ as well as the information acquired from data 
+% (models and observations).  The pQOI and prediction calculation can take 
+% many forms:   
+%
+% * Posterior bounds on j-th model variables ($pQOI = x_j$)
+%
+% $$ [ \min_{x} x_j : x \in \mathcal{F}_N, \max_{x} x_j : x \in \mathcal{F}_N] $$  
+%
+% * Posterior bounds on the j-th measured QOI ( $pQOI = M_j (x), j \in
+% [1,...,N]$)
+%
+% $$ [ \min_{x} M_j(x) : x \in \mathcal{F}_N, \max_{x} M_j(x) : x \in \mathcal{F}_N] $$
+%
+% * Prediction bounds on an unmeasured QOI ($pQOI = M_{N+1}(x)$)
+%
+% $$ [ \min_{x} M_{N+1}(x) : x \in \mathcal{F}_N, \max_{x} M_{N+1}(x) : x \in \mathcal{F}_N] $$
+%
+% In general, prediction corresponds to solving:
+%
+% $$ [ \min_{x} pQOI(x) : x \in \mathcal{F}, \max_{x} pQOI(x) : x \in \mathcal{F}] $$
+%
+% With quadratic and rational quadratic models, these optimizations cannot
+% be solved exactly.  Instead, we can efficiently bracket both optimization problems
+% with inner and outer bounds.  Taking just the outer bounds leads to a 
+% prediction range guarenteed to contain the true pQOI range.  
+
+%% Example: Posterior bounds on model variables 
+% In this example, the posterior bounds for variables 20 and 33 of |dsGRI| are
+% calculated using |calVarBounds|, which takes a |nIndex-by-1| vector of 
+% variable indices, where |nIndex|  is the number of indices, and a
+% |B2BDC.Option| file as inputs and returns an |nIndex-by-2| matrix.  The j-th
+% row of the returned array contains the lower bound approximiation of the
+% posterior minimum followed by the upper bound approximation of the posterior 
+% maximum.  Therefore, the true posterior range is guarenteed to be
+% contained between these quantities.
+
+Opt = generateOpt('Display',false);
+i1 = [20, 33]; %i1 = [1:nVars];
+varBndsPosterior = dsGRI.calVarBounds(i1,Opt);
+
+%%
+% The prior on variables 20 and 33 can be extracted from the |dsGRI| |VariableList|. 
+% The function |plotBounds| takes inputs in the following order:
+%
+% * prior bounds: an |nIndex-by-2| array of lower and upper bounds 
+% * posterior bounds: an |nIndex-by-2| array of lower and upper bounds
+% * names: an |nIndex-by-1| cell array of names
+
+varBndsPrior = [dsGRI.Variables.Values(i1).LowerBound; dsGRI.Variables.Values(i1).UpperBound]';
+varBndName = {dsGRI.Variables.Values(i1).Name};
+figure;
+plotBounds(varBndsPrior, varBndsPosterior, varBndName)
+
+%% Example: Posterior bounds on dataset QOIs (prediction)
+% In this example, the posterior bounds for eQOIs 15 and 30 are
+% calculated using |calQOIBounds|, which takes a |nIndex-by-1| vector of QOI indices and a
+% |B2BDC.Option| file as inputs and returns an |nIndex-by-2| matrix.  Much as before, the j-th
+% row of the returned array contains the lower bound approximiation of the
+% posterior minimum followed by the upper bound approximation of the posterior 
+% maximum.  The true posterior range is guarenteed to be
+% contained between these quantities. 
+
+i2 = [15, 30]; %i2 = [1:nQOI]
+qoiBndsPosterior = dsGRI.calQOIBounds(i2,Opt);
+
+%%
+% The method |calBound| returns an |nQOI-by-2| array of lower bounds and
+% upper bounds associated with the eQOIs of |dsGRI|.  The |plotBounds|
+% function is used again to display the posterior range improvement over
+% the prior. 
+
+allqoiBnds = dsGRI.calBound;
+qoiBndsPrior = allqoiBnds(i2,:);
+qoiNames = {dsGRI.DatasetUnits.Values(i2).Name};
+figure;
+plotBounds(qoiBndsPrior, qoiBndsPosterior, qoiNames);
+
+
+%% Example: Predicted bounds on unmeasured QOIs 
+% Recall, |deletedUnits| is the array of dataset units, which were 
+% removed earlier from the dataset |dsGRI|.  The function |predictQOI| takes a
+% |Model| object (surrogate model representing the pQOI) and a 
+% |B2BDC.Option| file as inputs and returns:
+%
+% * A structure containing the outer and inner bounds for both the
+% minimization and maximization of the pQOI.
+% * An |nVar-by-2| matrix where each column is the vector of variables
+% that corresponds to the inner bound calculation.
+% * A structure containing the sensitivities associated with both the
+% minimization and maximization of the pQOI.
+
+nUnits = length(deletedUnits);
+for i3 = 1:nUnits
+    xi = deletedUnits(i3).SurrogateModel;
+    [QOIRange, ~, QOISensitivity] = dsGRI.predictQOI(xi,Opt);
+    delBndsPosterior(i3,:) = [QOIRange.min(1) QOIRange.max(2)];
+end
+
+%%
+% The |plotBounds| function plots the observation bounds of pQOIs vs. their
+% prediction ranges on the feasible set.  Recall, the pQOIs in this example 
+% were removed from the dataset |dsGRI| as they caused inconsistency.  
+
+deletedBndsPrior = [deletedUnits.LowerBound; deletedUnits.UpperBound]';
+deletedNames = {deletedUnits.Name};
+figure;
+plotBounds(deletedBndsPrior, delBndsPosterior, deletedNames);
+legend('Observation','Prediction')
+
+%% Example: Sampling the feasible set
+% The |collectSamples| method takes a |Dataset| object and a specification
+% on how many samples are desired as inputs and returns an |nSamp-by-nVars|
+% matrix with feasible points as rows.  See |help plotmatrix| for MATLAB's 
+% documentation on scatter plots of matrices. 
+
+nSamp = 1000;
+xVals = collectSamples(dsGRI,nSamp);
+figure;
+[h,ax]= plotmatrix(xVals(:,1:10));
+[ax.XLim] = deal([-1,1]);
+[ax.YLim] = deal([-1,1]);
+
+%% Example: Predicting eQOIs on sampled feasible points
+% The dataset |eval| method takes an |nSamp-by-nVars|
+% matrix of points in the variable space and a vector of indices  
+% as inputs and returns an |nSample-by-nIndex| matrix where the (i,j)-th 
+% entry corresponds to the eQOI with j-th input index evaluated at the i-th
+% point.  In this section, we return the predicted values of QOIs 15 and 30 
+% at the 1000 sampled feasible points.
+
+i2 = [15, 30];
+yPred = dsGRI.eval(xVals,i2);
+
+%% Attribution
+% UC Berkeley, Spring 2016, B2BDC team
+
+##### SOURCE END #####
+--></body></html>

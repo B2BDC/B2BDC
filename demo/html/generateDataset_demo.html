@@ -1,0 +1,229 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>generateDataset_demo</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateDataset_demo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Create a dataset</a></li><li><a href="#3">Add dataset units into the dataset</a></li><li><a href="#4">Calculate the consistency measure</a></li><li><a href="#5">Consistency measure sensitivity plot</a></li><li><a href="#6">Clear the consistency measure</a></li><li><a href="#7">Make prediction on another model</a></li><li><a href="#8">QOI prediction sensitivity plot</a></li></ul></div><pre class="codeinput"><span class="comment">% This is a demo for how to create a B2BDC.B2Bdataset.Dataset object</span>
+<span class="comment">% and some function examples.</span>
+
+<span class="comment">%  Created: Nov 2, 2015     Wenyu Li</span>
+</pre><h2>Create a dataset<a name="2"></a></h2><p>To generate a dataset user needs a name for the dataset</p><pre class="codeinput"><span class="comment">% create a string that defines the name of the dataset</span>
+dsName = <span class="string">'Example Dataset'</span>;
+
+<span class="comment">% create a dataset object</span>
+ds = generateDataset(dsName);
+</pre><h2>Add dataset units into the dataset<a name="3"></a></h2><p>More detail information can be found in generateDatasetUnit demo</p><pre class="codeinput"><span class="comment">% create a VariableList</span>
+varName = {<span class="string">'pressure'</span>,<span class="string">'temperature'</span>,<span class="string">'rate'</span>};
+H = repmat([-1,1],3,1);
+varVal = zeros(3,1);
+varList = generateVar(varName,H,varVal);
+
+<span class="comment">% create 3 dataset units and add it to the dataset</span>
+nUnit = 3;
+nVar = size(H,1);
+<span class="keyword">for</span> i = 1:nUnit
+   dsUnitName = [<span class="string">'Dataset Unit '</span> num2str(i)];
+   coefMatrix = rand(nVar+1);
+   coefMatrix = coefMatrix+coefMatrix';
+   Qmodel = generateModel(coefMatrix,varList);
+   QoIBD = [-0.2-0.1*(rand(1)-0.5), 1+0.1*(rand(1)-0.5)];
+   dsUnit = generateDSunit(dsUnitName,Qmodel,QoIBD);
+   <span class="comment">% add dataset unit</span>
+   ds.addDSunit(dsUnit);
+<span class="keyword">end</span>
+</pre><h2>Calculate the consistency measure<a name="4"></a></h2><p>This will returns a logical result and also update the ConsistencyMeasure and ConsistencySensitivity property of the dataset object. The value updated in the property is an interval that contains the real consistency measure value.If the lower bound of this interval is positive, then the dataset is consistent and the return logical value is true. If the upper bound of this interval is negative, then the dataset is inconsistent and otherwise the dataset is undetermined. In both incosistent and undererminded case, the returned logical value is false.</p><pre class="codeinput">y = ds.isConsistent;
+CM = ds.ConsistencyMeasure
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: 1
+Consistency UB: 1
+The dataset is consistent
+
+CM =
+
+            1            1
+
+</pre><h2>Consistency measure sensitivity plot<a name="5"></a></h2><p>This plot shows the sensitivity of the outer bound of consistency measure with respect to the bounds of QoIs and variables.</p><pre class="codeinput">ds.plotConsistencySensitivity;
+</pre><img vspace="5" hspace="5" src="generateDataset_demo_01.png" alt=""> <h2>Clear the consistency measure<a name="6"></a></h2><p>You can also clear the consistency measure of the dataset</p><pre class="codeinput">ds.clearConsis;
+</pre><h2>Make prediction on another model<a name="7"></a></h2><p>When the dataset is consistent, we can add another model as a QoI that wants to be predicted. The function will update the QOIRange and QOISensitivity property of the dataset object.</p><pre class="codeinput"><span class="comment">% make a model for prediction</span>
+coefMatrix = rand(nVar+1);
+coefMatrix = coefMatrix+coefMatrix';
+Qmodel = generateModel(coefMatrix,varList);
+
+<span class="comment">% make QOI prediction</span>
+[QOIRange, ~, QOISensitivity] = ds.predictQOI(Qmodel);
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: 1
+Consistency UB: 1
+The dataset is consistent
+=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+The calculation is done
+Minimum value of QOI is within: [-0.78192 -0.77059]
+Maximum value of QOI is within: [0.12289 1.1125]
+</pre><h2>QOI prediction sensitivity plot<a name="8"></a></h2><p>This plot shows the sensitivity of the outer bound of QOI prediction with respect to the bounds of QoIs and variables.</p><pre class="codeinput">ds.plotQOISensitivity(QOISensitivity);
+</pre><img vspace="5" hspace="5" src="generateDataset_demo_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% This is a demo for how to create a B2BDC.B2Bdataset.Dataset object
+% and some function examples.
+
+%  Created: Nov 2, 2015     Wenyu Li
+
+%% Create a dataset
+% To generate a dataset user needs a name for the dataset
+
+% create a string that defines the name of the dataset
+dsName = 'Example Dataset';
+
+% create a dataset object
+ds = generateDataset(dsName);
+
+%% Add dataset units into the dataset
+% More detail information can be found in generateDatasetUnit demo
+
+% create a VariableList
+varName = {'pressure','temperature','rate'};
+H = repmat([-1,1],3,1);
+varVal = zeros(3,1);
+varList = generateVar(varName,H,varVal);
+
+% create 3 dataset units and add it to the dataset
+nUnit = 3;
+nVar = size(H,1);
+for i = 1:nUnit
+   dsUnitName = ['Dataset Unit ' num2str(i)];
+   coefMatrix = rand(nVar+1);
+   coefMatrix = coefMatrix+coefMatrix';
+   Qmodel = generateModel(coefMatrix,varList);
+   QoIBD = [-0.2-0.1*(rand(1)-0.5), 1+0.1*(rand(1)-0.5)];
+   dsUnit = generateDSunit(dsUnitName,Qmodel,QoIBD);
+   % add dataset unit
+   ds.addDSunit(dsUnit);
+end
+
+%% Calculate the consistency measure
+% This will returns a logical result and also update the ConsistencyMeasure
+% and ConsistencySensitivity property of the dataset object. The value
+% updated in the property is an interval that contains the real consistency
+% measure value.If the lower bound of this interval is positive, then the 
+% dataset is consistent and the return logical value is true. If the upper 
+% bound of this interval is negative, then the dataset is inconsistent and 
+% otherwise the dataset is undetermined. In both incosistent and
+% undererminded case, the returned logical value is false.
+
+y = ds.isConsistent;
+CM = ds.ConsistencyMeasure
+
+%% Consistency measure sensitivity plot
+% This plot shows the sensitivity of the outer bound of consistency measure
+% with respect to the bounds of QoIs and variables.
+
+ds.plotConsistencySensitivity;
+
+%% Clear the consistency measure
+% You can also clear the consistency measure of the dataset
+
+ds.clearConsis;
+
+%% Make prediction on another model
+% When the dataset is consistent, we can add another model as a QoI that
+% wants to be predicted. The function will update the QOIRange and
+% QOISensitivity property of the dataset object.
+
+% make a model for prediction
+coefMatrix = rand(nVar+1);
+coefMatrix = coefMatrix+coefMatrix';
+Qmodel = generateModel(coefMatrix,varList);
+
+% make QOI prediction
+[QOIRange, ~, QOISensitivity] = ds.predictQOI(Qmodel);
+
+%% QOI prediction sensitivity plot
+% This plot shows the sensitivity of the outer bound of QOI prediction
+% with respect to the bounds of QoIs and variables.
+
+ds.plotQOISensitivity(QOISensitivity);
+
+
+##### SOURCE END #####
+--></body></html>

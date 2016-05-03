@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding="utf-8"?>
+<toc version="2.0">
+    <tocitem target="B2BDCIntroPage.html">B2BDC
+
+    <!-- 1. Introduction -->
+	<tocitem target="\Introduction\B2BDCGettingStarted.html" image="HelpIcon.GETTING_STARTED">
+		 What is B2BDC?
+        <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">Origination</tocitem>
+        <tocitem target="\GettingStarted\LPVSystems\html\LPVSystems.html">Methodology</tocitem>
+	</tocitem>
+
+
+	<!-- 2. Dataset -->
+	<tocitem target="\DatasetCreation\DatasetIntroduction.html">
+		 How to create a dataset?
+       <tocitem target="\DatasetCreation\Variable\Variable.html">Variable</tocitem>
+       <tocitem target="\DatasetCreation\SurrogateModel\SurrogateModel.html">Surrogate Model</tocitem>
+			 <tocitem target="\DatasetCreation\DatasetUnit\DatasetUnit.html">Dataset Unit</tocitem>
+			 <tocitem target="\DatasetCreation\Dataset\Dataset.html">Dataset</tocitem>
+	</tocitem>
+
+
+	<!-- 3. Dataset -->
+	<tocitem target="\DatasetFunction\B2BDCGettingStarted.html">
+		 How to use B2BDC
+          <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">Consistency Measure</tocitem>
+          <tocitem target="\GettingStarted\LPVSystems\html\LPVSystems.html">Prediction</tocitem>
+			    <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">Sensitivity Analysis</tocitem>
+          <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">Sampling in Feasible Set</tocitem>
+	</tocitem>
+	
+	
+	<!-- 4. Support Software -->
+	<tocitem target="\SupportSoftware\B2BDCGettingStarted.html">
+		 Support softwares
+             <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">SeDuMi</tocitem>
+             <tocitem target="\GettingStarted\LPVSystems\html\LPVSystems.html">cvx</tocitem>
+			 <tocitem target="\GettingStarted\WhatIsLPVTools.html#WhatIsLPVTools">SOSOPT</tocitem>	
+	</tocitem>
+
+
+
+	<!-- 5. Demos -->
+	<tocitem target="\Demo\DemoIntroduction.html">
+		 Demos
+             <tocitem target="\Demo\GRI1\GRI1.html">GRI Creation</tocitem>
+             <tocitem target="\Demo\GRI2\GRI2.html">GRI Application</tocitem>
+			 <tocitem target="\Demo\MassDetection\MassDetection.html">Mass Detection</tocitem>
+			 <tocitem target="\Demo\DLR\DLR.html">DLR Application</tocitem>
+	</tocitem>
+
+    </tocitem>
+</toc>

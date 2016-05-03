@@ -1,0 +1,336 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>B2BDC example: GRI-Mech 3.0</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="GRIMech_demo1.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>B2BDC example: GRI-Mech 3.0</h1><!--introduction--><p>In this example, we illustrate one manner in which a <tt>Dataset</tt> object can be created and populated using Excel spreadsheets and MATLAB .mat files which contain, respectively, experimental observations and corresponding models with variable uncertainty.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Specifying (input) experimental QOI data (user-supplied)</a></li><li><a href="#5">Specifying (input) Models and variables</a></li><li><a href="#6">Surrogate Models</a></li><li><a href="#7">Model variables</a></li><li><a href="#8">Example: Load and examine model/variable data</a></li><li><a href="#15">Example: Initialize a dataset for B2B-DC analysis</a></li><li><a href="#17">Example: Add dataset units into the dataset</a></li><li><a href="#18">Example: Verify number of DatasetUnits</a></li><li><a href="#19">Example: Verify number of variables</a></li><li><a href="#20">Conclusion</a></li><li><a href="#21">Attribution</a></li></ul></div><pre class="codeinput">format <span class="string">compact</span>
+W = what(<span class="string">'GriAnalysisExample'</span>);
+str = genpath(W.path);
+addpath(str);
+</pre><h2>Specifying (input) experimental QOI data (user-supplied)<a name="2"></a></h2><p>The experimental QOI (eQOI) data can be loaded from a user-supplied Excel file of the form exemplified below,</p><p><img vspace="5" hspace="5" src="..\GriAnalysisExample\Images\ExcelSnapshot.png" alt=""> </p><p>where the columns, in order, are</p><div><ul><li>A: <i>name</i> - unique name identifying the experimental QOI (e.g., 'bch2o.t1')</li><li>B: <i>LB</i>  - LOWER bound on value of the eQOI; asserted by experimentalist</li><li>C: <i>UB</i>  - UPPER bound on value of the eQOI; asserted by experimentalist</li><li>D: <i>value</i> - observed value of the experimental QOI (this column is optional)</li></ul></div><p>The number of rows is denoted <tt>numQOI</tt>, which denotes the number of experimental QOIs in the dataset.  There may be 3 or 4 columns (<tt>numCol</tt>).</p><pre class="codeinput">[~,~,experimentData] = xlsread(<span class="string">'GRIMech_expdata.xls'</span>);
+</pre><p>The MATLAB function <b>xlsread</b> creates a MATLAB cell array (named <tt>experimentData</tt> here) of dimension <tt>numQOI</tt> -by- <tt>numCol</tt> containing the data in the Excel file.  In this particular example, <tt>numQOI</tt> equals 77, and <tt>numCol</tt> equals 4.</p><pre class="codeinput">size(experimentData)
+</pre><pre class="codeoutput">ans =
+    77     4
+</pre><p>Look at the name, experimental bounds (lower and upper), and observed value for the 14th eQOI</p><pre class="codeinput">experimentData{14,1}
+[experimentData{14,2} experimentData{14,3}]
+experimentData{14,4}
+</pre><pre class="codeoutput">ans =
+ch3.c2
+ans =
+    2.4883    2.5754
+ans =
+    2.5340
+</pre><h2>Specifying (input) Models and variables<a name="5"></a></h2><p>Models that predict the values of the eQOIs as functions of the uncertain variables can be input as a MATLAB cell array (denoted <tt>modelData</tt> below).  The dimension is <tt>numQOI</tt>-by-3.  Each row corresponds to a different model.  The columns represent</p><div><ul><li><i>key</i>, a unique key identifying the eQoI (should match one of the <i>name</i> entries within <tt>experimentData</tt>) associated with this model;</li><li><i>mCell</i>, a cell array, giving some mathematical description of the model. There are three acceptable formats for this, specified by coefficients or by data to fit, described in detail below;</li><li><i>vCell</i>, a cell array, delineating variables on which this model depends.</li></ul></div><h2>Surrogate Models<a name="6"></a></h2><p>There are several acceptable formats for <i>mCell</i>, corresponding to different forms of the individual models:</p><div><ol><li>models with <i>quadratic</i> dependence on variables;</li><li>models with <i>rational-quadratic</i> dependence on variables;</li><li>models described by a <i>collection of samples</i> (variable value, model output value).</li></ol></div><p>(1) For models with <i>quadratic</i> dependence, <i>mCell</i> is a 1-by-2 cell, of the form <tt>{'quadratic' , coeffMatrix}</tt>.</p><div><ul><li>The first entry (the string <tt>'quadratic'</tt>) specifies the model type.</li><li>The second entry is a symmetric matrix (MATLAB class <tt>double</tt>), defining a function</li></ul></div><p><img src="GRIMech_demo1_eq06006856271520043968.png" alt="$$M(x) = \left[ \begin{array}{c} 1 \\ x \end{array} \right]^T Q&#xA;\left[ \begin{array}{c} 1 \\ x \end{array} \right]$$"></p><p>where <img src="GRIMech_demo1_eq12795926589847895066.png" alt="$Q$"> is the symmetric coefficient matrix, <tt>coefMatrix</tt>, and <img src="GRIMech_demo1_eq12428413953531653171.png" alt="$x$"> is the vector of variables on which the model depends.</p><p>(2) For models with <i>rational-quadratic</i> dependence, <i>mCell</i> is a 1-by-3 cell, of the form <tt>{'rational quadratic' , coeffMatrixNum , coeffMatrixDen}</tt>.</p><div><ul><li>the first entry (the string <tt>'rational quadratic'</tt>) specifies the model type;</li><li>the second entry is a symmetric coefficient matrix defining the quadratic numerator function;</li><li>the 3rd entry is a symmetric coefficient matrix defining the quadratic denominator function.</li></ul></div><p>(3) Finally, for models that are described by samples, <i>mCell</i> is a 1-by-3 cell, of the form <tt>{fitClass , Xdata, Ydata}</tt>.</p><div><ul><li>The first entry dictates what function class (<tt>'quadratic'</tt> or <tt>'rational quadratic'</tt>) is used to fit the data.</li><li>The 2nd entry, <tt>Xdata</tt> is <tt>double</tt> matrix, of dimension <tt>nSample</tt> -by- <tt>nVar</tt>, describing variable values at the sample points.</li><li>The 3rd element, <tt>Ydata</tt> is a <tt>nSample</tt> -by- 1 <tt>double</tt> array corresponding model values at the sample point.</li></ul></div><h2>Model variables<a name="7"></a></h2><p>The variables on which the model depends are delineated in <i>vCell</i>, the 3rd column of <tt>modelData</tt>.   This is a <tt>nVar</tt>-by-4 cell array, where <tt>nVar</tt> represents the number of variables that the model depends on. Each row is of the form <tt>{varName , LB , UB , xNom}</tt>, where</p><div><ul><li><tt>varName</tt> is a string identifying the variable (e.g., 'k1' or 'A(O+H2=H+OH)')</li><li><tt>LB</tt> is the lower bound on the variable (prior information)</li><li><tt>UB</tt> is the upper bound on the variable (prior information)</li><li><tt>xNom</tt> is the nominal value of the variable (typically <tt>xNom = (LB + UB)/2</tt>)</li></ul></div><h2>Example: Load and examine model/variable data<a name="8"></a></h2><p>In this example file, all models are specified in the <tt>quadratic</tt> form.</p><pre class="codeinput">s = load(<span class="string">'GRIMech_modeldata.mat'</span>);
+modelData = s.GRIMech_modeldata;
+</pre><p>There are 77 models in this set</p><pre class="codeinput">size(modelData,1)
+</pre><pre class="codeoutput">ans =
+    77
+</pre><p>As an example, the model #61 is named <tt>'oh.3b'</tt> which corresponds to an OH concentration measurement (for more information, see the <a href="http://combustion.berkeley.edu/gri-mech/version30/targets30/oh.3b.html">GRIMech</a> website). It depends on 12 model variables, and there is a 13-by-13 coefficient matrix describing the quadratic (plus linear plus constant) surrogate model.</p><pre class="codeinput">modelData{61,1}
+</pre><pre class="codeoutput">ans =
+oh.3b
+</pre><pre class="codeinput">modelData{61,3}
+</pre><pre class="codeoutput">ans = 
+    'A(O+CH4&lt;=&gt;OH+CH3)'      [-1]    [1]    [      0]
+    'A(H+O2+M&lt;=&gt;HO2+M)'      [-1]    [1]    [-0.6897]
+    'A(H+O2&lt;=&gt;O+OH)'         [-1]    [1]    [     -1]
+    'A(H+CH3(+M)&lt;=&gt;CH...'    [-1]    [1]    [      0]
+    'A(H+CH2O(+M)&lt;=&gt;C...'    [-1]    [1]    [      0]
+    'A(OH+HO2&lt;=&gt;O2+H2...'    [-1]    [1]    [      1]
+    'A(OH+CH3&lt;=&gt;CH2(S...'    [-1]    [1]    [      0]
+    'A(HO2+CH3&lt;=&gt;O2+CH4)'    [-1]    [1]    [      0]
+    'A(CH2(S)+O2&lt;=&gt;CO...'    [-1]    [1]    [      0]
+    'A(CH3+O2&lt;=&gt;O+CH3O)'     [-1]    [1]    [      0]
+    'A(HCO(+M)&lt;=&gt;H+CO...'    [-1]    [1]    [ 0.2630]
+    'A(HCO+O2&lt;=&gt;HO2+CO)'     [-1]    [1]    [     -1]
+    'A(CH3O+O2&lt;=&gt;HO2+...'    [-1]    [1]    [-0.5015]
+</pre><pre class="codeinput">modelData{61,2}
+</pre><pre class="codeoutput">ans = 
+    'quadratic'    [14x14 double]
+</pre><p>By contrast, Model 62 depends on 11 model variables</p><pre class="codeinput">modelData{62,3}
+</pre><pre class="codeoutput">ans = 
+    'A(O+CH3&lt;=&gt;H+CH2O)'      [-1]    [1]    [     0]
+    'A(O+CH4&lt;=&gt;OH+CH3)'      [-1]    [1]    [     0]
+    'A(H+O2&lt;=&gt;O+OH)'         [-1]    [1]    [    -1]
+    'A(H+CH3(+M)&lt;=&gt;CH...'    [-1]    [1]    [     0]
+    'A(H+CH4&lt;=&gt;CH3+H2)'      [-1]    [1]    [     0]
+    'A(OH+CH3&lt;=&gt;CH2(S...'    [-1]    [1]    [     0]
+    'A(OH+CH4&lt;=&gt;CH3+H2O)'    [-1]    [1]    [     0]
+    'A(CH3+O2&lt;=&gt;O+CH3O)'     [-1]    [1]    [     0]
+    'A(CH3+O2&lt;=&gt;OH+CH2O)'    [-1]    [1]    [     0]
+    'A(2CH3(+M)&lt;=&gt;C2H...'    [-1]    [1]    [    -1]
+    'A(2CH3&lt;=&gt;H+C2H5)'       [-1]    [1]    [0.6781]
+</pre><p>Model 61 and 62 share 5 common model variables</p><pre class="codeinput">intersect(modelData{61,3}(:,1), modelData{62,3}(:,1))
+</pre><pre class="codeoutput">ans = 
+    'A(CH3+O2&lt;=&gt;O+CH3O)'
+    'A(H+CH3(+M)&lt;=&gt;CH4(+M))'
+    'A(H+O2&lt;=&gt;O+OH)'
+    'A(O+CH4&lt;=&gt;OH+CH3)'
+    'A(OH+CH3&lt;=&gt;CH2(S)+H2O)'
+</pre><h2>Example: Initialize a dataset for B2B-DC analysis<a name="15"></a></h2><p>Initialize an empty <tt>DataSet</tt> object.  The only input arguments is a descriptive name.  Here we use <tt>'GRI Mech 3.0'</tt>, reflecting where the experimental data and models originated.</p><pre class="codeinput">dsGRI = generateDataset(<span class="string">'GRI Mech 3.0'</span>);
+</pre><p>As expected, except for the user-supplied name, there is no information contained in the object</p><pre class="codeinput">dsGRI
+</pre><pre class="codeoutput">dsGRI = 
+  Dataset with properties:
+
+                  Name: 'GRI Mech 3.0'
+          DatasetUnits: []
+             Variables: [1x1 B2BDC.B2Bvariables.VariableList]
+         FeasiblePoint: []
+    ConsistencyMeasure: []
+</pre><h2>Example: Add dataset units into the dataset<a name="17"></a></h2><pre class="codeinput">dsGRI = addData(dsGRI,experimentData,modelData);
+</pre><h2>Example: Verify number of DatasetUnits<a name="18"></a></h2><p>As expected, there are 77 dataset units in the object.  These represent pairings of the experimental bounds with their corresponding surrogate models.</p><pre class="codeinput">dsGRI.DatasetUnits
+</pre><pre class="codeoutput">ans = 
+  DatasetUnitList with properties:
+
+    Length: 77
+    Values: [1x77 B2BDC.B2Bdataset.DatasetUnit]
+</pre><h2>Example: Verify number of variables<a name="19"></a></h2><p>Each of the 77 models depends a handful (from 5 to 13) of model variables.  Some are common across models.  The union of the lists of these variables form the variable-space for this dataset.  In this case, there are 102 overall model variables.</p><pre class="codeinput">dsGRI.Variables
+</pre><pre class="codeoutput">ans = 
+  VariableList with properties:
+
+    Length: 102
+    Values: [1x102 B2BDC.B2Bvariables.ModelVariable]
+</pre><h2>Conclusion<a name="20"></a></h2><p>Constructing a <tt>Dataset</tt> object involves specifying many items</p><div><ol><li>experimental results: each corresponds to a (named) scalar-valued eQOI, with an interval of its true value asserted by the experimentalist;</li><li>a model for each eQOI, with dependence on unknown/uncertain model variables</li><li>a-priori upper and lower bounds on the model variables</li></ol></div><p>Once these are specified, analysis tools, such as <b>dataset consistency</b> and <b>prediction</b> can be carried out.  Those calculations are illustrated in the <b>Performing B2B-DC analysis on a Dataset</b> example in <tt>GRIMech_demo2</tt>.</p><h2>Attribution<a name="21"></a></h2><p>UC Berkeley, Spring 2016, B2BDC team</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% B2BDC example: GRI-Mech 3.0
+% In this example, we illustrate one manner in which a |Dataset| object can
+% be created and populated using Excel spreadsheets and MATLAB .mat files
+% which contain, respectively, experimental observations and corresponding
+% models with variable uncertainty.
+
+%% 
+format compact
+W = what('GriAnalysisExample');
+str = genpath(W.path);
+addpath(str);
+
+%% Specifying (input) experimental QOI data (user-supplied)
+% The experimental QOI (eQOI) data can be loaded from a user-supplied Excel
+% file of the form exemplified below, 
+%
+% <<..\GriAnalysisExample\Images\ExcelSnapshot.png>>
+% 
+% where the columns, in order, are
+%
+% * A: _name_ - unique name identifying the experimental QOI (e.g., 'bch2o.t1')       
+% * B: _LB_  - LOWER bound on value of the eQOI; asserted by experimentalist                          
+% * C: _UB_  - UPPER bound on value of the eQOI; asserted by experimentalist                  
+% * D: _value_ - observed value of the experimental QOI (this column is optional)                            
+%
+% The number of rows is denoted |numQOI|, which denotes the number of
+% experimental QOIs in the dataset.  There may be 3 or 4 columns
+% (|numCol|).
+[~,~,experimentData] = xlsread('GRIMech_expdata.xls');
+%%
+% The MATLAB function *xlsread* creates a MATLAB cell array (named
+% |experimentData| here) of dimension |numQOI| -by- |numCol| containing the
+% data in the Excel file.  In this particular example, |numQOI| equals 77,
+% and |numCol| equals 4.
+size(experimentData)
+%%
+% Look at the name, experimental bounds (lower and upper), and observed
+% value for the 14th eQOI
+experimentData{14,1}
+[experimentData{14,2} experimentData{14,3}]
+experimentData{14,4}
+
+%% Specifying (input) Models and variables
+% Models that predict the values of the eQOIs as functions of
+% the uncertain variables can be input as a MATLAB cell array
+% (denoted |modelData| below).  The dimension is |numQOI|-by-3.  Each row
+% corresponds to a different model.  The columns represent
+%
+% * _key_, a unique key identifying the eQoI (should match one of the
+% _name_ entries within |experimentData|) associated with this model;
+% * _mCell_, a cell array, giving some mathematical description of the model.
+% There are three acceptable formats for this, specified by coefficients or
+% by data to fit, described in detail below;
+% * _vCell_, a cell array, delineating variables on which this model
+% depends.
+
+%% Surrogate Models
+% There are several acceptable formats for _mCell_, corresponding to
+% different forms of the individual models:
+%
+% # models with _quadratic_ dependence on variables;
+% # models with _rational-quadratic_ dependence on variables;
+% # models described by a _collection of samples_ (variable value, model
+% output value).
+%
+% (1) For models with _quadratic_ dependence, _mCell_ is a 1-by-2 cell, of the
+% form |{'quadratic' , coeffMatrix}|.
+%
+% * The first entry (the string |'quadratic'|) specifies the model type.
+% * The second entry is a symmetric matrix (MATLAB class |double|), defining
+% a function
+%
+% $$M(x) = \left[ \begin{array}{c} 1 \\ x \end{array} \right]^T Q
+% \left[ \begin{array}{c} 1 \\ x \end{array} \right]$$
+% 
+% where $Q$ is the
+% symmetric coefficient matrix, |coefMatrix|, and $x$ is the vector of
+% variables on which the model depends.
+%
+% (2) For models with _rational-quadratic_ dependence, _mCell_ is a 1-by-3 cell,
+% of the form |{'rational quadratic' , coeffMatrixNum , coeffMatrixDen}|. 
+%
+% * the first entry (the string |'rational quadratic'|) specifies the model
+% type;
+% * the second entry is a symmetric coefficient matrix defining the
+% quadratic numerator function;
+% * the 3rd entry is a symmetric coefficient matrix defining the quadratic
+% denominator function.
+%
+% (3) Finally, for models that are described by samples, _mCell_ is a 1-by-3
+% cell, of the form |{fitClass , Xdata, Ydata}|.
+%
+% * The first entry dictates what function class (|'quadratic'| or
+% |'rational quadratic'|) is used to fit the data.
+% * The 2nd entry, |Xdata| is |double| matrix, of dimension |nSample| -by-
+% |nVar|, describing variable values at the sample points.
+% * The 3rd element, |Ydata| is a |nSample| -by- 1 |double| array
+% corresponding model values at the sample point.
+
+%% Model variables
+% The variables on which the model depends are delineated in _vCell_, the
+% 3rd column of |modelData|.   This is a |nVar|-by-4 cell array, where
+% |nVar| represents the number of variables that the model depends on.
+% Each row is of the form |{varName , LB , UB , xNom}|, where
+%
+% * |varName| is a string identifying the variable (e.g., 'k1' or 'A(O+H2=H+OH)')
+% * |LB| is the lower bound on the variable (prior information)
+% * |UB| is the upper bound on the variable (prior information)
+% * |xNom| is the nominal value of the variable (typically |xNom = (LB + UB)/2|)
+
+%% Example: Load and examine model/variable data
+% In this example file, all models are specified in the |quadratic| form.
+s = load('GRIMech_modeldata.mat');
+modelData = s.GRIMech_modeldata;
+%%
+% There are 77 models in this set
+size(modelData,1)
+%%
+% As an example, the model #61 is named |'oh.3b'| which corresponds to an
+% OH concentration measurement (for more information, see the
+% <http://combustion.berkeley.edu/gri-mech/version30/targets30/oh.3b.html
+% GRIMech> website). It depends on 12 model variables, and there is a 13-by-13
+% coefficient matrix describing the quadratic (plus linear plus constant)
+% surrogate model.
+modelData{61,1}
+%%
+modelData{61,3}
+%%
+modelData{61,2}
+%%
+% By contrast, Model 62 depends on 11 model variables
+modelData{62,3}
+%%
+% Model 61 and 62 share 5 common model variables
+intersect(modelData{61,3}(:,1), modelData{62,3}(:,1))
+
+%% Example: Initialize a dataset for B2B-DC analysis
+% Initialize an empty |DataSet| object.  The only input arguments is a
+% descriptive name.  Here we use |'GRI Mech 3.0'|, reflecting where the
+% experimental data and models originated.
+dsGRI = generateDataset('GRI Mech 3.0');
+%%
+% As expected, except for the user-supplied name, there is no information
+% contained in the object
+dsGRI
+
+%% Example: Add dataset units into the dataset
+dsGRI = addData(dsGRI,experimentData,modelData);
+
+%% Example: Verify number of DatasetUnits
+% As expected, there are 77 dataset units in the object.  These represent
+% pairings of the experimental bounds with their corresponding surrogate
+% models.
+dsGRI.DatasetUnits
+
+%% Example: Verify number of variables
+% Each of the 77 models depends a handful (from 5 to 13) of model
+% variables.  Some are common across models.  The union of the lists of
+% these variables form the variable-space for this dataset.  In this
+% case, there are 102 overall model variables.
+dsGRI.Variables
+
+%% Conclusion
+% Constructing a |Dataset| object involves specifying many items
+%
+% # experimental results: each corresponds to a (named) scalar-valued eQOI,
+% with an interval of its true value asserted by the experimentalist;
+% # a model for each eQOI, with dependence on unknown/uncertain model
+% variables
+% # a-priori upper and lower bounds on the model variables
+%
+% Once these are specified, analysis tools, such as *dataset consistency*
+% and *prediction* can be carried out.  Those calculations are illustrated
+% in the *Performing B2B-DC analysis on a Dataset* example in |GRIMech_demo2|.
+
+%% Attribution
+% UC Berkeley, Spring 2016, B2BDC team
+
+##### SOURCE END #####
+--></body></html>

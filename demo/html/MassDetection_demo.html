@@ -1,0 +1,443 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>B2BDC Example: Mass detection from impedance magnitude measurements</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="MassDetection_demo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>B2BDC Example: Mass detection from impedance magnitude measurements</h1><!--introduction--><p>In this example, we demonstrate a B2BDC analysis of an existing simulation code. Specifically, we use the B2BDC toolbox to analyze a series connection of 12 mass-spring-damper systems with identical stiffness and damping coefficents. The first 6 masses are uncertain and serve as the variables for the analysis.</p><p><img vspace="5" hspace="5" src="..\MassDetectionExample\MassDetectionDiagram.png" alt=""> </p><p>The m-files <tt>MSD1D.m</tt> provides the computational model for the example. Additionally, the function <tt>getQOIonSamples.m</tt> evaluates the computational model and returns frequency response measurements for the velocity output x1_dot due to a sinusoidal input f_1(t) at 25 specified probing frequencies. These frequency response measurements serve as QOIs. Following the B2BDC methodology, we incorporate the variables, QOI models, and noisy QOI observations in a dataset and demonstrate a reduction in uncertainty of the 6 masses.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Problem setup</a></li><li><a href="#3">Insert uncertain masses and prior bounds into a <tt>VariableList</tt> object</a></li><li><a href="#4">Create LatinHyperCube samples for training and validation data</a></li><li><a href="#5">Define values of all known quantities</a></li><li><a href="#6">Call computational model to evaluate QOIs on training data and validation data</a></li><li><a href="#7">Construct quadratic surrogate models from training data</a></li><li><a href="#8">Simulating data collection: specify true mass values and noisy QOI measurements</a></li><li><a href="#9">Error analysis</a></li><li><a href="#10">Using a B2BDC option file</a></li><li><a href="#11">Constructing the dataset</a></li><li><a href="#12">Predict range of each uncertain mass</a></li><li><a href="#13">Plot predictions (and hidden true values)</a></li><li><a href="#14">Create rational-quadratic surrogate model from training data</a></li><li><a href="#15">Evaluate rational-quadratic surrogate error on validation data</a></li><li><a href="#16">Error analysis</a></li><li><a href="#17">Create a new dataset with rational-quadratic surrogates</a></li><li><a href="#18">Predict range of each uncertain mass</a></li><li><a href="#19">Plot predictions (and hidden true values)</a></li><li><a href="#20">Attribution</a></li></ul></div><pre class="codeinput">format <span class="string">compact</span>
+W = what(<span class="string">'MassDetectionExample'</span>);
+str = genpath(W.path);
+addpath(str);
+</pre><h2>Problem setup<a name="2"></a></h2><pre class="codeinput">nUncertainMass = 6;
+nFixedMass = 6;  <span class="comment">% number of fixed-value masses (further below)</span>
+NQOI = 25; <span class="comment">% number of probing frequencies</span>
+wProbeVec = logspace(log10(0.1),log10(3),NQOI);
+NTrainSamples = 15*nUncertainMass^2; <span class="comment">% 6 masses -&gt; 540 samples</span>
+NValidateSamples = round(NTrainSamples/2);
+</pre><h2>Insert uncertain masses and prior bounds into a <tt>VariableList</tt> object<a name="3"></a></h2><p>The uncertain masses serve as the variables in this example. Prior knowledge tells us that each mass lies within the range [1/sqrt(2) sqrt(2)]. The function <tt>generateVar</tt> takes a <tt>numberOfVariables-by-1</tt> cell array of variable names and an <tt>numberOfVariables-by-2</tt> array containing the corresponding lower and upper bounds as inputs and returns a <tt>VariableList</tt> object.</p><pre class="codeinput">varName = {<span class="string">'M1'</span>,<span class="string">'M2'</span>,<span class="string">'M3'</span>,<span class="string">'M4'</span>,<span class="string">'M5'</span>,<span class="string">'M6'</span>};
+H = repmat([1/sqrt(2) sqrt(2)],[nUncertainMass,1]);
+varList = generateVar(varName,H);
+</pre><h2>Create LatinHyperCube samples for training and validation data<a name="4"></a></h2><p>The function <tt>makeLHSsample</tt> takes a specification on the number of samples and returns a <tt>numberOfSamples-by-numberOfVariables</tt> Latin hypercube design matrix. In this case, we are sampling the uncertain region of the 6 unkown masses. These samples will be used to train and validate the surrogate models for the QOIs.</p><pre class="codeinput">xTrain = varList.makeLHSsample(NTrainSamples);
+xValidate = varList.makeLHSsample(NValidateSamples);
+</pre><h2>Define values of all known quantities<a name="5"></a></h2><p>The 6 known masses all have a mass of 1. Similarly, the stiffness and damping coefficients are 1 and 0.2 respectively.</p><pre class="codeinput">fixedMassValue = 1;
+fixedMassVec = repmat(fixedMassValue,[nFixedMass,1]);
+Kval = 1;
+Cval = 0.2;
+</pre><h2>Call computational model to evaluate QOIs on training data and validation data<a name="6"></a></h2><p>The function <tt>getQOIonSamples.m</tt> is specific to this example. It takes a <tt>numberOfSamples-by-numberOfVariables</tt> design matrix and an <tt>1-by-NQOI</tt> vector of probing frequencies as inputs (as well as some problem setup data) and returns a <tt>numberOfSamples-by-NQOI</tt> array. The (i,k)-th entry of the returned array corresponds to the frequency response of the system constructed from i-th mass sample at the k-th frequency.</p><pre class="codeinput">yTrain = getQOIonSamples(xTrain, wProbeVec, nUncertainMass, fixedMassVec, Kval, Cval);
+yValidate = getQOIonSamples(xValidate, wProbeVec, nUncertainMass, fixedMassVec, Kval, Cval);
+</pre><h2>Construct quadratic surrogate models from training data<a name="7"></a></h2><p>In this section, we construct 25 quadratic models representing the relationship between the variables (6 uncertain masses) and the 25 QOIs (frequency responses at 25 probing frequencies). Details regarding the <tt>generateModelbyFit</tt> function can be found in <tt>Model_by_Fitting_demo.m</tt>.</p><pre class="codeinput">qSMQOI = [];
+qAbsErrMax = zeros(NQOI,1);
+<span class="keyword">for</span> k = 1:NQOI
+    qModel = generateModelbyFit(xTrain,yTrain(:,k),varList,<span class="string">'qinf'</span>);
+    qSMQOI = [qSMQOI ; qModel];
+    errValidate = yValidate(:,k) - qModel.eval(xValidate);
+    qAbsErrMax(k) = max(errValidate);
+<span class="keyword">end</span>
+</pre><h2>Simulating data collection: specify true mass values and noisy QOI measurements<a name="8"></a></h2><p>In this section, we specify the true values of the uncertain masses. These are used to generate noisy observations for the B2BDC analysis. In a real world setting, these observations would come from experiments. Of course, the true mass values are hidden from the analysis and will be used for verification during the posterior analysis. The observation error of 5%, however, is a known quantity and a property of the measuring equipment.</p><pre class="codeinput">Mtrue = [0.85; 1.3; 0.85; 0.85; 0.85; 1.3];
+z = getQOIonSamples(Mtrue',wProbeVec,nUncertainMass, fixedMassVec, Kval,Cval);
+yTrue = abs(z(:));
+measError = 0.05;
+yMeas = yTrue.*(1-2*measError*(rand(NQOI,1)-0.5));
+</pre><h2>Error analysis<a name="9"></a></h2><p>Note, the fitting error of the second and third QOIs are quite large. In the code cell below, we compare the in-sample training error, which is stored in the <tt>Qmodel</tt> array <tt>qSMQOI</tt>, to the cross-validation error we have calculated above in <tt>qAbsErrMax</tt>.</p><pre class="codeinput"><span class="comment">%in-sample error</span>
+qSMQOI(2).ErrorStats
+qSMQOI(3).ErrorStats
+
+<span class="comment">%cross-validation error</span>
+qAbsErrMax(2:3)
+</pre><pre class="codeoutput">ans = 
+    absMax: 14.1329
+    absAvg: 7.5011
+    relMax: 3.1884
+    relAvg: 0.6932
+ans = 
+    absMax: 10.2620
+    absAvg: 4.8643
+    relMax: 2.6357
+    relAvg: 0.6104
+ans =
+   18.9033
+   25.1931
+</pre><h2>Using a B2BDC option file<a name="10"></a></h2><p>Due to the large fitting errors for a few of the QOIs, it would be imprudent to trust the surrogate models completely. To compensate for this additional uncertainty, we can incorporate the fitting errors into the observation bounds when constructing the dataset units. If we wished to use the in-sample error, the following code would create an option file that automates that process: <tt>Opt = generateOpt('Display',false,'AddFitError',true);</tt>. We could then procede as usual and enter the measurement uncertainty / observation bounds without modification. In this case, however, the cross-validation error is significantly larger and we wish to manually include it into the dataset. Thus, we must ensure that the 'AddFitError' option is off.</p><pre class="codeinput">Opt = generateOpt(<span class="string">'Display'</span>,false,<span class="string">'AddFitError'</span>,false);
+</pre><h2>Constructing the dataset<a name="11"></a></h2><p>Having defined our QOI models and observations, we can now construct a dataset. The observation upper and lower bounds include both the measurement error and the fitting error. See <tt>Dataset_demo.m</tt> for details on the <tt>generateDSunit</tt> and <tt>addDSunit</tt> commands.</p><pre class="codeinput">dsName = <span class="string">'Mass Detection Dataset: Quadratic'</span>;
+dsQ = generateDataset(dsName);
+
+<span class="keyword">for</span> k = 1: NQOI
+    dsUnit_Name = [<span class="string">'At frequency w_'</span> int2str(k)];
+    exp_LB = yMeas(k) - measError*abs(yMeas(k)) - qAbsErrMax(k);
+    exp_UB = yMeas(k) + measError*abs(yMeas(k)) + qAbsErrMax(k);
+    exp_Observe = yMeas(k);
+    dsUnit = generateDSunit(dsUnit_Name,qSMQOI(k),[exp_LB,exp_UB],exp_Observe);
+    dsQ.addDSunit(dsUnit);
+<span class="keyword">end</span>
+</pre><h2>Predict range of each uncertain mass<a name="12"></a></h2><p>For each mass, perform the posterior calculation. See the <tt>GRIMech_demo2.m</tt> demo for details.</p><pre class="codeinput">predResultQ = dsQ.calVarBounds([1:nUncertainMass],Opt);
+</pre><h2>Plot predictions (and hidden true values)<a name="13"></a></h2><p>The posterior bounds are plotted as red bars, the prior bounds are plotted as blue bars, and the truth is shown in black.</p><pre class="codeinput">priorQ = [ [dsQ.Variables.Values.LowerBound]' [dsQ.Variables.Values.UpperBound]'];
+figure;
+plotBounds(priorQ,predResultQ, varName);
+plot(Mtrue,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'k'</span>);
+xlabel(<span class="string">'Mass Index'</span>);
+ylabel(<span class="string">'Mass Prediction'</span>);
+title(<span class="string">'Using quadratic surrogates'</span>);
+</pre><img vspace="5" hspace="5" src="MassDetection_demo_01.png" alt=""> <h2>Create rational-quadratic surrogate model from training data<a name="14"></a></h2><p>Now, we rerun the entire procedure using rational-quadratic surrogates. Due to the long runtime (~1 hour), we are currently loading previously constructed surrogates. To generate your own rational-quadratic surrogates, change <tt>runRatQuadFit = false;</tt> to <tt>runRatQuadFit = true;</tt>.</p><pre class="codeinput">runRatQuadFit = false;
+<span class="keyword">if</span> runRatQuadFit
+    rqSMQOI = [];
+    rqAbsErrStd = zeros(NQOI,1);
+    <span class="keyword">for</span> k = 1:NQOI
+        rqModel = generateModelbyFit(xTrain,yTrain(:,k),varList,<span class="string">'rq'</span>);
+        rqSMQOI = [rqSMQOI ; rqModel];
+    <span class="keyword">end</span>
+    save <span class="string">RatQuadModels</span> <span class="string">rqSMQOI</span>
+<span class="keyword">else</span>
+    load <span class="string">RatQuadModels</span>
+<span class="keyword">end</span>
+</pre><h2>Evaluate rational-quadratic surrogate error on validation data<a name="15"></a></h2><p>This standard deviation will be used to add to the QOI bounds, effectively account for errors in the surrogate models</p><pre class="codeinput">rqAbsErrMax = zeros(NQOI,1);
+<span class="keyword">for</span> k = 1:NQOI
+    errValidateRQ = yValidate(:,k) - rqSMQOI(k).eval(xValidate);
+    rqAbsErrMax(k) = max(errValidateRQ);
+<span class="keyword">end</span>
+</pre><h2>Error analysis<a name="16"></a></h2><pre class="codeinput"><span class="comment">%in-sample error</span>
+rqSMQOI(2).ErrorStats
+rqSMQOI(3).ErrorStats
+
+<span class="comment">%cross-validation error</span>
+rqAbsErrMax(2:3)
+</pre><pre class="codeoutput">ans = 
+    absMax: 7.1612
+    absAvg: 3.3841
+    relMax: 1.7283
+    relAvg: 0.3481
+ans = 
+    absMax: 6.2091
+    absAvg: 3.3355
+    relMax: 1.6451
+    relAvg: 0.4822
+ans =
+   16.9771
+   27.6793
+</pre><h2>Create a new dataset with rational-quadratic surrogates<a name="17"></a></h2><p>This process is identical to creating the previous dataset with quadratic surrogates.</p><pre class="codeinput">dsName = <span class="string">'Mass Detection Dataset: Rational Quadratic'</span>;
+dsRQ = generateDataset(dsName);
+
+<span class="keyword">for</span> k = 1: NQOI
+    dsUnit_Name = [<span class="string">'At frequency w_'</span> int2str(k)];
+    exp_LB = yMeas(k) - measError*abs(yMeas(k)) - rqAbsErrMax(k);
+    exp_UB = yMeas(k) + measError*abs(yMeas(k)) + rqAbsErrMax(k);
+    exp_Observe = yMeas(k);
+    dsUnit = generateDSunit(dsUnit_Name,rqSMQOI(k),[exp_LB,exp_UB],exp_Observe);
+    dsRQ.addDSunit(dsUnit);
+<span class="keyword">end</span>
+</pre><h2>Predict range of each uncertain mass<a name="18"></a></h2><p>As we have already incorporated the fitting error in the dataset, we must create an option file to turn the 'AddFitError' feature off before performing prediction.</p><pre class="codeinput">Opt = generateOpt(<span class="string">'Display'</span>,false,<span class="string">'AddFitError'</span>,false);
+predResultRQ = dsRQ.calVarBounds([1:nUncertainMass],Opt);
+</pre><h2>Plot predictions (and hidden true values)<a name="19"></a></h2><p>The posterior bounds are plotted as red bars, the prior bounds are plotted as blue bars, and the truth is shown in black.</p><pre class="codeinput">priorRQ= [ [dsRQ.Variables.Values.LowerBound]' [dsRQ.Variables.Values.UpperBound]'];
+figure;
+plotBounds(priorRQ,predResultRQ, varName);
+plot(Mtrue,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColor'</span>,<span class="string">'k'</span>);
+xlabel(<span class="string">'Mass Index'</span>);
+ylabel(<span class="string">'Mass Prediction'</span>);
+title(<span class="string">'Using rational-quadratic surrogates'</span>);
+</pre><img vspace="5" hspace="5" src="MassDetection_demo_02.png" alt=""> <h2>Attribution<a name="20"></a></h2><p>UC Berkeley, Spring 2016, B2BDC team</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% B2BDC Example: Mass detection from impedance magnitude measurements 
+% In this example, we demonstrate a B2BDC analysis of an existing simulation code.
+% Specifically, we use the B2BDC toolbox to analyze a series connection 
+% of 12 mass-spring-damper systems with identical stiffness and damping coefficents. 
+% The first 6 masses are uncertain and serve as the variables for the analysis. 
+%
+% <<..\MassDetectionExample\MassDetectionDiagram.png>>
+%
+% The m-files |MSD1D.m| provides the computational model for the example.
+% Additionally, the function |getQOIonSamples.m| evaluates the computational 
+% model and returns frequency response measurements for the velocity output
+% x1_dot due to a sinusoidal input f_1(t) at 25 specified probing frequencies.
+% These frequency response measurements serve as QOIs. Following the B2BDC
+% methodology, we incorporate the variables, QOI models, and noisy QOI 
+% observations in a dataset and demonstrate a reduction in uncertainty of 
+% the 6 masses. 
+
+%% 
+format compact
+W = what('MassDetectionExample');
+str = genpath(W.path);
+addpath(str);
+
+%% Problem setup
+
+nUncertainMass = 6;
+nFixedMass = 6;  % number of fixed-value masses (further below)
+NQOI = 25; % number of probing frequencies 
+wProbeVec = logspace(log10(0.1),log10(3),NQOI);
+NTrainSamples = 15*nUncertainMass^2; % 6 masses -> 540 samples
+NValidateSamples = round(NTrainSamples/2);
+
+%% Insert uncertain masses and prior bounds into a |VariableList| object
+% The uncertain masses serve as the variables in this example. Prior knowledge
+% tells us that each mass lies within the range [1/sqrt(2) sqrt(2)]. The
+% function |generateVar| takes a |numberOfVariables-by-1| cell array of 
+% variable names and an |numberOfVariables-by-2| array containing the 
+% corresponding lower and upper bounds as inputs and returns a |VariableList|
+% object.
+
+varName = {'M1','M2','M3','M4','M5','M6'};
+H = repmat([1/sqrt(2) sqrt(2)],[nUncertainMass,1]);
+varList = generateVar(varName,H);
+
+%% Create LatinHyperCube samples for training and validation data
+% The function |makeLHSsample| takes a specification on the number of
+% samples and returns a |numberOfSamples-by-numberOfVariables| 
+% Latin hypercube design matrix. In this case, we are sampling the
+% uncertain region of the 6 unkown masses. These samples will be used to
+% train and validate the surrogate models for the QOIs. 
+
+xTrain = varList.makeLHSsample(NTrainSamples);
+xValidate = varList.makeLHSsample(NValidateSamples);
+
+%% Define values of all known quantities
+% The 6 known masses all have a mass of 1. Similarly, the stiffness and
+% damping coefficients are 1 and 0.2 respectively. 
+fixedMassValue = 1;
+fixedMassVec = repmat(fixedMassValue,[nFixedMass,1]);
+Kval = 1;
+Cval = 0.2;
+
+%% Call computational model to evaluate QOIs on training data and validation data
+% The function |getQOIonSamples.m| is specific to this example. It takes a
+% |numberOfSamples-by-numberOfVariables| design matrix and an |1-by-NQOI|
+% vector of probing frequencies as inputs (as well as some problem setup
+% data) and returns a |numberOfSamples-by-NQOI| array. The (i,k)-th
+% entry of the returned array corresponds to the frequency response of the 
+% system constructed from i-th mass sample at the k-th frequency.
+
+yTrain = getQOIonSamples(xTrain, wProbeVec, nUncertainMass, fixedMassVec, Kval, Cval);
+yValidate = getQOIonSamples(xValidate, wProbeVec, nUncertainMass, fixedMassVec, Kval, Cval);
+
+%% Construct quadratic surrogate models from training data
+% In this section, we construct 25 quadratic models representing the relationship
+% between the variables (6 uncertain masses) and the 25 QOIs 
+% (frequency responses at 25 probing frequencies). 
+% Details regarding the |generateModelbyFit| function can be found in
+% |Model_by_Fitting_demo.m|.
+
+qSMQOI = [];
+qAbsErrMax = zeros(NQOI,1);
+for k = 1:NQOI
+    qModel = generateModelbyFit(xTrain,yTrain(:,k),varList,'qinf');
+    qSMQOI = [qSMQOI ; qModel];
+    errValidate = yValidate(:,k) - qModel.eval(xValidate);
+    qAbsErrMax(k) = max(errValidate);
+end
+
+%% Simulating data collection: specify true mass values and noisy QOI measurements
+% In this section, we specify the true values of the uncertain masses. 
+% These are used to generate noisy observations for the B2BDC analysis. In 
+% a real world setting, these observations would come from experiments. 
+% Of course, the true mass values are hidden from the analysis and will be used 
+% for verification during the posterior analysis. The observation error of 
+% 5%, however, is a known quantity and a property of the measuring equipment.
+
+Mtrue = [0.85; 1.3; 0.85; 0.85; 0.85; 1.3];
+z = getQOIonSamples(Mtrue',wProbeVec,nUncertainMass, fixedMassVec, Kval,Cval); 
+yTrue = abs(z(:));
+measError = 0.05;
+yMeas = yTrue.*(1-2*measError*(rand(NQOI,1)-0.5));
+
+%% Error analysis
+% Note, the fitting error of the second and third QOIs are quite large.
+% In the code cell below, we compare the in-sample training error, which 
+% is stored in the |Qmodel| array |qSMQOI|, to the cross-validation error 
+% we have calculated above in |qAbsErrMax|. 
+
+%in-sample error
+qSMQOI(2).ErrorStats
+qSMQOI(3).ErrorStats
+
+%cross-validation error
+qAbsErrMax(2:3)
+
+%% Using a B2BDC option file
+% Due to the large fitting errors for a few of the QOIs, it would be 
+% imprudent to trust the surrogate models completely. To compensate for this additional
+% uncertainty, we can incorporate the fitting errors into the observation bounds
+% when constructing the dataset units. If we wished to use the in-sample error, the
+% following code would create an option file that automates that process:
+% |Opt = generateOpt('Display',false,'AddFitError',true);|. We could then 
+% procede as usual and enter the measurement uncertainty / observation bounds 
+% without modification. In this case, however, the cross-validation error is 
+% significantly larger and we wish to manually include it into the dataset. 
+% Thus, we must ensure that the 'AddFitError' option is off.
+
+Opt = generateOpt('Display',false,'AddFitError',false);
+
+%% Constructing the dataset
+% Having defined our QOI models and observations, we can now construct a dataset.
+% The observation upper and lower bounds include both the measurement error and
+% the fitting error. See |Dataset_demo.m| for details on the |generateDSunit| 
+% and |addDSunit| commands.
+
+dsName = 'Mass Detection Dataset: Quadratic';
+dsQ = generateDataset(dsName);
+
+for k = 1: NQOI
+    dsUnit_Name = ['At frequency w_' int2str(k)];
+    exp_LB = yMeas(k) - measError*abs(yMeas(k)) - qAbsErrMax(k);
+    exp_UB = yMeas(k) + measError*abs(yMeas(k)) + qAbsErrMax(k);
+    exp_Observe = yMeas(k);
+    dsUnit = generateDSunit(dsUnit_Name,qSMQOI(k),[exp_LB,exp_UB],exp_Observe);
+    dsQ.addDSunit(dsUnit);
+end
+
+%% Predict range of each uncertain mass 
+% For each mass, perform the posterior calculation. See the 
+% |GRIMech_demo2.m| demo for details.
+
+predResultQ = dsQ.calVarBounds([1:nUncertainMass],Opt);
+
+%% Plot predictions (and hidden true values)
+% The posterior bounds are plotted as red bars, the prior bounds are plotted as
+% blue bars, and the truth is shown in black.
+
+priorQ = [ [dsQ.Variables.Values.LowerBound]' [dsQ.Variables.Values.UpperBound]'];
+figure;
+plotBounds(priorQ,predResultQ, varName);
+plot(Mtrue,'ko','MarkerFaceColor','k');
+xlabel('Mass Index');
+ylabel('Mass Prediction');
+title('Using quadratic surrogates');
+
+%% Create rational-quadratic surrogate model from training data
+% Now, we rerun the entire procedure using rational-quadratic surrogates.
+% Due to the long runtime (~1 hour), we are currently loading previously
+% constructed surrogates. To generate your own rational-quadratic
+% surrogates, change |runRatQuadFit = false;| to |runRatQuadFit = true;|.
+
+runRatQuadFit = false;
+if runRatQuadFit
+    rqSMQOI = [];
+    rqAbsErrStd = zeros(NQOI,1);
+    for k = 1:NQOI
+        rqModel = generateModelbyFit(xTrain,yTrain(:,k),varList,'rq');
+        rqSMQOI = [rqSMQOI ; rqModel];
+    end
+    save RatQuadModels rqSMQOI
+else
+    load RatQuadModels
+end
+
+%% Evaluate rational-quadratic surrogate error on validation data
+% This standard deviation will be used to add to the QOI bounds,
+% effectively account for errors in the surrogate models
+
+rqAbsErrMax = zeros(NQOI,1);
+for k = 1:NQOI
+    errValidateRQ = yValidate(:,k) - rqSMQOI(k).eval(xValidate);
+    rqAbsErrMax(k) = max(errValidateRQ);
+end
+
+%% Error analysis
+
+%in-sample error
+rqSMQOI(2).ErrorStats
+rqSMQOI(3).ErrorStats
+
+%cross-validation error
+rqAbsErrMax(2:3)
+
+%% Create a new dataset with rational-quadratic surrogates
+% This process is identical to creating the previous dataset with quadratic 
+% surrogates.  
+
+dsName = 'Mass Detection Dataset: Rational Quadratic';
+dsRQ = generateDataset(dsName);
+
+for k = 1: NQOI
+    dsUnit_Name = ['At frequency w_' int2str(k)];
+    exp_LB = yMeas(k) - measError*abs(yMeas(k)) - rqAbsErrMax(k);
+    exp_UB = yMeas(k) + measError*abs(yMeas(k)) + rqAbsErrMax(k);
+    exp_Observe = yMeas(k);
+    dsUnit = generateDSunit(dsUnit_Name,rqSMQOI(k),[exp_LB,exp_UB],exp_Observe);
+    dsRQ.addDSunit(dsUnit);
+end
+
+%% Predict range of each uncertain mass 
+% As we have already incorporated the fitting error in the dataset, we must create an
+% option file to turn the 'AddFitError' feature off before performing prediction. 
+
+Opt = generateOpt('Display',false,'AddFitError',false);
+predResultRQ = dsRQ.calVarBounds([1:nUncertainMass],Opt);
+
+%% Plot predictions (and hidden true values)
+% The posterior bounds are plotted as red bars, the prior bounds are plotted as
+% blue bars, and the truth is shown in black.
+
+priorRQ= [ [dsRQ.Variables.Values.LowerBound]' [dsRQ.Variables.Values.UpperBound]'];
+figure;
+plotBounds(priorRQ,predResultRQ, varName);
+plot(Mtrue,'ko','MarkerFaceColor','k');
+xlabel('Mass Index');
+ylabel('Mass Prediction');
+title('Using rational-quadratic surrogates');
+
+%% Attribution
+% UC Berkeley, Spring 2016, B2BDC team
+
+##### SOURCE END #####
+--></body></html>
