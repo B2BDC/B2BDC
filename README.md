@@ -1,2 +1,2 @@
-# B2BDCv0.7
-The 0.7 version of B2BDC toolbox
+# Bound-to-Bound Data Collaboration
+B2BDC is a MATLAB toolbox used for uncertainty quantification and propagation.
