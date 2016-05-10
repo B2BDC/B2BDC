@@ -141,11 +141,6 @@ frac = B2Bopt.ExtraLinFraction;
 [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE);
 %[minout,minSens] = obj.cvxminouterbound(QOIobj,frac);
 %[maxout,maxSens] = obj.cvxmaxouterbound(QOIobj,frac);
-if B2Bopt.Display
-   disp('The calculation is done')
-   disp(['Minimum value of QOI is within: [' num2str(minout) ' ' num2str(minin) ']'])
-   disp(['Maximum value of QOI is within: [' num2str(maxin) ' ' num2str(maxout) ']'])
-end
 my = QOIobj.yScale.my;
 dy = QOIobj.yScale.dy;
 QOIrange.min = dy*[minout, minin]+my;
@@ -160,6 +155,11 @@ maxSens.varu = dy*maxSens.varu;
 maxSens.varl = dy*maxSens.varl;
 QOISensitivity.min = minSens;
 QOISensitivity.max = maxSens;
+if B2Bopt.Display
+   disp('The calculation is done')
+   disp(['Minimum value of QOI is within: [' num2str(minout) ' ' num2str(minin) ']'])
+   disp(['Maximum value of QOI is within: [' num2str(maxin) ' ' num2str(maxout) ']'])
+end
 
 
 
