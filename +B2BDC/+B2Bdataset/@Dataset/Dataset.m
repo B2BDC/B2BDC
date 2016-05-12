@@ -329,6 +329,22 @@ classdef Dataset < handle
             end
          end
       end
+      
+      function set.FeasiblePoint(obj,x0)
+         if isempty(x0)
+            obj.FeasiblePoint = [];
+         else
+            if size(x0,1) == 1
+               x0 = x0';
+            end
+            if obj.isFeasiblePoint(x0')
+               obj.FeasiblePoint = x0;
+            else
+               error('The input point is infeasible')
+            end
+         end
+      end
+      
    end
    
    methods (Static, Hidden = true)
