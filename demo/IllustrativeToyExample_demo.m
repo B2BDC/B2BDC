@@ -47,9 +47,9 @@ for i=1:nSamples
 end
 
 %% Get quadratic fits to eQOIs
-e1model = generateModelbyFit(kData,eSimData(:,1),varList,false,false);
-e2model = generateModelbyFit(kData,eSimData(:,2),varList,false,false);
-e3model = generateModelbyFit(kData,eSimData(:,3),varList,false,false);
+e1model = generateModelbyFit(kData,eSimData(:,1),varList);
+e2model = generateModelbyFit(kData,eSimData(:,2),varList);
+e3model = generateModelbyFit(kData,eSimData(:,3),varList);
 
 %% Check accuracy of quadratic eQOI surrogate models
 e1modelEvaluations = e1model.eval(kData,varList);
@@ -75,7 +75,7 @@ meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
 disp(['p1QOI: Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
 
 %% Rational quadratic fit to pQOI
-p1modelrq = generateModelbyFit(kData,pSimData,varList,false,false,'rq');
+p1modelrq = generateModelbyFit(kData,pSimData,varList,'rq');
 p1modelrqEvaluations = p1modelrq.eval(kData,varList);
 fitError1rq = pSimData - p1modelrqEvaluations;
 meanError1rq = mean(abs(fitError1rq)); stdError1rq = std(fitError1rq);
