@@ -19,7 +19,7 @@ for i = 1:size(prior,1)
     h.LineWidth = 2;
     hold on
     midPosterior = mean(posterior(i,:));
-    h2 = errorbar(i, midPosterior, posterior(i,2)-midPosterior, 'r');
+    h2 = errorbar(i+0.05, midPosterior, posterior(i,2)-midPosterior, 'r');
     h2.LineWidth = 4;
 end
 
