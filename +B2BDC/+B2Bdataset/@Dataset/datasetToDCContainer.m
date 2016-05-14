@@ -29,7 +29,7 @@ nUnit = obj.Length;
 dc.modelKey = {obj.DatasetUnits.Values.Name}';
 tep_coef = cell(nUnit,1);
 for i = 1:nUnit
-   tep_coef{i} = obj.DatasetUnits.Values(i).SurrogateModel.CoefMatrix;
+   tep_coef{i} = obj.DatasetUnits.Values(i).SurrogateModel.NormalizedCoefMatrix;
 end
 dc.modelCoeffs = tep_coef;
 

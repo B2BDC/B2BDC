@@ -45,7 +45,7 @@ for i = 1:n
    
    paramDomain = struct('name',pNames,'range',pRanges);
    
-   RM{i} = DClab.ResponseModel(units(i).SurrogateModel.CoefMatrix,paramDomain);
+   RM{i} = DClab.ResponseModel(units(i).SurrogateModel.NormalizedCoefMatrix,paramDomain);
    
    RM{i} = set(RM{i},'name',units(i).Name);
    

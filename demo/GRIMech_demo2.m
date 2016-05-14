@@ -4,8 +4,8 @@
 
 %% 
 format compact
-currentFolder = pwd;
-str = genpath([currentFolder '\GriExample']);
+W = what('GriAnalysisExample');
+str = genpath(W.path);
 addpath(str);
 
 %% Loading GRI-Mech 3.0 dataset 

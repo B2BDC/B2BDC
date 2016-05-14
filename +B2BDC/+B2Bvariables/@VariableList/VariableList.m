@@ -267,6 +267,25 @@ classdef VariableList < B2BDC.Util.IContainer
             error('Wrong number of input arguments')
          end
       end
+      
+      function newVar = makeSubset(obj,varIdx)
+         % NEWVAR = MAKESUBSET(OBJ,INDEX) returns a VariableList object
+         % including only a subset of the original VariableList object
+         % specifed by the index input
+         
+         if ischar(varIdx)
+            [~,id,~] = intersect(varIdx,{obj.Values.Name});
+         elseif isvector(varIdx)
+            id = varIdx;
+         else
+            error('Wrong input index type or length')
+         end
+         vName = {obj.Values.Name};
+         H = obj.calBound;
+         newName = vName(id);
+         newH = H(id,:);
+         newVar = generateVar(newName, newH);
+      end
  
    end
    

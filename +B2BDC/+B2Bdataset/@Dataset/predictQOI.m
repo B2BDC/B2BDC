@@ -57,8 +57,8 @@ id02 = [1;id03+1];
 if isa(model0,'B2BDC.B2Bmodels.RQModel')
    N0 = zeros(length(id02),length(id02));
    D0 = zeros(length(id02),length(id02));
-   N1 = model0.Numerator;
-   D1 = model0.Denominator;
+   N1 = model0.NormalizedNumerator;
+   D1 = model0.NormalizedDenominator;
    for i0 = 1:length(id02)
       for j0 = 1:length(id02)
          N0(i0,j0) = N1(id02(i0),id02(j0));
@@ -67,7 +67,7 @@ if isa(model0,'B2BDC.B2Bmodels.RQModel')
    end
 elseif isa(model0,'B2BDC.B2Bmodels.QModel')
    Coef0 = zeros(length(id02),length(id02));
-   Coef1 = model0.CoefMatrix;
+   Coef1 = model0.NormalizedCoefMatrix;
    for i0 = 1:length(id02)
       for j0 = 1:length(id02)
          Coef0(i0,j0) = Coef1(id02(i0),id02(j0));
@@ -164,7 +164,6 @@ end
 
 
 
-
    function [y,gy] = funxmin(x)
       gy = zeros(n_variable,1);
       if isa(model0,'B2BDC.B2Bmodels.RQModel')
@@ -207,8 +206,8 @@ end
          if isa(model,'B2BDC.B2Bmodels.RQModel')
             N = zeros(length(id3),length(id3));
             D = zeros(length(id3),length(id3));
-            N1 = model.Numerator;
-            D1 = model.Denominator;
+            N1 = model.NormalizedNumerator;
+            D1 = model.NormalizedDenominator;
             for i1 = 1:length(id3)
                for j1 = 1:length(id3)
                   N(i1,j1) = N1(id3(i1),id3(j1));
@@ -229,7 +228,7 @@ end
             g(:,2*i) = grad2;
          elseif isa(model,'B2BDC.B2Bmodels.QModel')
             quadCoef = zeros(length(id3),length(id3));
-            quadCoef2 = model.CoefMatrix;
+            quadCoef2 = model.NormalizedCoefMatrix;
             for i1 = 1:length(id3)
                for j1 = 1:length(id3)
                   quadCoef(i1,j1) = quadCoef2(id3(i1),id3(j1));

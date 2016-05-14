@@ -18,9 +18,9 @@ for i = 1:n_units
    [~,id1,id2] = intersect(allVarname,unitModel.VarNames);
    if isa(unitModel,'B2BDC.B2Bmodels.RQModel')
       NumCoef0 = zeros(n_variable,n_variable);
-      NumCoef1 = 2*unitModel.Numerator(2:end,2:end);
+      NumCoef1 = 2*unitModel.NormalizedNumerator(2:end,2:end);
       DenCoef0 = zeros(n_variable,n_variable);
-      DenCoef1 = 2*unitModel.Denominator(2:end,2:end);
+      DenCoef1 = 2*unitModel.NormalizedDenominator(2:end,2:end);
       for j = 1:length(id2)
          for k = 1:length(id2)
             NumCoef0(id1(j),id1(k)) = NumCoef1(id2(j),id2(k));

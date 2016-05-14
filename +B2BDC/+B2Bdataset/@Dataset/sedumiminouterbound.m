@@ -55,7 +55,7 @@ for i1 = 1:n_units
       minSensitivity.expu(i1) = -lamEU(i1)*d(i1)*S(1,1);
       minSensitivity.expl(i1) = -lamEL(i1)*d(i1)*S(1,1);
    elseif isa(obj.DatasetUnits.Values(i1).SurrogateModel,'B2BDC.B2Bmodels.RQModel')
-      tmpD = obj.DatasetUnits.Values(i1).SurrogateModel.Denominator;
+      tmpD = obj.DatasetUnits.Values(i1).SurrogateModel.NormalizedDenominator;
       minSensitivity.expu(i1) = -lamEU(i1)*d(i1)*trace(tmpD*S);
       minSensitivity.expl(i1) = -lamEL(i1)*d(i1)*trace(tmpD*S);
    end
@@ -93,8 +93,8 @@ end
       id1 = [1;id1+1];
       id2 = [1;id2+1];
       if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         N0 = model0.Numerator;
-         D0 = model0.Denominator;
+         N0 = model0.NormalizedNumerator;
+         D0 = model0.NormalizedDenominator;
          targetN = zeros(n_variable+1,n_variable+1);
          targetD = zeros(n_variable+1,n_variable+1);
          for j = 1:length(id2)
@@ -105,7 +105,7 @@ end
          end
          targetMatrix = targetN;
       elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-         Coef0 = model0.CoefMatrix;
+         Coef0 = model0.NormalizedCoefMatrix;
          targetMatrix = zeros(n_variable+1,n_variable+1);
          for j = 1:length(id2)
             for k = 1:length(id2)

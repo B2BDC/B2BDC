@@ -46,8 +46,8 @@ for i = 1:n_units
    id1 = [1;id1+1];
    id2 = [1;id2+1];
    if isa(model,'B2BDC.B2Bmodels.RQModel')
-      N = model.Numerator;
-      D = model.Denominator;
+      N = model.NormalizedNumerator;
+      D = model.NormalizedDenominator;
       constrN = zeros(n_variable+1,n_variable+1);
       constrD = zeros(n_variable+1,n_variable+1);
       for j = 1:length(id2)
@@ -59,7 +59,7 @@ for i = 1:n_units
       Qunits{2*i-1} = constrN-bds(i,2)*constrD;
       Qunits{2*i} = bds(i,1)*constrD-constrN;
    elseif isa(model,'B2BDC.B2Bmodels.QModel')
-      Coef = model.CoefMatrix;
+      Coef = model.NormalizedCoefMatrix;
       constrMatrix1 = zeros(n_variable+1,n_variable+1);
       constrMatrix2 = zeros(n_variable+1,n_variable+1);
       for j = 1:length(id2)

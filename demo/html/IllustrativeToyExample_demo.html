@@ -1,0 +1,411 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Illustrative Toy Example</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="IllustrativeToyExample_demo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Illustrative Toy Example</h1><!--introduction--><p>Simple three-component, 2-reaction linear model (3 state variables). The experimental QOIs (eQOIs) are</p><div><ul><li>peak-value of x2</li><li>time-of-peak-value of x2</li><li>time for x1 to decay to half initial value</li></ul></div><p>The prediction QOI (pQOI) is ratio of x3 to x1 at time of peak of x2. Model parameters are two rate coefficients</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Two model parameters</a></li><li><a href="#2">Create a random k data</a></li><li><a href="#3">Create Model</a></li><li><a href="#4">Model simulation for Surrogate Model training</a></li><li><a href="#5">Get quadratic fits to eQOIs</a></li><li><a href="#6">Check accuracy of quadratic eQOI surrogate models</a></li><li><a href="#7">Get quadratic fits to pQOI</a></li><li><a href="#8">Assess quality of quadratic surrogate model</a></li><li><a href="#9">Rational quadratic fit to pQOI</a></li><li><a href="#10">Synthetic Observed Values</a></li><li><a href="#12">Experimental Observations regarding eQOI1 and eQOI2</a></li><li><a href="#13">Create a DataSet object, and insert all DataSet Units</a></li><li><a href="#14">Consistency Test: check consistency of DataSet</a></li><li><a href="#15">Prediction</a></li></ul></div><h2>Two model parameters<a name="1"></a></h2><p>Create a <tt>VariableList</tt> object containing information about the model variables (uncertain/unknown rate constants).  More detailed information can be found in the VariableList_demo</p><pre class="codeinput">varName = {<span class="string">'k1'</span>,<span class="string">'k2'</span>};
+H = [1 4;0.5 2];
+H = [1.3 3.6;0.6 1.8];
+H = [1.3 3.6;0.6 1.8];
+H = [[1.5 3];[1.5 3]];
+varNominalVal = [2;1]
+varNominalVal = [2.25;2.25]
+varList = generateVar(varName,H,varNominalVal);
+</pre><pre class="codeoutput">varNominalVal =
+     2
+     1
+varNominalVal =
+    2.2500
+    2.2500
+</pre><h2>Create a random k data<a name="2"></a></h2><pre class="codeinput">nVar = size(H,1);
+nSamples = 15*nVar*(nVar+1)/2;
+kData = varList.makeLHSsample(nSamples);
+</pre><h2>Create Model<a name="3"></a></h2><p>Set up 3-state ODE model for reaction system</p><pre class="codeinput">odeModel = @(t,x,k1,k2) [-k1*x(1);k1*x(1)-k2*x(2);k2*x(2)];
+</pre><h2>Model simulation for Surrogate Model training<a name="4"></a></h2><pre class="codeinput">eSimData = zeros(nSamples,3);
+pSimData = zeros(nSamples,1);
+x0 = [1;0;0];
+tFinal = 3;
+<span class="keyword">for</span> i=1:nSamples
+   f = @(t,x) odeModel(t,x,kData(i,1),kData(i,2));
+   [tSol,xSol] = ode45(f,[0 tFinal],x0);
+   [x2peak,peakIndex] = max(xSol(:,2));
+   [~,midIndex] = min(abs(xSol(:,1)-x0(1)/2));
+   eSimData(i,:) = [x2peak tSol(peakIndex) xSol(midIndex,1)];
+   pSimData(i,:) = xSol(peakIndex,3)/xSol(peakIndex,1);
+<span class="keyword">end</span>
+</pre><h2>Get quadratic fits to eQOIs<a name="5"></a></h2><pre class="codeinput">e1model = generateModelbyFit(kData,eSimData(:,1),varList);
+e2model = generateModelbyFit(kData,eSimData(:,2),varList);
+e3model = generateModelbyFit(kData,eSimData(:,3),varList);
+</pre><h2>Check accuracy of quadratic eQOI surrogate models<a name="6"></a></h2><pre class="codeinput">e1modelEvaluations = e1model.eval(kData,varList);
+e2modelEvaluations = e2model.eval(kData,varList);
+e3modelEvaluations = e3model.eval(kData,varList);
+fitError1 = eSimData(:,1) - e1modelEvaluations;
+fitError2 = eSimData(:,2) - e2modelEvaluations;
+fitError3 = eSimData(:,3) - e3modelEvaluations;
+meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
+meanError2 = mean(abs(fitError2)); stdError2 = std(fitError2);
+meanError3 = mean(abs(fitError3)); stdError3 = std(fitError3);
+disp([<span class="string">'e1QOI: Mean Abs Error: '</span> num2str(meanError1) <span class="string">', STD Error: '</span> num2str(stdError1)]);
+disp([<span class="string">'e2QOI: Mean Abs Error: '</span> num2str(meanError2) <span class="string">', STD Error: '</span> num2str(stdError2)]);
+disp([<span class="string">'e3QOI: Mean Abs Error: '</span> num2str(meanError3) <span class="string">', STD Error: '</span> num2str(stdError3)]);
+</pre><pre class="codeoutput">e1QOI: Mean Abs Error: 0.00054619, STD Error: 0.00058598
+e2QOI: Mean Abs Error: 0.014978, STD Error: 0.017558
+e3QOI: Mean Abs Error: 0.011704, STD Error: 0.013494
+</pre><h2>Get quadratic fits to pQOI<a name="7"></a></h2><pre class="codeinput">p1model = generateModelbyFit(kData,pSimData,varList);
+</pre><h2>Assess quality of quadratic surrogate model<a name="8"></a></h2><pre class="codeinput">p1modelEvaluations = p1model.eval(kData,varList);
+fitError1 = pSimData - p1modelEvaluations;
+meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
+disp([<span class="string">'p1QOI: Mean Abs Error: '</span> num2str(meanError1) <span class="string">', STD Error: '</span> num2str(stdError1)]);
+</pre><pre class="codeoutput">p1QOI: Mean Abs Error: 0.064054, STD Error: 0.070319
+</pre><h2>Rational quadratic fit to pQOI<a name="9"></a></h2><pre class="codeinput">p1modelrq = generateModelbyFit(kData,pSimData,varList,<span class="string">'rq'</span>);
+p1modelrqEvaluations = p1modelrq.eval(kData,varList);
+fitError1rq = pSimData - p1modelrqEvaluations;
+meanError1rq = mean(abs(fitError1rq)); stdError1rq = std(fitError1rq);
+disp([<span class="string">'p1QOIrq: Mean Abs Error: '</span> num2str(meanError1rq) <span class="string">', STD Error: '</span> num2str(stdError1rq)]);
+</pre><pre class="codeoutput">p1QOIrq: Mean Abs Error: 0.063124, STD Error: 0.069234
+</pre><h2>Synthetic Observed Values<a name="10"></a></h2><p>For the purposes of this example, we select a <b>true</b> value of the model variables, and compute the eQOIs at this true value.   Then, synthetically capture the experimental measurement by adding some plus/minus error to these true values to create the experimental bounds.</p><pre class="codeinput">k1True = 2.1;
+k2True = 2.4;
+kTrue = [k1True k2True];
+f = @(t,x) odeModel(t,x,k1True,k2True);
+[tSol,xSol] = ode45(f,[0 tFinal],x0);
+[x2peak,peakIndex] = max(xSol(:,2));
+[~,midIndex] = min(abs(xSol(:,1)-x0(1)/2));
+eTrue = [x2peak tSol(peakIndex) xSol(midIndex,1)];
+pTrue = xSol(peakIndex,3)/xSol(peakIndex,1);
+</pre><p>%% Check accuracy of quadratic eQOI surrogate models e1modelEvaluations = e1model.eval(kData,varList); e2modelEvaluations = e2model.eval(kData,varList); e3modelEvaluations = e3model.eval(kData,varList); fitError1 = eSimData(:,1) - e1modelEvaluations; fitError2 = eSimData(:,2) - e2modelEvaluations; fitError3 = eSimData(:,3) - e3modelEvaluations; meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1); meanError2 = mean(abs(fitError2)); stdError2 = std(fitError2); meanError3 = mean(abs(fitError3)); stdError3 = std(fitError3); disp(['e1QOI: Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]); disp(['e2QOI: Mean Abs Error: ' num2str(meanError2) ', STD Error: ' num2str(stdError2)]); disp(['e3QOI: Mean Abs Error: ' num2str(meanError3) ', STD Error: ' num2str(stdError3)]);</p><p>%% Check accuracy of fit for Model #1 % Plot the simulation and corresponding surrogate model predictions.  Note % that for this model, the surrogate model is quite accurate. e1modelEvaluations = e1model.eval(kData,varList); alle1 = [e1modelEvaluations; eSimData(:,1)]; minmaxVal = [min(alle1) max(alle1)]; plot(eSimData(:,1),e1modelEvaluations,'+',minmaxVal,minmaxVal); xlabel('Simulation Data: #1') ylabel('(quadratic) Surrogate Model #1 prediction'); title('Comparing model to surrogate model') fitError1 = eSimData(:,1) - e1modelEvaluations; meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1); disp(['Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);</p><p>%% Check accuracy of fit for Model #2 % Plot the simulation and corresponding surrogate model predictions. e2modelEvaluations = e2model.eval(kData,varList); alle2 = [e2modelEvaluations; eSimData(:,2)]; minmaxVal = [min(alle2) max(alle2)]; plot(eSimData(:,2),e2modelEvaluations,'+',minmaxVal,minmaxVal); xlabel('Simulation Data: #2') ylabel('(quadratic) Surrogate Model #2 prediction'); title('Comparing model to surrogate model') fitError2 = eSimData(:,2) - e2modelEvaluations; meanError2 = mean(abs(fitError2)); stdError2 = std(fitError2); disp(['Mean Abs Error: ' num2str(meanError2) ', STD Error: ' num2str(stdError2)]);</p><p>%% Rational-quadratic for Model #2 e2modelrq = generateModelbyFit(kData,eSimData(:,2),varList,false,false,'rq'); e2modelrqEvaluations = e2modelrq.eval(kData,varList); alle2 = [e2modelrqEvaluations; eSimData(:,2)]; minmaxVal = [min(alle2) max(alle2)]; plot(eSimData(:,2),e2modelEvaluations,'+',...    eSimData(:,2),y2modelrqEvaluations,'go',...    minmaxVal,minmaxVal); xlabel('Simulation Data') ylabel('(quadratic and rational-quadratic) Surrogate Model prediction'); title('Comparing model to surrogate model') fitError2rq = eSimData(:,2) - y2modelrqEvaluations; meanError2rq = mean(abs(fitError2rq)); stdError2rq = std(fitError2rq); disp(['Mean Abs Error: ' num2str(meanError2rq) ', STD Error: ' num2str(stdError2rq)]);</p><p>%% Get quadratic fit to pQOI p1model = generateModelbyFit(kData,pSimData,varList);</p><p>%% Assess quality of quadratic surrogate model p1modelEvaluations = p1model.eval(kData,varList); allp1 = [p1modelEvaluations; pSimData]; minmaxVal = [min(allp1) max(allp1)]; plot(pSimData,p1modelEvaluations,'+',minmaxVal,minmaxVal); xlabel('Simulation Data: Prediction Model') ylabel('(quadratic) Surrogate Model'); title('Comparing model to surrogate model') fitError1 = pSimData - p1modelEvaluations; meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1); disp(['Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);</p><h2>Experimental Observations regarding eQOI1 and eQOI2<a name="12"></a></h2><p>These are bounds, asserted by experimentalist, as to the true values (from experimentation) of the two experimental QOIs.</p><pre class="codeinput">eBound1 = [0.55 0.83];
+eBound2 = [0.45 0.55];
+eBound3 = [0.45 0.55];
+eBound1 = eTrue(1)*[0.9 1.1];
+eBound2 = eTrue(2)*[0.9 1.1];
+eBound3 = eTrue(3)*[0.9 1.1];
+<span class="comment">%</span>
+<span class="comment">% %% Create DataSet Units for all eQOIs</span>
+<span class="comment">% % Each DataSet Unit is associated with an experimental QOI, and consists of</span>
+<span class="comment">% % a (surrogate) model and associated bounds on the eQOI's true value.</span>
+dsUnitName1 = <span class="string">'Peak X2'</span>;
+dsUnit1 = generateDSunit(dsUnitName1,e1model,eBound1);
+dsUnitName2 = <span class="string">'Time of Peak X2'</span>;
+dsUnit2 = generateDSunit(dsUnitName2,e2model,eBound2);
+dsUnitName3 = <span class="string">'Time of Half X1'</span>;
+dsUnit3 = generateDSunit(dsUnitName3,e3model,eBound3);
+<span class="comment">%</span>
+</pre><h2>Create a DataSet object, and insert all DataSet Units<a name="13"></a></h2><pre class="codeinput">dsName = <span class="string">'Toy SIAM Example'</span>;
+DS = generateDataset(dsName);
+DS.addDSunit(dsUnit1);
+DS.addDSunit(dsUnit2);
+DS.addDSunit(dsUnit3);
+</pre><h2>Consistency Test: check consistency of DataSet<a name="14"></a></h2><pre class="codeinput">DS.isConsistent
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: 0.73628
+Consistency UB: 1
+The dataset is consistent
+ans =
+     1
+</pre><h2>Prediction<a name="15"></a></h2><pre class="codeinput">[pRange, xFeasInner, Sens] = DS.predictQOI(p1model);
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+</pre><pre class="codeoutput">The dataset is consistent
+=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+The calculation is done
+Minimum value of QOI is within: [-0.51744 -0.47538]
+Maximum value of QOI is within: [0.011063 0.37038]
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Illustrative Toy Example
+% Simple three-component, 2-reaction linear model (3 state variables). 
+% The experimental QOIs (eQOIs) are
+%
+% * peak-value of x2
+% * time-of-peak-value of x2
+% * time for x1 to decay to half initial value
+%
+% The prediction QOI (pQOI) is ratio of x3 to x1 at time of peak of x2.
+% Model parameters are two rate coefficients
+
+
+%% Two model parameters
+% Create a |VariableList| object containing information about the model
+% variables (uncertain/unknown rate constants).  More detailed information
+% can be found in the VariableList_demo
+varName = {'k1','k2'};
+H = [1 4;0.5 2];
+H = [1.3 3.6;0.6 1.8];
+H = [1.3 3.6;0.6 1.8];
+H = [[1.5 3];[1.5 3]];
+varNominalVal = [2;1]
+varNominalVal = [2.25;2.25]
+varList = generateVar(varName,H,varNominalVal);
+
+%% Create a random k data
+nVar = size(H,1);
+nSamples = 15*nVar*(nVar+1)/2;
+kData = varList.makeLHSsample(nSamples);
+
+%% Create Model 
+% Set up 3-state ODE model for reaction system
+odeModel = @(t,x,k1,k2) [-k1*x(1);k1*x(1)-k2*x(2);k2*x(2)];
+
+%% Model simulation for Surrogate Model training
+eSimData = zeros(nSamples,3);
+pSimData = zeros(nSamples,1);
+x0 = [1;0;0];
+tFinal = 3;
+for i=1:nSamples
+   f = @(t,x) odeModel(t,x,kData(i,1),kData(i,2));
+   [tSol,xSol] = ode45(f,[0 tFinal],x0);
+   [x2peak,peakIndex] = max(xSol(:,2));
+   [~,midIndex] = min(abs(xSol(:,1)-x0(1)/2));
+   eSimData(i,:) = [x2peak tSol(peakIndex) xSol(midIndex,1)];
+   pSimData(i,:) = xSol(peakIndex,3)/xSol(peakIndex,1);
+end
+
+%% Get quadratic fits to eQOIs
+e1model = generateModelbyFit(kData,eSimData(:,1),varList);
+e2model = generateModelbyFit(kData,eSimData(:,2),varList);
+e3model = generateModelbyFit(kData,eSimData(:,3),varList);
+
+%% Check accuracy of quadratic eQOI surrogate models
+e1modelEvaluations = e1model.eval(kData,varList);
+e2modelEvaluations = e2model.eval(kData,varList);
+e3modelEvaluations = e3model.eval(kData,varList);
+fitError1 = eSimData(:,1) - e1modelEvaluations;
+fitError2 = eSimData(:,2) - e2modelEvaluations;
+fitError3 = eSimData(:,3) - e3modelEvaluations;
+meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
+meanError2 = mean(abs(fitError2)); stdError2 = std(fitError2);
+meanError3 = mean(abs(fitError3)); stdError3 = std(fitError3);
+disp(['e1QOI: Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
+disp(['e2QOI: Mean Abs Error: ' num2str(meanError2) ', STD Error: ' num2str(stdError2)]);
+disp(['e3QOI: Mean Abs Error: ' num2str(meanError3) ', STD Error: ' num2str(stdError3)]);
+
+%% Get quadratic fits to pQOI
+p1model = generateModelbyFit(kData,pSimData,varList);
+
+%% Assess quality of quadratic surrogate model
+p1modelEvaluations = p1model.eval(kData,varList);
+fitError1 = pSimData - p1modelEvaluations;
+meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
+disp(['p1QOI: Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
+
+%% Rational quadratic fit to pQOI
+p1modelrq = generateModelbyFit(kData,pSimData,varList,'rq');
+p1modelrqEvaluations = p1modelrq.eval(kData,varList);
+fitError1rq = pSimData - p1modelrqEvaluations;
+meanError1rq = mean(abs(fitError1rq)); stdError1rq = std(fitError1rq);
+disp(['p1QOIrq: Mean Abs Error: ' num2str(meanError1rq) ', STD Error: ' num2str(stdError1rq)]);
+
+%% Synthetic Observed Values
+% For the purposes of this example, we select a *true* value of the model
+% variables, and compute the eQOIs at this true value.   Then,
+% synthetically capture the experimental measurement by adding some
+% plus/minus error to these true values to create the experimental bounds.
+k1True = 2.1;
+k2True = 2.4;
+kTrue = [k1True k2True];
+f = @(t,x) odeModel(t,x,k1True,k2True);
+[tSol,xSol] = ode45(f,[0 tFinal],x0);
+[x2peak,peakIndex] = max(xSol(:,2));
+[~,midIndex] = min(abs(xSol(:,1)-x0(1)/2));
+eTrue = [x2peak tSol(peakIndex) xSol(midIndex,1)];
+pTrue = xSol(peakIndex,3)/xSol(peakIndex,1);
+
+%%
+% %% Check accuracy of quadratic eQOI surrogate models
+% e1modelEvaluations = e1model.eval(kData,varList);
+% e2modelEvaluations = e2model.eval(kData,varList);
+% e3modelEvaluations = e3model.eval(kData,varList);
+% fitError1 = eSimData(:,1) - e1modelEvaluations;
+% fitError2 = eSimData(:,2) - e2modelEvaluations;
+% fitError3 = eSimData(:,3) - e3modelEvaluations;
+% meanError1 = mean(abs(fitError1)); stdError1 = std(fitError1);
+% meanError2 = mean(abs(fitError2)); stdError2 = std(fitError2);
+% meanError3 = mean(abs(fitError3)); stdError3 = std(fitError3);
+% disp(['e1QOI: Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
+% disp(['e2QOI: Mean Abs Error: ' num2str(meanError2) ', STD Error: ' num2str(stdError2)]);
+% disp(['e3QOI: Mean Abs Error: ' num2str(meanError3) ', STD Error: ' num2str(stdError3)]);
+% 
+% 
+% 
+% %% Check accuracy of fit for Model #1
+% % Plot the simulation and corresponding surrogate model predictions.  Note
+% % that for this model, the surrogate model is quite accurate.
+% e1modelEvaluations = e1model.eval(kData,varList);
+% alle1 = [e1modelEvaluations; eSimData(:,1)];
+% minmaxVal = [min(alle1) max(alle1)];
+% plot(eSimData(:,1),e1modelEvaluations,'+',minmaxVal,minmaxVal);
+% xlabel('Simulation Data: #1')
+% ylabel('(quadratic) Surrogate Model #1 prediction');
+% title('Comparing model to surrogate model')
+% fitError1 = eSimData(:,1) - e1modelEvaluations;
+% meanError1 = mean(abs(fitError1));
+% stdError1 = std(fitError1);
+% disp(['Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
+% 
+% 
+% 
+% %% Check accuracy of fit for Model #2
+% % Plot the simulation and corresponding surrogate model predictions.  
+% e2modelEvaluations = e2model.eval(kData,varList);
+% alle2 = [e2modelEvaluations; eSimData(:,2)];
+% minmaxVal = [min(alle2) max(alle2)];
+% plot(eSimData(:,2),e2modelEvaluations,'+',minmaxVal,minmaxVal);
+% xlabel('Simulation Data: #2')
+% ylabel('(quadratic) Surrogate Model #2 prediction');
+% title('Comparing model to surrogate model')
+% fitError2 = eSimData(:,2) - e2modelEvaluations;
+% meanError2 = mean(abs(fitError2));
+% stdError2 = std(fitError2);
+% disp(['Mean Abs Error: ' num2str(meanError2) ', STD Error: ' num2str(stdError2)]);
+% 
+% %% Rational-quadratic for Model #2
+% e2modelrq = generateModelbyFit(kData,eSimData(:,2),varList,false,false,'rq');
+% e2modelrqEvaluations = e2modelrq.eval(kData,varList);
+% alle2 = [e2modelrqEvaluations; eSimData(:,2)];
+% minmaxVal = [min(alle2) max(alle2)];
+% plot(eSimData(:,2),e2modelEvaluations,'+',...
+%    eSimData(:,2),y2modelrqEvaluations,'go',...
+%    minmaxVal,minmaxVal);
+% xlabel('Simulation Data')
+% ylabel('(quadratic and rational-quadratic) Surrogate Model prediction');
+% title('Comparing model to surrogate model')
+% fitError2rq = eSimData(:,2) - y2modelrqEvaluations;
+% meanError2rq = mean(abs(fitError2rq));
+% stdError2rq = std(fitError2rq);
+% disp(['Mean Abs Error: ' num2str(meanError2rq) ', STD Error: ' num2str(stdError2rq)]);
+% 
+% %% Get quadratic fit to pQOI
+% p1model = generateModelbyFit(kData,pSimData,varList);
+% 
+% %% Assess quality of quadratic surrogate model
+% p1modelEvaluations = p1model.eval(kData,varList);
+% allp1 = [p1modelEvaluations; pSimData];
+% minmaxVal = [min(allp1) max(allp1)];
+% plot(pSimData,p1modelEvaluations,'+',minmaxVal,minmaxVal);
+% xlabel('Simulation Data: Prediction Model')
+% ylabel('(quadratic) Surrogate Model');
+% title('Comparing model to surrogate model')
+% fitError1 = pSimData - p1modelEvaluations;
+% meanError1 = mean(abs(fitError1));
+% stdError1 = std(fitError1);
+% disp(['Mean Abs Error: ' num2str(meanError1) ', STD Error: ' num2str(stdError1)]);
+% 
+% 
+%% Experimental Observations regarding eQOI1 and eQOI2
+% These are bounds, asserted by experimentalist, as to the true values
+% (from experimentation) of the two experimental QOIs.
+eBound1 = [0.55 0.83];
+eBound2 = [0.45 0.55];
+eBound3 = [0.45 0.55];
+eBound1 = eTrue(1)*[0.9 1.1];
+eBound2 = eTrue(2)*[0.9 1.1];
+eBound3 = eTrue(3)*[0.9 1.1];
+% 
+% %% Create DataSet Units for all eQOIs
+% % Each DataSet Unit is associated with an experimental QOI, and consists of
+% % a (surrogate) model and associated bounds on the eQOI's true value. 
+dsUnitName1 = 'Peak X2';
+dsUnit1 = generateDSunit(dsUnitName1,e1model,eBound1);
+dsUnitName2 = 'Time of Peak X2';
+dsUnit2 = generateDSunit(dsUnitName2,e2model,eBound2);
+dsUnitName3 = 'Time of Half X1';
+dsUnit3 = generateDSunit(dsUnitName3,e3model,eBound3);
+% 
+%%  Create a DataSet object, and insert all DataSet Units
+dsName = 'Toy SIAM Example';
+DS = generateDataset(dsName);
+DS.addDSunit(dsUnit1);
+DS.addDSunit(dsUnit2);
+DS.addDSunit(dsUnit3);
+
+%% Consistency Test: check consistency of DataSet
+DS.isConsistent
+
+
+%% Prediction
+[pRange, xFeasInner, Sens] = DS.predictQOI(p1model);
+% 
+% 
+% 
+% 
+% 
+
+##### SOURCE END #####
+--></body></html>

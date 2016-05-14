@@ -6,14 +6,14 @@ classdef RQModel < B2BDC.B2Bmodels.Model
    % Modified: Nov 1, 2015     Wenyu Li (error stats added)
    
    properties
-      Numerator = [];  % The normalized symmetric coefficient matrix of the quadratic numerator of size (nVar+1)-by-(nVar+1)
-      Denominator = []; % The normalized symmetric coefficient matrix of the quadratic denominator of size (nVar+1)-by-(nVar+1)
+      NormalizedNumerator = [];  % The normalized symmetric coefficient matrix of the quadratic numerator of size (nVar+1)-by-(nVar+1)
+      NormalizedDenominator = []; % The normalized symmetric coefficient matrix of the quadratic denominator of size (nVar+1)-by-(nVar+1)
       K = []; % Conditional parameter defines the upper bound of denominator over variable domain
    end
    
    properties (Dependent)
-      ScaledNumerator = []; % The scaled symmetric coefficient matrix of the quadratic numerator of size (nVar+1)-by-(nVar+1)
-      ScaledDenominator = []; % The scaled symmetric coefficient matrix of the quadratic denominator of size (nVar+1)-by-(nVar+1)
+      Numerator = []; % The scaled symmetric coefficient matrix of the quadratic numerator of size (nVar+1)-by-(nVar+1)
+      Denominator = []; % The scaled symmetric coefficient matrix of the quadratic denominator of size (nVar+1)-by-(nVar+1)
    end
    
    properties (Hidden = true)
@@ -36,8 +36,8 @@ classdef RQModel < B2BDC.B2Bmodels.Model
             if ~issymmetric(Npoly) || ~issymmetric(Dpoly)
                error('Numerator matrix and denominator matrix must be symmetric')
             else
-               obj.Numerator = Npoly;
-               obj.Denominator = Dpoly;
+               obj.NormalizedNumerator = Npoly;
+               obj.NormalizedDenominator = Dpoly;
             end 
          end
          if nargin > 2
@@ -60,8 +60,8 @@ classdef RQModel < B2BDC.B2Bmodels.Model
                if abs(dy) < 1e-5
                   dy = 1;
                end
-               obj.Numerator = obj.Numerator - my*obj.Denominator;
-               obj.Numerator = obj.Numerator/dy;
+               obj.NormalizedNumerator = obj.NormalizedNumerator - my*obj.NormalizedDenominator;
+               obj.NormalizedNumerator = obj.NormalizedNumerator/dy;
             else
                my = yScale.my;
                dy = yScale.dy;
@@ -79,8 +79,8 @@ classdef RQModel < B2BDC.B2Bmodels.Model
             end
             obj.yScale.my = my;
             obj.yScale.dy = dy;
-            obj.Numerator = obj.Numerator - my*obj.Denominator;
-            obj.Numerator = obj.Numerator/dy;
+            obj.NormalizedNumerator = obj.NormalizedNumerator - my*obj.NormalizedDenominator;
+            obj.NormalizedNumerator = obj.NormalizedNumerator/dy;
          end
          if nargin > 5
             obj.ErrorStats.absMax = err.absMax;
@@ -108,7 +108,7 @@ classdef RQModel < B2BDC.B2Bmodels.Model
             [~,~,id] = intersect(oldVar, newVar, 'stable');
             X = X(:,id);
          end
-         if size(obj.Numerator) ~= size(X,2)+1
+         if size(obj.NormalizedNumerator) ~= size(X,2)+1
             error('Wrong input dimension of variables')
          else
             x1 = [ones(size(X,1),1), X];
@@ -116,8 +116,8 @@ classdef RQModel < B2BDC.B2Bmodels.Model
             x2 = T*x1';
             x2 = x2';
             xNew = B2BDC.Fitting.expandBasis(x2(:,2:end));
-            Nvec = B2BDC.Fitting.coef2vec(obj.Numerator);
-            Dvec = B2BDC.Fitting.coef2vec(obj.Denominator);
+            Nvec = B2BDC.Fitting.coef2vec(obj.NormalizedNumerator);
+            Dvec = B2BDC.Fitting.coef2vec(obj.NormalizedDenominator);
             num = xNew * Nvec;
             den = xNew * Dvec;
             y = num./den;
@@ -129,18 +129,18 @@ classdef RQModel < B2BDC.B2Bmodels.Model
          end
       end
       
-      function y = get.ScaledNumerator(obj)
+      function y = get.Numerator(obj)
          T = obj.Variables.TransMatrix;
-         Q = obj.Numerator;
+         Q = obj.NormalizedNumerator;
          y = T'*Q*T;
          y = y*obj.yScale.dy;
-         y = y + obj.yScale.my*obj.ScaledDenominator;
+         y = y + obj.yScale.my*obj.Denominator;
          y = 0.5*(y + y');
       end
       
-      function y = get.ScaledDenominator(obj)
+      function y = get.Denominator(obj)
          T = obj.Variables.TransMatrix;
-         Q = obj.Denominator;
+         Q = obj.NormalizedDenominator;
          y = T'*Q*T;
       end
          

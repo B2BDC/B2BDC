@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>generateDatasetUnit_demo</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateDatasetUnit_demo.m"><style type="text/css">
+      --><title>generateDatasetUnit_demo</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="generateDatasetUnit_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -89,31 +89,25 @@ dsUnit_1 = generateDSunit(dsUnitName,Qmodel,QoIBD,QoIval)
 
 <span class="comment">% without user input QoI observed value</span>
 dsUnit_2 = generateDSunit(dsUnitName,Qmodel,QoIBD)
-</pre><pre class="codeoutput">
-dsUnit_1 = 
-
+</pre><pre class="codeoutput">dsUnit_1 = 
   DatasetUnit with properties:
 
               Name: 'Example Dataset Unit'
-        LowerBound: -0.2
-     ObservedValue: 0.1
-        UpperBound: 0.45
+        LowerBound: -0.2000
+     ObservedValue: 0.1000
+        UpperBound: 0.4500
     SurrogateModel: [1x1 B2BDC.B2Bmodels.QModel]
       VariableList: [1x1 B2BDC.B2Bvariables.VariableList]
-
-
 dsUnit_2 = 
-
   DatasetUnit with properties:
 
               Name: 'Example Dataset Unit'
-        LowerBound: -0.2
-     ObservedValue: 0.125
-        UpperBound: 0.45
+        LowerBound: -0.2000
+     ObservedValue: 0.1250
+        UpperBound: 0.4500
     SurrogateModel: [1x1 B2BDC.B2Bmodels.QModel]
       VariableList: [1x1 B2BDC.B2Bvariables.VariableList]
-
-</pre><h2>Attribution<a name="7"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+</pre><h2>Attribution<a name="7"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 % This is a demo showing how to use generateDSunit function to create
 % B2BDC.B2Bdataset.DatasetUnit object.

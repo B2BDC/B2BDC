@@ -28,7 +28,6 @@ if index > nVar
 end
 vars = obj.Variables;
 allName = obj.VarNames;
-tep_target = zeros(nVar+1,1);
 if isempty(index)
    id = 2:nVar+1;
 elseif iscell(index)
@@ -43,10 +42,10 @@ xBound = zeros(length(id),2);
 % if opt.Display
    h = waitbar(0,'Calculating the Posterior Variable Bounds');
 % end
+tep_model = [0;1];
 for i = 1:length(id)
-   tep_model = tep_target;
-   tep_model(id(i)) = 1;
-   tep_QOI = generateModel(tep_model,vars);
+   tep_var = vars.makeSubset(id(i)-1);
+   tep_QOI = generateModel(tep_model,tep_var);
    QOIRange = obj.predictQOI(tep_QOI, opt);
    xBound(i,1) = QOIRange.min(1);
    xBound(i,2) = QOIRange.max(2);

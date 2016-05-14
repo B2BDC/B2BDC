@@ -85,7 +85,8 @@ if yin >= 0
    dx = 0.5*([vars.UpperBound]'-[vars.LowerBound]');
    T = [1, zeros(1,n_variable);
       mx, diag(dx)];
-   xtmp = T*x0{id};
+   xf = x0{id}(2:end);
+   xtmp = T*[1;xf];
    obj.FeasiblePoint = xtmp(2:end);
 end
 
@@ -157,8 +158,8 @@ end
          if isa(model,'B2BDC.B2Bmodels.RQModel')
             N = zeros(length(id3),length(id3));
             D = zeros(length(id3),length(id3));
-            N1 = model.Numerator;
-            D1 = model.Denominator;
+            N1 = model.NormalizedNumerator;
+            D1 = model.NormalizedDenominator;
             for i1 = 1:length(id3)
                for i2 = 1:length(id3)
                   N(i1,i2) = N1(id3(i1),id3(i2));
@@ -181,7 +182,7 @@ end
             g(:,2*i) = grad2;
          elseif isa(model,'B2BDC.B2Bmodels.QModel')
             quadCoef = zeros(length(id3),length(id3));
-            quadCoef2 = model.CoefMatrix;
+            quadCoef2 = model.NormalizedCoefMatrix;
             for i1 = 1:length(id3)
                for i2 = 1:length(id3)
                   quadCoef(i1,i2) = quadCoef2(id3(i1),id3(i2));

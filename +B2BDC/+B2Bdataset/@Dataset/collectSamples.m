@@ -31,9 +31,9 @@ for i=1:nTargets
    idx{i} = VIDX;
    idx{i+nTargets} = VIDX;
    if isa(EUi.SurrogateModel,'B2BDC.B2Bmodels.QModel')
-      Mgd{i} = EUi.SurrogateModel.ScaledCoefMatrix;
+      Mgd{i} = EUi.SurrogateModel.CoefMatrix;
       Mgd{i}(1,1) = Mgd{i}(1,1) - EUi.UpperBound;
-      Mgd{i+nTargets} = -EUi.SurrogateModel.ScaledCoefMatrix;
+      Mgd{i+nTargets} = -EUi.SurrogateModel.CoefMatrix;
       Mgd{i+nTargets}(1,1) = Mgd{i+nTargets}(1,1) + EUi.LowerBound;
    elseif isa(EUi.SurrogateModel,'B2BDC.B2Bmodels.RQModel')
       Ni = EUi.SurrogateModel.ScaledNumerator;

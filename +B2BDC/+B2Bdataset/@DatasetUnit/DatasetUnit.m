@@ -7,10 +7,10 @@ classdef DatasetUnit
    
    properties
       Name   % Descriptive name for the dataset unit
-        LowerBound   % Lower bound of the observed experimental value
-        ObservedValue  % Experimental Value
-        UpperBound   % Upper bound of the observed experimental value
-        SurrogateModel  % Surrogate model representing the experiment
+      LowerBound   % Lower bound of the observed experimental value
+      ObservedValue  % Experimental Value
+      UpperBound   % Upper bound of the observed experimental value
+      SurrogateModel  % Surrogate model representing the experiment
    end
    
    properties (Dependent)
