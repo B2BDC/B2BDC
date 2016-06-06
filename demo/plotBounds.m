@@ -1,4 +1,4 @@
-function plotBounds(prior, posterior, labels)
+function h = plotBounds(prior, posterior, labels)
 %   PLOTBOUNDS(PRIOR, POSTERIOR) plots errorbars for PRIOR and POSTERIOR
 %   vectors of size n-by-2 of minimum and maximum values of n number of 
 %   observations or variables.

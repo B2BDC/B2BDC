@@ -182,7 +182,7 @@ varBndsPosterior = dsGRI.calVarBounds(i1,Opt);
 varBndsPrior = [dsGRI.Variables.Values(i1).LowerBound; dsGRI.Variables.Values(i1).UpperBound]';
 varBndName = {dsGRI.Variables.Values(i1).Name};
 figure;
-plotBounds(varBndsPrior, varBndsPosterior, varBndName)
+plotBounds(varBndsPrior, varBndsPosterior, varBndName);
 
 %% Example: Posterior bounds on dataset QOIs (prediction)
 % In this example, the posterior bounds for eQOIs 15 and 30 are
