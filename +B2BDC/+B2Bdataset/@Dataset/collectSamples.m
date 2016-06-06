@@ -36,8 +36,8 @@ for i=1:nTargets
       Mgd{i+nTargets} = -EUi.SurrogateModel.CoefMatrix;
       Mgd{i+nTargets}(1,1) = Mgd{i+nTargets}(1,1) + EUi.LowerBound;
    elseif isa(EUi.SurrogateModel,'B2BDC.B2Bmodels.RQModel')
-      Ni = EUi.SurrogateModel.ScaledNumerator;
-      Di = EUi.SurrogateModel.ScaledDenominator;
+      Ni = EUi.SurrogateModel.Numerator;
+      Di = EUi.SurrogateModel.Denominator;
       Mgd{i} = Ni - EUi.UpperBound*Di;
       Mgd{i+nTargets} = EUi.LowerBound*Di - Ni;
    else
