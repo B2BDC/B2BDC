@@ -157,8 +157,8 @@ QOISensitivity.min = minSens;
 QOISensitivity.max = maxSens;
 if B2Bopt.Display
    disp('The calculation is done')
-   disp(['Minimum value of QOI is within: [' dy*num2str(minout)+my ' ' dy*num2str(minin)+my ']'])
-   disp(['Maximum value of QOI is within: [' dy*num2str(maxin)+my ' ' dy*num2str(maxout)+my ']'])
+   disp(['Minimum value of QOI is within: [' num2str(dy*minout+my) ' ' num2str(dy*minin+my) ']'])
+   disp(['Maximum value of QOI is within: [' num2str(dy*maxin+my) ' ' num2str(dy*maxout+my) ']'])
 end
 
 
