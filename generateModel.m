@@ -71,7 +71,12 @@ elseif nin < 3
       T = inv(T);
       coefMatrix = T'*coefMatrix*T;
       coefMatrix = 0.5*(coefMatrix+coefMatrix');
-      modelObj = B2BDC.B2Bmodels.QModel(coefMatrix,varList);
+      if isempty(varList.ExtraQuaConstraint)
+         yscale = checkrange;
+         modelObj = B2BDC.B2Bmodels.QModel(coefMatrix,varList,yscale);
+      else
+         modelObj = B2BDC.B2Bmodels.QModel(coefMatrix,varList);
+      end
    elseif ismatrix(varargin{1})
       coefMatrix = varargin{1};
       T = varList.TransMatrix;
@@ -157,8 +162,7 @@ end
       tmpDSunit = B2BDC.B2Bdataset.DatasetUnit('test',tmpModel,0,2);
       testDS.addDSunit(tmpDSunit);
       opt = generateOpt('Display',false,'ExtraLinFraction',0);
-      QOIrange = testDS.predictQOI(Dmodel,opt);
-      minOuter = QOIrange.min(1);
+      minOuter = testDS.sedumiminouterbound(Dmodel, opt.ExtraLinFraction, 0);
       if minOuter <= 0
          y = false;
       else
@@ -176,6 +180,46 @@ end
             error('invalid input variables')
         end
     end
-
-
+ 
+   function yScale = checkrange
+      if ~isempty(varList.ExtraLinConstraint.A)
+         A0 = varList.ExtraLinConstraint.A;
+         LB = varList.ExtraLinConstraint.LB;
+         UB = varList.ExtraLinConstraint.UB;
+         [nc,nV] = size(A0);
+         H = varList.calBound;
+         nS = 2*(nc+nV);
+         A = zeros(nS, nS+nV);
+         A(:,nV) = [A0; -A0; eye(nV); -eye(nV)];
+         A(:,nv+1:end) = eye(nS);
+         b = [UB; -LB; H(:,2); -H(:,1)];
+         k.f = nV;
+         k.l = nS;
+         pars.fid = 0;
+         c1 = vecCoef(2:end);
+         tmpx = sedumi(A,b,c1,k,pars);
+         miny = c1'*tmpx(1:nV)+c1(1);
+         tmpx = sedumi(A,b,-c1,k,pars);
+         maxy = -c1'*tmpx(1:nV)+c1(1);
+      else
+         c = vecCoef;
+         miny = c(1);
+         maxy = c(1);
+         nV = varList.Length;
+         H = varList.calBound;
+         for i = 1:nV
+            if c(i+1) >= 0
+               maxy = maxy + H(i,2)*c(i+1);
+               miny = miny + H(i,1)*c(i+1);
+            else
+               maxy = maxy + H(i,1)*c(i+1);
+               miny = miny + H(i,2)*c(i+1);
+            end
+         end
+      end
+      yScale.my = 0.5*(miny+maxy);
+      yScale.dy = 0.5*(maxy-miny);
+   end
 end
+
+
