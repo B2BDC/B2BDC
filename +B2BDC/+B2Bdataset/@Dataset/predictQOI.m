@@ -44,10 +44,10 @@ flag = quadratictest(units);
 if flag && isa(QOIobj,'B2BDC.B2Bmodels.QModel')
    opt = optimoptions('fmincon','Display','none','GradObj','on',...
       'GradConstr','on','Algorithm','interior-point','Hessian',...
-      'user-supplied','HessFcn',@hessianfcn,'TolFun',1e-10,'TolCon',1e-10);
+      'user-supplied','HessFcn',@hessianfcn,'TolFun',1e-6,'TolCon',1e-6);
 else
    opt = optimoptions('fmincon','Display','none','GradObj','on',...
-      'GradConstr','on','Algorithm','interior-point','TolFun',1e-10,'TolCon',1e-10);
+      'GradConstr','on','Algorithm','interior-point','TolFun',1e-6,'TolCon',1e-6);
 end
 model0 = QOIobj;
 n_units = length(units);
