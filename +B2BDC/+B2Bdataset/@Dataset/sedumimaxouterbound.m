@@ -130,7 +130,7 @@ end
          end
       end          
       if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         As(:,end) = -targetD;
+         As(:,end) = -targetD(:);
       elseif isa(model0,'B2BDC.B2Bmodels.QModel')
          As(1,end) = -1;
       end
