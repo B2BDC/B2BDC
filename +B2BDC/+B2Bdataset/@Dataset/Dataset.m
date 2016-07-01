@@ -150,29 +150,38 @@ classdef Dataset < handle
          end
       end
       
-      function deletedUnits = deleteUnit(obj,id)
-          %   DELETEDUNITS = DELETEUNIT(OBJ, ID) removes specified 
-          %   DatasetUnits from the dataset OBJ and will return an
-          %   n-by-1 array of deleted DatasetUnits in DELETEDUNITS. 
-          %   ID will specify which DatasetUnits to delete by either a cell
-          %   array of the DatasetUnit names or a vector of indicies of the
-          %   n number of DatasetUnits to be removed. 
-          
-          deletedUnits = [];
-          if iscell(id)
-             allName = {obj.DatasetUnits.Values.Name};
-             [~,idx] = intersect(allName, id);
-          else
-             idx = id;
-          end
-          units = obj.DatasetUnits.Values;
-          obj.clearDataset;
-          if ~isempty(idx)
-             deletedUnits = units(idx);
-             units(idx) = [];
-          end
-          obj.addDSunit(units);
-      end
+        function deletedUnits = deleteUnit(obj,id)
+            %   DELETEDUNITS = DELETEUNIT(OBJ, ID) removes specified
+            %   DatasetUnits from the dataset OBJ and will return an
+            %   n-by-1 array of deleted DatasetUnits in DELETEDUNITS.
+            %   ID will specify which DatasetUnits to delete by either a cell
+            %   array of the DatasetUnit names or a vector of indicies of the
+            %   n number of DatasetUnits to be removed.
+            
+            deletedUnits = [];
+            idx = [];
+            if iscell(id)
+                allName = {obj.DatasetUnits.Values.Name};
+                [~,idx] = intersect(allName, id);
+            elseif isa(id, 'B2BDC.B2Bdataset.DatasetUnit')
+                allName = {obj.DatasetUnits.Values.Name};
+                idNames = {id.Name};
+                [~,idx] = intersect(allName, idNames);
+            elseif isa(id, 'double') && all(id <= obj.DatasetUnits.Length) && all(id > 0)
+                    idx = id;
+            end
+            if isempty(idx)
+                error(['The ID to be removed was not found ', ...
+                        'or exceeded the dataset length.'])
+            end
+            units = obj.DatasetUnits.Values;
+            obj.clearDataset;
+            if ~isempty(idx)
+                deletedUnits = units(idx);
+                units(idx) = [];
+            end
+            obj.addDSunit(units);
+        end
       
       function changeBounds(obj,newBD,idx)
           %   CHANGEBOUNDS(OBJ, NEWBD) returns a dataset OBJ with new
