@@ -73,6 +73,10 @@ elseif nin < 3
       coefMatrix = 0.5*(coefMatrix+coefMatrix');
       if isempty(varList.ExtraQuaConstraint)
          yscale = checkrange;
+         my = yscale.my;
+         dy = yscale.dy;
+         coefMatrix(1,1) = coefMatrix(1,1) - my;
+         coefMatrix = coefMatrix / dy;
          modelObj = B2BDC.B2Bmodels.QModel(coefMatrix,varList,yscale);
       else
          modelObj = B2BDC.B2Bmodels.QModel(coefMatrix,varList);

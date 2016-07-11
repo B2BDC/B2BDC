@@ -56,8 +56,6 @@ classdef QModel < B2BDC.B2Bmodels.Model
             else
                my = yScale.my;
                dy = yScale.dy;
-               obj.NormalizedCoefMatrix(1,1) = obj.NormalizedCoefMatrix(1,1) - my;
-               obj.NormalizedCoefMatrix = obj.NormalizedCoefMatrix / dy;
             end
             obj.yScale.my = my;
             obj.yScale.dy = dy;
