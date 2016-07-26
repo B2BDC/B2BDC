@@ -361,6 +361,12 @@ classdef Dataset < handle
    end
    
    methods (Hidden = true)
+       function y = length(obj)
+           % LENGTH(OBJ) returns the number of DatsetUnits in the Dateset
+           % OBJ
+           
+           y = obj.Length;
+       end
        
        function clearConsis(obj)
           %   CLEARCONSIS(OBJ) removes all properties of consistency of
