@@ -167,6 +167,8 @@ end
       testDS.addDSunit(tmpDSunit);
       opt = generateOpt('Display',false,'ExtraLinFraction',0);
       minOuter = testDS.sedumiminouterbound(Dmodel, opt.ExtraLinFraction, 0);
+      ys = Dmodel.yScale;
+      minOuter = minOuter*ys.dy + ys.my;
       if minOuter <= 0
          y = false;
       else

@@ -9,6 +9,11 @@ classdef VariableList < B2BDC.Util.IContainer
       TransMatrix = []; % Transform matrix to transform x from unnormalized space specified by Variables to normalized space ([-1,1])
    end
    
+   properties (SetAccess = private)
+      ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
+      ExtraQuaConstraint = {};
+   end
+   
    methods
       
       function obj = VariableList()
