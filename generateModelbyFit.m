@@ -36,6 +36,8 @@ if nargin > 3 && ~isempty(mtype)
          else
             y = B2BDC.Fitting.sedumirqfitinfnorm(X,Y,vars,opt);
          end
+      case 'lin'
+         y = B2BDC.Fitting.linearFit(X,Y,vars);
    end
 else
    y = B2BDC.Fitting.sedumiquadfitinfnorm(X,Y,vars);
