@@ -8,10 +8,9 @@
 
 varName = {'pressure','temperature','rate'};
 H = repmat([-1,1],3,1);
-varVal = zeros(3,1);
-varList = generateVar(varName,H,varVal);
+varList = generateVar(varName,H);
 
-%% Create a random X data
+%% Create X data by sampling in the variable domain
 % The X data should be a nSample-by-nVar matrix
 
 % number of variables
@@ -20,13 +19,18 @@ nVar = size(H,1);
 % number of sample points
 nSample = 20*nVar;
 
-% generate sample points from the VariableList object
+% generate LHS sample points from the VariableList object
 xData = varList.makeLHSsample(nSample);
 
-%% Create a random Y data
-% The Y data should be a nSample-by-1 column vector
+%% Create Y data from the function handle
+% Create the random quadratic function with 5% random error
+A = rand(nVar+1);
+A = A+A';
+f = @(x) diag([ones(nSample,1),x] * A * [ones(nSample,1),x]')+...
+   0.05*A(1,1)*rand(nSample,1);
 
-yData = rand(nSample,1);
+% generate nSample-by-1 column vector Y data
+yData = f(xData);
 
 %% Create a B2BDC.B2Bmodels.QModel by fitting the data
 % Two different criteria to minimize different norm of error terms can be used
