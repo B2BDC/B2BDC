@@ -23,11 +23,8 @@ nSample = 20*nVar;
 xData = varList.makeLHSsample(nSample);
 
 %% Create Y data from the function handle
-% Create the random quadratic function with 5% random error
-A = rand(nVar+1);
-A = A+A';
-f = @(x) diag([ones(nSample,1),x] * A * [ones(nSample,1),x]')+...
-   0.05*A(1,1)*rand(nSample,1);
+% Create a function handle
+f = @(x)exp(x(:,1).*x(:,2))+x(:,1).^2 - x(:,1).*x(:,2)+3*x(:,2);
 
 % generate nSample-by-1 column vector Y data
 yData = f(xData);
@@ -35,6 +32,9 @@ yData = f(xData);
 %% Create a B2BDC.B2Bmodels.QModel by fitting the data
 % Two different criteria to minimize different norm of error terms can be used
 % by a string input shown in the following example:
+
+% generate a linear model by minimize 2-norm error
+Lmodel = generateModelbyFit(xData,yData,varList,'lin')
 
 % generate a quadratic model by minimize infinity-norm error
 Qmodel_1 = generateModelbyFit(xData,yData,varList,'qinf')
