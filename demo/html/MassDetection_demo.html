@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>B2BDC Example: Mass detection from impedance magnitude measurements</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="MassDetection_demo.m"><style type="text/css">
+      --><title>B2BDC Example: Mass detection from impedance magnitude measurements</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="MassDetection_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -107,18 +107,18 @@ qSMQOI(3).ErrorStats
 <span class="comment">%cross-validation error</span>
 qAbsErrMax(2:3)
 </pre><pre class="codeoutput">ans = 
-    absMax: 12.9381
-    absAvg: 9.0994
-    relMax: 2.9508
-    relAvg: 0.8731
+    absMax: 14.1329
+    absAvg: 7.5011
+    relMax: 3.1884
+    relAvg: 0.6932
 ans = 
-    absMax: 10.4405
-    absAvg: 5.0065
-    relMax: 3.2326
-    relAvg: 0.6152
+    absMax: 10.2620
+    absAvg: 4.8643
+    relMax: 2.6357
+    relAvg: 0.6104
 ans =
-   14.8891
-   14.8698
+   18.9033
+   25.1931
 </pre><h2>Using a B2BDC option file<a name="10"></a></h2><p>Due to the large fitting errors for a few of the QOIs, it would be imprudent to trust the surrogate models completely. To compensate for this additional uncertainty, we can incorporate the fitting errors into the observation bounds when constructing the dataset units. If we wished to use the in-sample error, the following code would create an option file that automates that process: <tt>Opt = generateOpt('Display',false,'AddFitError',true);</tt>. We could then procede as usual and enter the measurement uncertainty / observation bounds without modification. In this case, however, the cross-validation error is significantly larger and we wish to manually include it into the dataset. Thus, we must ensure that the 'AddFitError' option is off.</p><pre class="codeinput">Opt = generateOpt(<span class="string">'Display'</span>,false,<span class="string">'AddFitError'</span>,false);
 </pre><h2>Constructing the dataset<a name="11"></a></h2><p>Having defined our QOI models and observations, we can now construct a dataset. The observation upper and lower bounds include both the measurement error and the fitting error. See <tt>Dataset_demo.m</tt> for details on the <tt>generateDSunit</tt> and <tt>addDSunit</tt> commands.</p><pre class="codeinput">dsName = <span class="string">'Mass Detection Dataset: Quadratic'</span>;
 dsQ = generateDataset(dsName);
@@ -163,18 +163,18 @@ rqSMQOI(3).ErrorStats
 <span class="comment">%cross-validation error</span>
 rqAbsErrMax(2:3)
 </pre><pre class="codeoutput">ans = 
-    absMax: 6.4030
-    absAvg: 3.2030
-    relMax: 1.4979
-    relAvg: 0.3443
+    absMax: 7.1612
+    absAvg: 3.3841
+    relMax: 1.7283
+    relAvg: 0.3481
 ans = 
-    absMax: 5.4470
-    absAvg: 2.9062
-    relMax: 1.5800
-    relAvg: 0.4164
+    absMax: 6.2091
+    absAvg: 3.3355
+    relMax: 1.6451
+    relAvg: 0.4822
 ans =
-    8.5196
-   20.1613
+   16.9771
+   27.6793
 </pre><h2>Create a new dataset with rational-quadratic surrogates<a name="17"></a></h2><p>This process is identical to creating the previous dataset with quadratic surrogates.</p><pre class="codeinput">dsName = <span class="string">'Mass Detection Dataset: Rational Quadratic'</span>;
 dsRQ = generateDataset(dsName);
 
@@ -195,7 +195,7 @@ plot(Mtrue,<span class="string">'ko'</span>,<span class="string">'MarkerFaceColo
 xlabel(<span class="string">'Mass Index'</span>);
 ylabel(<span class="string">'Mass Prediction'</span>);
 title(<span class="string">'Using rational-quadratic surrogates'</span>);
-</pre><img vspace="5" hspace="5" src="MassDetection_demo_02.png" alt=""> <h2>Attribution<a name="20"></a></h2><p>UC Berkeley, Spring 2016, B2BDC team</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="MassDetection_demo_02.png" alt=""> <h2>Attribution<a name="20"></a></h2><p>UC Berkeley, Spring 2016, B2BDC team</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% B2BDC Example: Mass detection from impedance magnitude measurements 
 % In this example, we demonstrate a B2BDC analysis of an existing simulation code.

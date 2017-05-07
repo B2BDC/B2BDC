@@ -47,9 +47,9 @@ for i=1:nSamples
 end
 
 %% Get quadratic fits to eQOIs
-e1model = generateModelbyFit(kData,eSimData(:,1),varList);
-e2model = generateModelbyFit(kData,eSimData(:,2),varList);
-e3model = generateModelbyFit(kData,eSimData(:,3),varList);
+e1model = generateModelbyFit(kData,eSimData(:,1),varList,'q2norm');
+e2model = generateModelbyFit(kData,eSimData(:,2),varList,'q2norm');
+e3model = generateModelbyFit(kData,eSimData(:,3),varList,'q2norm');
 
 %% Check accuracy of quadratic eQOI surrogate models
 e1modelEvaluations = e1model.eval(kData,varList);

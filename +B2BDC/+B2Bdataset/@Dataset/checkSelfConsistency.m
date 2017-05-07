@@ -13,6 +13,7 @@ function dsUnitList = checkSelfConsistency(obj,opt)
   if nargin < 2
      opt = generateOpt;
      opt.Display = false;
+     opt.ExtraLinFraction = -1;
   end
   dsUnitList = [];
   n = obj.Length;

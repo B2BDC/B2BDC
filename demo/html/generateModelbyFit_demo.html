@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>generateModelbyFit_demo</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="generateModelbyFit_demo.m"><style type="text/css">
+      --><title>generateModelbyFit_demo</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateModelbyFit_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -91,21 +91,21 @@ Qmodel_2 = generateModelbyFit(xData,yData,varList,<span class="string">'q2norm'<
 </pre><pre class="codeoutput">Qmodel_1 = 
   QModel with properties:
 
-    NormalizedCoefMatrix: [4x4 double]
-              CoefMatrix: [4x4 double]
-               Variables: [1x1 B2BDC.B2Bvariables.VariableList]
-              ErrorStats: [1x1 struct]
-               VarRanges: [3x2 double]
-                VarNames: {3x1 cell}
+          CoefMatrix: [4x4 double]
+    ScaledCoefMatrix: [4x4 double]
+           Variables: [1x1 B2BDC.B2Bvariables.VariableList]
+          ErrorStats: [1x1 struct]
+           VarRanges: [3x2 double]
+            VarNames: {3x1 cell}
 Qmodel_2 = 
   QModel with properties:
 
-    NormalizedCoefMatrix: [4x4 double]
-              CoefMatrix: [4x4 double]
-               Variables: [1x1 B2BDC.B2Bvariables.VariableList]
-              ErrorStats: [1x1 struct]
-               VarRanges: [3x2 double]
-                VarNames: {3x1 cell}
+          CoefMatrix: [4x4 double]
+    ScaledCoefMatrix: [4x4 double]
+           Variables: [1x1 B2BDC.B2Bvariables.VariableList]
+          ErrorStats: [1x1 struct]
+           VarRanges: [3x2 double]
+            VarNames: {3x1 cell}
 </pre><h2>Create a B2BDC.B2Bmodels.RQModel by fitting the data<a name="6"></a></h2><p>To generate a RQmodel by fitting the data, user can provide a positive condition number K, or the algorithm will find a K between 1-20 by cross validation</p><pre class="codeinput"><span class="comment">% generate the option object</span>
 opt = generateOpt(<span class="string">'Display'</span>,false);
 
@@ -117,28 +117,28 @@ RQmodel_2 = generateModelbyFit(xData,yData,varList,<span class="string">'rq'</sp
 </pre><pre class="codeoutput">RQmodel_1 = 
   RQModel with properties:
 
-      NormalizedNumerator: [4x4 double]
-    NormalizedDenominator: [4x4 double]
-                        K: 20
-                Numerator: [4x4 double]
-              Denominator: [4x4 double]
-                Variables: [1x1 B2BDC.B2Bvariables.VariableList]
-               ErrorStats: [1x1 struct]
-                VarRanges: [3x2 double]
-                 VarNames: {3x1 cell}
+            Numerator: [4x4 double]
+          Denominator: [4x4 double]
+                    K: 2
+      ScaledNumerator: [4x4 double]
+    ScaledDenominator: [4x4 double]
+            Variables: [1x1 B2BDC.B2Bvariables.VariableList]
+           ErrorStats: [1x1 struct]
+            VarRanges: [3x2 double]
+             VarNames: {3x1 cell}
 RQmodel_2 = 
   RQModel with properties:
 
-      NormalizedNumerator: [4x4 double]
-    NormalizedDenominator: [4x4 double]
-                        K: 10
-                Numerator: [4x4 double]
-              Denominator: [4x4 double]
-                Variables: [1x1 B2BDC.B2Bvariables.VariableList]
-               ErrorStats: [1x1 struct]
-                VarRanges: [3x2 double]
-                 VarNames: {3x1 cell}
-</pre><h2>Attribution<a name="7"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+            Numerator: [4x4 double]
+          Denominator: [4x4 double]
+                    K: 10
+      ScaledNumerator: [4x4 double]
+    ScaledDenominator: [4x4 double]
+            Variables: [1x1 B2BDC.B2Bvariables.VariableList]
+           ErrorStats: [1x1 struct]
+            VarRanges: [3x2 double]
+             VarNames: {3x1 cell}
+</pre><h2>Attribution<a name="7"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 % This is a demo showing how to use generateModelbyFit function to create
 % B2BDC.B2Bmodels.Model object with different input formats.

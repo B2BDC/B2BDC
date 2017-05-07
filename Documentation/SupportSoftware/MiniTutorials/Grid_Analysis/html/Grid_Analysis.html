@@ -1,0 +1,289 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>LPV Analysis</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-03-13"><meta name="DC.source" content="Grid_Analysis.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>LPV Analysis</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Problem Statement</a></li><li><a href="#2">Modeling</a></li><li><a href="#3">LTI Analysis</a></li><li><a href="#4">LTI Analysis Result</a></li><li><a href="#5">LPV Analysis</a></li><li><a href="#6">LPV Analysis Results</a></li><li><a href="#7">LPV simulation</a></li><li><a href="#10">Summary</a></li><li><a href="#11">Reference</a></li></ul></div><h2>Problem Statement<a name="1"></a></h2><p>The following example illustrates how the LPV approach can help to analyze a subtle difference between two parameter dependent systems.</p><p>Consider a first order Linear Time-Invariant (LTI) system G:</p><p><img vspace="5" hspace="5" src="Gss.PNG" alt=""> </p><p>and a time-varying parameter <img src="Grid_Analysis_eq13614420219940560664.png" alt="$\delta(t)$">, subject to <img src="Grid_Analysis_eq16676267560895398754.png" alt="$-1 \leq \delta \leq 1$"> and <img src="Grid_Analysis_eq15222360869805091660.png" alt="$-\beta \leq \dot{\delta} \leq \beta$">, in a parallel interconnection as shown in Figure 1.</p><p><img vspace="5" hspace="5" src="ExampleSystem.PNG" alt=""> </p><p><i>Figure 1: A parallel interconnection of two first order systems.</i></p><p>The parallel signal paths in Figure 1 describe two systems: <img src="Grid_Analysis_eq14789666154769485987.png" alt="$G\delta$"> and <img src="Grid_Analysis_eq09156565880276887210.png" alt="$\delta G$">. The systems differ only in the position of the <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> parameter. In one system <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is applied to the input of <img src="Grid_Analysis_eq07365524530707038546.png" alt="$G$">, while it is applied to the output of <img src="Grid_Analysis_eq07365524530707038546.png" alt="$G$"> in the other. The output of the interconnection, <img src="Grid_Analysis_eq12226254761175012236.png" alt="$e$">, is the difference between the outputs of the two systems.</p><p><b>Question</b>: Is there any difference between placing the scalar <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> before or after <img src="Grid_Analysis_eq07365524530707038546.png" alt="$G$"> in the signal path?</p><h2>Modeling<a name="2"></a></h2><p>The following code buils up the system G, the time-varying parameter <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">, and the interconnection shown in Figure 1:</p><pre class="codeinput"><span class="comment">% Define the LTI System G</span>
+G = ss(-1,1,1,0);
+
+<span class="comment">% Define a scalar parameter 'delta' with values at 20 grid points between -1 and 1</span>
+Vals = linspace(-1,1,10);
+delta = pgrid(<span class="string">'delta'</span>,Vals);
+
+<span class="comment">% Define a parameter dependent system that describes the interconnection in Figure 1</span>
+H = delta*G-G*delta;
+</pre><h2>LTI Analysis<a name="3"></a></h2><p>If <img src="Grid_Analysis_eq13614420219940560664.png" alt="$\delta(t)$"> is constant, then the gain from <img src="Grid_Analysis_eq17615571056258974497.png" alt="$d$"> to <img src="Grid_Analysis_eq12226254761175012236.png" alt="$e$"> can be easily computed. The follwing code computes the induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm from <img src="Grid_Analysis_eq17615571056258974497.png" alt="$d$"> to <img src="Grid_Analysis_eq12226254761175012236.png" alt="$e$"> (i.e. the infinity norm of H), and plots how it changes as a function of the parameter <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">.</p><pre class="codeinput"><span class="comment">% Compute the induced L2 norm of H</span>
+n = norm(H,inf);
+
+<span class="comment">% Plot how this norm varies with the value of the parameter delta</span>
+lpvplot(n)
+title(<span class="string">'Induced L_2 norm of H as a function of a constant \delta'</span>)
+ylabel(<span class="string">'Induced L_2 norm of H'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Analysis_01.png" alt=""> <h2>LTI Analysis Result<a name="4"></a></h2><p>When <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is held constant, the induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm of H is zero for all values of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">. Judging from the LTI analysis, the position of the parameter in the signal path has no effect. The LTI analysis is not capable of discriminating between the two systems: <img src="Grid_Analysis_eq14789666154769485987.png" alt="$G\delta$"> and <img src="Grid_Analysis_eq09156565880276887210.png" alt="$\delta G$">.</p><h2>LPV Analysis<a name="5"></a></h2><p>Now compute the induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm of H while taking into account the time-varying nature of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">. The following code computes the induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm of H for any trajectory of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> which satisfies: <img src="Grid_Analysis_eq16676267560895398754.png" alt="$-1 \leq \delta \leq 1$"> and <img src="Grid_Analysis_eq14375170315344759564.png" alt="$-\infty \leq \dot{\delta} \leq \infty$">.</p><pre class="codeinput">syslpvnorm = lpvnorm(H)
+</pre><pre class="codeoutput">syslpvnorm =
+    1.0024
+</pre><h2>LPV Analysis Results<a name="6"></a></h2><p>The LPV analysis yields a non-zero induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm for H when <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is allowed to vary with time. This means that there exists some trejectory of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">, subject to <img src="Grid_Analysis_eq16676267560895398754.png" alt="$-1 \leq \delta \leq 1$"> and <img src="Grid_Analysis_eq14375170315344759564.png" alt="$-\infty \leq \dot{\delta} \leq \infty$">. such that the two different signal paths through the interconnection in Figure 1 do not yield the same result.</p><p>The previous analysis assumed that <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> could change arbitrarily fast with time, i.e. <img src="Grid_Analysis_eq14375170315344759564.png" alt="$-\infty \leq \dot{\delta} \leq \infty$">. Lets repeat the previous analysis with different bounds on the rate of variation of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">.</p><p>The following code computes the induced <img src="Grid_Analysis_eq14766676290793252675.png" alt="$L_2$"> norm of H when the rate of variation of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is constrained: <img src="Grid_Analysis_eq15222360869805091660.png" alt="$-\beta \leq \dot{\delta} \leq \beta$">, with <img src="Grid_Analysis_eq05475234640737140062.png" alt="$\beta<\infty$">.</p><pre class="codeinput"><span class="comment">% Define basis functions for the analysis algorithm.</span>
+bf = basis(delta,<span class="string">'delta'</span>,1);
+Xb = [1;bf;bf^2;bf^3];
+<span class="comment">% Define a set of rate bounds (beta) to try: 15 values between 0.01 and 4.</span>
+rb = logspace(-2,log10(4),15);
+<span class="keyword">for</span> i=1:numel(rb)
+  <span class="comment">% Set the rate bounds of H to be +/- rb(i)</span>
+  H.Parameter.delta.RateBounds = [-rb(i) rb(i)];
+  <span class="comment">% Compute the induced L2 norm of H, subject to a time-varying delta</span>
+  <span class="comment">% lying between -1 and 1, with d/dt(delta) between +/- rb(i)</span>
+  NormBounds(i) = lpvnorm(H,Xb);
+<span class="keyword">end</span>
+
+
+plot(rb,NormBounds)
+xlabel(<span class="string">'Rate bound on \delta: -\beta \leq d/dt(\delta) \leq \beta'</span>)
+ylabel(<span class="string">'Induced L_2 norm of H'</span>)
+title(<span class="string">'Induced L_2 norm of H as a function of the rate bound on \delta'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Analysis_02.png" alt=""> <h2>LPV simulation<a name="7"></a></h2><p>Lets compare the time-domain response of the two signal paths n <img src="Grid_Analysis_eq17354617462179732091.png" alt="$H$">, i.e. the systems <img src="Grid_Analysis_eq12585687930826765926.png" alt="$G \delta$"> and <img src="Grid_Analysis_eq09156565880276887210.png" alt="$\delta G$">. We will use <tt>lpvstep</tt> to compare the parameter dependent step response:</p><p>Start by defining a time vector</p><pre class="codeinput">t = 0:0.01:10;
+</pre><p>Define a structure whose fields describe the trajectory of the parameter <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$">:</p><pre class="codeinput">ptraj.time = t;
+ptraj.delta = sin(t);
+</pre><p>Plot the step response of <img src="Grid_Analysis_eq12585687930826765926.png" alt="$G \delta$"> and <img src="Grid_Analysis_eq09156565880276887210.png" alt="$\delta G$"> when <img src="Grid_Analysis_eq14562798771001739678.png" alt="$\delta(t) = sin(t)$">. The time domain response highlights the difference between the two signal paths when <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is treated as a time-varying parameter.</p><pre class="codeinput">lpvstep(delta*G,ptraj)
+hold <span class="string">on</span>
+lpvstep(G*delta,ptraj)
+legend(<span class="string">'\delta G'</span>,<span class="string">'G\delta'</span>,<span class="string">'location'</span>,<span class="string">'best'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Analysis_03.png" alt=""> <h2>Summary<a name="10"></a></h2><p>The preceding example demonstrates the power of the LPV approach, and its ability to augment traditional LTI analysis methods with results that take into account the time-varying nature of system components.</p><p>If the time varying nature of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is ignored, an analysis in the LTI framework indicates that the two signal paths in Figure 1 are equivalent. However, if the the time-varying nature of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> is taken into account, an analysis in the LPV framework demonstrates that the position of <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> in this interconnection can have a drastic effect on the results.</p><p>If <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> varies slowly with time the difference between the two signal paths is small, e.g. its on the order of 1% when <img src="Grid_Analysis_eq07563299614450072918.png" alt="$|\dot{\delta}| \leq 0.01$">. However, when <img src="Grid_Analysis_eq06646721004341227832.png" alt="$\delta$"> changes faster, the difference becomes significant, e.g. the difference between the two singal paths is on the order of 20% when <img src="Grid_Analysis_eq05248855125988645740.png" alt="$|\dot{\delta}| = 0.2$">, .</p><h2>Reference<a name="11"></a></h2><p>This example was published by Tamas Peni and Peter Seiler in [1]</p><div><ol><li>T. Peni, and P. Seiler, "Computation of a lower bound for the induced L2 norm of LPV systems," <i>accepted to the American Control Conference</i>, 2015.</li></ol></div><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% LPV Analysis
+%
+%% Problem Statement
+%
+% The following example illustrates how the LPV approach can help to 
+% analyze a subtle difference between two parameter dependent systems.
+% 
+% Consider a first order Linear Time-Invariant (LTI) system G:
+% 
+% <<Gss.PNG>>
+% 
+% and a time-varying parameter $\delta(t)$, subject to 
+% $-1 \leq \delta \leq 1$ and $-\beta \leq \dot{\delta} \leq \beta$, 
+% in a parallel interconnection as shown in Figure 1.
+% 
+% <<ExampleSystem.PNG>>
+% 
+% _Figure 1: A parallel interconnection of two first order systems._
+%
+% The parallel signal paths in Figure 1 describe two systems: $G\delta$ and $\delta G$. 
+% The systems differ only in the position of the $\delta$ parameter. 
+% In one system $\delta$ is applied to the input of $G$, while it is applied to 
+% the output of $G$ in the other.
+% The output of the interconnection, $e$, is the difference between the
+% outputs of the two systems.
+%
+% *Question*: Is there any difference between placing the scalar $\delta$ 
+% before or after $G$ in the signal path? 
+%
+%% Modeling
+% 
+% The following code buils up the system G, the time-varying parameter
+% $\delta$, and the interconnection shown in Figure 1:
+
+% Define the LTI System G
+G = ss(-1,1,1,0);
+
+% Define a scalar parameter 'delta' with values at 20 grid points between -1 and 1
+Vals = linspace(-1,1,10);
+delta = pgrid('delta',Vals);
+
+% Define a parameter dependent system that describes the interconnection in Figure 1
+H = delta*G-G*delta;
+
+
+%% LTI Analysis
+%
+% If $\delta(t)$ is constant, then the gain from $d$ to $e$ can be 
+% easily computed. The follwing code computes the induced $L_2$ norm from 
+% $d$ to $e$ (i.e. the infinity norm of H), and plots how it changes as a
+% function of the parameter $\delta$.
+
+
+% Compute the induced L2 norm of H
+n = norm(H,inf);
+
+% Plot how this norm varies with the value of the parameter delta
+lpvplot(n)
+title('Induced L_2 norm of H as a function of a constant \delta')
+ylabel('Induced L_2 norm of H')
+
+
+%% LTI Analysis Result
+% 
+% When $\delta$ is held constant, the induced $L_2$ norm of H is zero for all
+% values of $\delta$. Judging from the LTI analysis, the position of the 
+% parameter in the signal path has no effect. The LTI analysis is not
+% capable of discriminating between the two systems: $G\delta$ and $\delta
+% G$.
+
+%% LPV Analysis
+%
+% Now compute the induced $L_2$ norm of H while taking into account the
+% time-varying nature of $\delta$. The following code computes the 
+% induced $L_2$ norm of H for any trajectory of $\delta$ which satisfies: 
+% $-1 \leq \delta \leq 1$ and 
+% $-\infty \leq \dot{\delta} \leq \infty$.
+
+syslpvnorm = lpvnorm(H)
+
+%% LPV Analysis Results
+%
+% The LPV analysis yields a non-zero induced $L_2$ norm for H when $\delta$
+% is allowed to vary with time. This means that there exists some
+% trejectory of $\delta$, subject to 
+% $-1 \leq \delta \leq 1$ and 
+% $-\infty \leq \dot{\delta} \leq \infty$.
+% such that the two different signal paths through the interconnection 
+% in Figure 1 do not yield the same result. 
+%
+% The previous analysis assumed that $\delta$ could change arbitrarily fast
+% with time, i.e. $-\infty \leq \dot{\delta} \leq \infty$.
+% Lets repeat the previous analysis with different bounds on the rate
+% of variation of $\delta$. 
+%
+% The following code computes the induced $L_2$ norm of H when the rate of
+% variation of $\delta$ is constrained: $-\beta \leq \dot{\delta} \leq \beta$, 
+% with $\beta<\infty$.
+
+
+% Define basis functions for the analysis algorithm.
+bf = basis(delta,'delta',1);
+Xb = [1;bf;bf^2;bf^3]; 
+% Define a set of rate bounds (beta) to try: 15 values between 0.01 and 4.
+rb = logspace(-2,log10(4),15);
+for i=1:numel(rb)
+  % Set the rate bounds of H to be +/- rb(i)
+  H.Parameter.delta.RateBounds = [-rb(i) rb(i)];
+  % Compute the induced L2 norm of H, subject to a time-varying delta
+  % lying between -1 and 1, with d/dt(delta) between +/- rb(i)
+  NormBounds(i) = lpvnorm(H,Xb);
+end
+
+
+plot(rb,NormBounds)
+xlabel('Rate bound on \delta: -\beta \leq d/dt(\delta) \leq \beta')
+ylabel('Induced L_2 norm of H')
+title('Induced L_2 norm of H as a function of the rate bound on \delta')
+
+%% LPV simulation
+%
+% Lets compare the time-domain response of the two signal paths n $H$, i.e. 
+% the systems $G \delta$ and $\delta G$. We will use |lpvstep| to
+% compare the parameter dependent step response:
+%
+% Start by defining a time vector
+t = 0:0.01:10;
+
+
+%%
+% Define a structure whose fields describe the trajectory of the parameter
+% $\delta$:
+ptraj.time = t;
+ptraj.delta = sin(t);
+
+%%
+% Plot the step response of $G \delta$ and $\delta G$ when $\delta(t) = sin(t)$.
+% The time domain response highlights the difference between the two signal
+% paths when $\delta$ is treated as a time-varying parameter.
+
+lpvstep(delta*G,ptraj)
+hold on
+lpvstep(G*delta,ptraj)
+legend('\delta G','G\delta','location','best')
+
+%% Summary
+%
+% The preceding example demonstrates the power of the LPV approach, and 
+% its ability to augment traditional LTI analysis methods with results
+% that take into account the time-varying nature of system components. 
+%
+% If the time varying nature of $\delta$ is ignored, an analysis in
+% the LTI framework indicates that the two signal paths in Figure 1 are
+% equivalent. However, if the the time-varying nature of $\delta$ is taken
+% into account, an analysis in the LPV framework demonstrates that 
+% the position of $\delta$ in this interconnection can have a drastic
+% effect on the results. 
+%
+% If $\delta$ varies slowly with time the
+% difference between the two signal paths is small, e.g. 
+% its on the order of 1% when $|\dot{\delta}| \leq 0.01$.
+% However, when $\delta$ changes faster, the difference becomes
+% significant, e.g. the difference between 
+% the two singal paths is on the order of 20% when $|\dot{\delta}| = 0.2$, .
+
+%% Reference
+%
+% This example was published by Tamas Peni and Peter Seiler in [1]
+%
+% # T. Peni, and P. Seiler, "Computation of a lower bound for the induced 
+% L2 norm of LPV systems," _accepted to the American Control Conference_, 2015.
+
+
+##### SOURCE END #####
+--></body></html>

@@ -23,10 +23,10 @@ function rqModel = sedumirqfitinfnorm(X,Y,vars,b2bopt,K)
 %  Modified: August 16, 2015  Wenyu Li
 
 [n_sample,n_variable] = size(X);
-mx = mean(vars.calBound')';
-dx = 0.5*diff(vars.calBound')';
-Tx = [1, zeros(1,n_variable);
-   -mx./dx , diag(1./dx)];
+% mx = mean(vars.calBound')';
+% dx = 0.5*diff(vars.calBound')';
+% Tx = [1, zeros(1,n_variable);
+%    -mx./dx , diag(1./dx)];
 if ~isvector(Y) || n_sample ~= length(Y)
    error('Wrong dimension of input data')
 end
@@ -34,19 +34,15 @@ my = mean(Y);
 dy = 0.5*(max(Y)-min(Y));
 yScale.my = my;
 yScale.dy = dy;
-Y = (Y-my)/dy;
-x1 = [ones(n_sample,1) X];
-x2 = Tx*x1';
-x2 = x2';
+% Y = (Y-my)/dy;
+% x1 = [ones(n_sample,1) X];
+% x2 = Tx*x1';
+% x2 = x2';
 X0 = X;
-X = x2(:,2:end);
+% X = x2(:,2:end);
 nc = 0.5*(n_variable+1)*(n_variable+2);
-LB = [vars.Values.LowerBound]';
-UB = [vars.Values.UpperBound]';
-LB = Tx*[1;LB];
-UB = Tx*[1;UB];
-LB = LB(2:end);
-UB = UB(2:end);
+LB = -ones(n_variable,1);
+UB = -LB;
 if nargin == 4
    if b2bopt.Display
       disp('Start cross validation to select best K value...')
@@ -142,10 +138,10 @@ Nmod = B2BDC.Fitting.vec2coef(Nvec,n_variable);
 Dmod = B2BDC.Fitting.vec2coef(Dvec,n_variable);
 rqModel = B2BDC.B2Bmodels.RQModel(Nmod,Dmod,vars,kk,yScale);
 x = B2BDC.Fitting.expandBasis(X);
-err = dy*abs(x*Nvec./(x*Dvec)-Y);
+err = abs(x*Nvec./(x*Dvec)-Y);
 rqModel.ErrorStats.absMax = max(err);
 rqModel.ErrorStats.absAvg = mean(err);
-err = err./abs(Y*dy+my);
+err = err./abs(Y);
 rqModel.ErrorStats.relMax = max(err);
 rqModel.ErrorStats.relAvg = mean(err);
 if b2bopt.Display

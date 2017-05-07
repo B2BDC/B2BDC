@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>generateModel_demo</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="generateModel_demo.m"><style type="text/css">
+      --><title>generateModel_demo</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateModel_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -96,7 +96,7 @@ k = 10;
 
 <span class="comment">% Create the RQModel object</span>
 RQmodel = generateModel(Ncoef,Dcoef,varList,k);
-</pre><h2>Create a rational quadratic model (2)<a name="4"></a></h2><p>To create a B2BDC.B2Bmodels.RQModel object by input the coefficient matrix of both numerator and denominator and variable information. The positivity condition of the denominator is then checked.</p><pre class="codeinput"><span class="comment">% Create a random coefficient matrix for nominator</span>
+</pre><h2>Create a rational quadratic model (2)<a name="4"></a></h2><p>To create a B2BDC.B2Bmodels.RQModel object by input the coefficient matrix of both numerator and denominator and vairable information. The posisitivity condition of the denominator is then checked.</p><pre class="codeinput"><span class="comment">% Create a random coefficient matrix for nominator</span>
 Ncoef = rand(nVar+1);
 
 <span class="comment">% Make the coefficient matrix symmetric</span>
@@ -115,12 +115,11 @@ D2(1,1) = -1;
 <span class="comment">% Create the RQModel object with D1</span>
 RQmodel = generateModel(Ncoef,D1,varList);
 
-<span class="comment">% Create the RQModel object with D2, the following code will fail due to</span>
-<span class="comment">% the non-positivity of the denominator D2</span>
+<span class="comment">% Create the RQModel object with D2</span>
 RQmodel = generateModel(Ncoef,D2,varList);
 </pre><pre class="codeoutput error">Error using generateModel (line 115)
 The denominator function is not always positive over the variable domain
-Error in generateModel_demo (line 72)
+Error in generateModel_demo (line 71)
 RQmodel = generateModel(Ncoef,D2,varList);</pre><h2>Evaluate a function value at given x values<a name="5"></a></h2><p>The input should be a nSample-by-nVar matrix that defines the values of x you want to calculate the function value. The output is a nSample-by-1 column vector of the function values at those points.</p><pre class="codeinput"><span class="comment">% Make sample points, more information can be found in VariableList_demo</span>
 nSample = 20;
 xSample = varList.makeLHSsample(nSample);
@@ -130,7 +129,7 @@ y_q = Qmodel.eval(xSample);
 
 <span class="comment">% Calculate the function values from the RQModel object</span>
 y_rq = RQmodel.eval(xSample);
-</pre><h2>Attribution<a name="6"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><h2>Attribution<a name="6"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 
 %% Create a VariableList object contains the information about the variables
@@ -179,8 +178,8 @@ RQmodel = generateModel(Ncoef,Dcoef,varList,k);
 
 %% Create a rational quadratic model (2)
 % To create a B2BDC.B2Bmodels.RQModel object by input the coefficient matrix
-% of both numerator and denominator and variable information. The
-% positivity condition of the denominator is then checked.
+% of both numerator and denominator and vairable information. The
+% posisitivity condition of the denominator is then checked.
 
 % Create a random coefficient matrix for nominator
 Ncoef = rand(nVar+1);
@@ -201,8 +200,7 @@ D2(1,1) = -1;
 % Create the RQModel object with D1
 RQmodel = generateModel(Ncoef,D1,varList);
 
-% Create the RQModel object with D2, the following code will fail due to
-% the non-positivity of the denominator D2
+% Create the RQModel object with D2
 RQmodel = generateModel(Ncoef,D2,varList);
 
 %% Evaluate a function value at given x values

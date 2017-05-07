@@ -1,0 +1,41 @@
+evalConsistencyrel@Dataset
+ - relCMfmincon (tested)
+ - relCMopti (tested)
+
+evalConsistencyabs@Dataset
+ - absCMfmincon (tested)
+ - absCMopti (tested)
+
+predictQOI@Dataset
+ - predQfmincon (tested)
+ - predQopti (tested)
+
+VariableList@VariableList
+ - delete ExtraQuaConstraint
+ - deleteVariable includes the consideration of extra linear constraints
+ - scale (pending)
+ - isSubset (pending)
+ - splitToinclude (pending)
+ - findIntersect (pending)
+ - changeBound includes the consideration of extra linear constraints
+ - delete addQuadraticConstraint
+ - makeSubset includes the consideration of extra linear constraints
+ - clearExtraConstraint delete the quadratic constraint part
+
+subDivide@VariableList (pending)
+
+getJacobian@VariableList (pending)
+
+collectSamples_old@VariableList is deleted
+
+collectSamples_norm@VariableList is deleted
+
+collectSamples@VariableList is deleted
+
+SampleOption updated
+
+optimizationParameter updated with opti and fmincon
+
+sensitivity for RQ mixed consistency, also plotConsistencySensitivity
+
+calVarBounds@Dataset, calQOIBounds@Dataset

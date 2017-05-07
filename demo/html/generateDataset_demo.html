@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>generateDataset_demo</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="generateDataset_demo.m"><style type="text/css">
+      --><title>generateDataset_demo</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateDataset_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -107,8 +107,11 @@ The calculation is done
 Consistency LB: 1
 Consistency UB: 1
 The dataset is consistent
+
 CM =
-    1.0000    1.0000
+
+            1            1
+
 </pre><h2>Consistency measure sensitivity plot<a name="5"></a></h2><p>This plot shows the sensitivity of the outer bound of consistency measure with respect to the bounds of QoIs and variables.</p><pre class="codeinput">ds.plotConsistencySensitivity;
 </pre><img vspace="5" hspace="5" src="generateDataset_demo_01.png" alt=""> <h2>Clear the consistency measure<a name="6"></a></h2><p>You can also clear the consistency measure of the dataset</p><pre class="codeinput">ds.clearConsis;
 </pre><h2>Make prediction on another model<a name="7"></a></h2><p>When the dataset is consistent, we can add another model as a QoI that wants to be predicted. The function will update the QOIRange and QOISensitivity property of the dataset object.</p><pre class="codeinput"><span class="comment">% make a model for prediction</span>
@@ -136,10 +139,10 @@ Searching inner bound...
 Calculating outer bound...
 =======================================================
 The calculation is done
-Minimum value of QOI is within: [-1.0512 -0.79609]
-Maximum value of QOI is within: [-0.29206 -0.22712]
+Minimum value of QOI is within: [-0.78192 -0.77059]
+Maximum value of QOI is within: [0.12289 1.1125]
 </pre><h2>QOI prediction sensitivity plot<a name="8"></a></h2><p>This plot shows the sensitivity of the outer bound of QOI prediction with respect to the bounds of QoIs and variables.</p><pre class="codeinput">ds.plotQOISensitivity(QOISensitivity);
-</pre><img vspace="5" hspace="5" src="generateDataset_demo_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="generateDataset_demo_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 % This is a demo for how to create a B2BDC.B2Bdataset.Dataset object
 % and some function examples.

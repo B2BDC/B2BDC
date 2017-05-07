@@ -11,7 +11,7 @@ classdef VariableList < B2BDC.Util.IContainer
    
    properties (SetAccess = private)
       ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
-      ExtraQuaConstraint = {};
+      ScalingVector = [];
    end
    
    methods
@@ -32,6 +32,19 @@ classdef VariableList < B2BDC.Util.IContainer
          %   Variable Name) the intersection of their LowerBound and 
          %   UpperBound will be taken.
          
+         A1 = obj.ExtraLinConstraint.A;
+         LB1 = obj.ExtraLinConstraint.LB;
+         UB1 = obj.ExtraLinConstraint.UB;
+         if isempty(obj.Values)
+            name1 = {};
+         else
+            name1 = {obj.Values.Name};
+         end
+         A2 = varList.ExtraLinConstraint.A;
+         LB2 = varList.ExtraLinConstraint.LB;
+         UB2 = varList.ExtraLinConstraint.UB;
+         name2 = {varList.Values.Name};
+         obj = obj.clearExtraConstraint;
          variables = varList.Values;
          for i = 1:varList.Length
             variable = variables(i);
@@ -47,6 +60,24 @@ classdef VariableList < B2BDC.Util.IContainer
                end
             end
          end
+         allName = {obj.Values.Name};
+         nV = obj.Length;
+         if ~isempty(A1)
+            n1 = size(A1,1);
+            At = zeros(n1,nV);
+            [~,~,id] = intersect(name1,allName,'stable');
+            At(:,id) = A1;
+            obj = obj.addLinearConstraint(At,LB1,UB1);
+%             obj = obj.addLinearConstraint([At;-At],[UB1;-LB1]);
+         end
+         if ~isempty(A2)
+            n2 = size(A2,1);
+            At = zeros(n2,nV);
+            [~,~,id] = intersect(name2,allName,'stable');
+            At(:,id) = A2;
+            obj = obj.addLinearConstraint(At,LB2,UB2);
+%             obj = obj.addLinearConstraint([At;-At],[UB2;-LB2]);
+         end 
       end
       
       function xSample = makeLHSsample(obj,nSample)
@@ -84,52 +115,16 @@ classdef VariableList < B2BDC.Util.IContainer
          else
             error('Wrong input index type or length')
          end
+         A = obj.ExtraLinConstraint.A;
+         tA = A(:,id);
+         if any(tA)
+            error('Extra linear constraints contain the variables you want to delete')
+         end
          if ~isempty(id)
             obj = obj.remove(id);
+            obj.ScalingVector = [];
          else
             disp('The variable you want to delete is not in the current list')
-         end
-      end
-      
-      function obj = scale(obj,factor)
-         %   OBJ = SCALE(OBJ, FACTOR) returns a VariableList OBJ where all 
-         %   variables have been scaled by FACTOR. FACTOR can be a
-         %   vector of length two where the lower bound is scaled by the
-         %   first element and the upper bound is scaled by the scond.
-         %   FACTOR also can be a nVar-by-2 matrix which scales each 
-         %   Variable LowerBound and UpperBound by the corresponding 
-         %   elements of the FACTOR. 
-         
-         if isvector(factor)
-            if length(factor) ~= 2
-               error(['Incorrect dimensions for a scaling factor. ' ...
-                   'Scaling factor should be a vector of length two or ' ...
-                   'an nVar-by-2 matrix.'])
-            else
-               for i = 1:obj.Length
-                  obj.Container{i}.LowerBound = factor(1)*obj.Container{i}.LowerBound;
-                  obj.Container{i}.UpperBound = factor(2)*obj.Container{i}.UpperBound;
-               end
-            end
-         elseif ismatrix(factor)
-            if size(factor,1) ~= obj.Length || size(factor,2) ~= 2
-               error(['Incorrect dimensions for a scaling factor. ' ...
-                   'Scaling factor should be a vector of length two or ' ...
-                   'an nVar-by-2 matrix.'])
-            else
-               for i = 1:obj.Length
-                  obj.Container{i}.LowerBound = factor(i,1)*obj.Container{i}.LowerBound;
-                  obj.Container{i}.UpperBound = factor(i,2)*obj.Container{i}.UpperBound;
-               end
-            end
-         else
-            error(['Incorrect input for a scaling factor. ' ...
-                 'Scaling factor should be a vector of length two or ' ...
-                 'an nVar-by-2 matrix.'])
-         end
-         bds = obj.calBound;
-         if any(bds(:,1) >= bds(:,2))
-            error('The domain after scaling cannot be empty')
          end
       end
       
@@ -154,69 +149,6 @@ classdef VariableList < B2BDC.Util.IContainer
          %   VariableList OBJ. 
          
           nVar = obj.Length;
-      end
-      
-      function flag = isSubset(obj, var2)
-         % Returns true if the domain specified by obj is a subset of the
-         % domain specified by var2, otherwise false.
-         bd1 = obj.calBound;
-         bd2 = var2.calBound;
-         flag = true;
-         if any(bd1(:,1) < bd2(:,1))
-            flag = false;
-         elseif any(bd1(:,2) > bd2(:,2))
-            flag = false;
-         end   
-      end
-      
-      function domOut = splitToinclude(obj,var2)
-         % Calculate the complementary of domain specified by var2. The
-         % whole domain is specified by obj.
-         if var2.isSubset(obj)
-            varNames = {obj.Values.Name};
-            tgtH = var2.calBound;
-            domH = obj.calBound;
-            domOut = {};
-            for i = 1:length(varNames)
-               if tgtH(i,1) > domH(i,1)
-                  tmpH = domH;
-                  tmpH(i,2) = tgtH(i,1);
-                  domH(i,1) = tgtH(i,1);
-                  domOut{end+1} = generateVar(varNames, tmpH);
-               end
-               if tgtH(i,2) < domH(i,2)
-                  tmpH = domH;
-                  tmpH(i,1) = tgtH(i,2);
-                  domH(i,2) = tgtH(i,2);
-                  domOut{end+1} = generateVar(varNames, tmpH);
-               end
-            end
-            domOut = [domOut{:}]';
-         else
-            error('The target domain is not fully contained in the whole domain')
-         end
-      end
-      
-      function varInt = findIntersect(obj, var2)
-         % Returns a VariableList that specifies the domain as the
-         % intersection of the two domains specified by obj and var2
-         % respectively. It returns empty if the two domains don't
-         % intersect.
-         varNames = {obj.Values.Name};
-         h1 = obj.calBound;
-         h2 = var2.calBound;
-         id1 = h1(:,1) >= h2(:,1);
-         h1(~id1,1) = 0;
-         h2(id1,1) = 0;
-         id2 = h1(:,2) <= h2(:,2);
-         h1(~id2,2) = 0;
-         h2(id2,2) = 0;
-         hInt = h1 + h2;
-         if any(hInt(:,1) >= hInt(:,2))
-            varInt = [];
-         else
-            varInt = generateVar(varNames, hInt);
-         end
       end
       
       function Var = changeBound(obj, newBD, idx)
@@ -268,9 +200,111 @@ classdef VariableList < B2BDC.Util.IContainer
             else
                Var = generateVar(varName,newBD(:,1:2),newBD(:,3));
             end
+            if ~isempty(obj.ExtraLinConstraint.A)
+               A = obj.ExtraLinConstraint.A;
+               LB = obj.ExtraLinConstraint.LB;
+               UB = obj.ExtraLinConstraint.UB;
+               Var = Var.addLinearConstraint(A,LB,UB);
+%                Var = Var.addLinearConstraint([A;-A],[UB;-LB]);
+            end
+            obj.ScalingVector = [];
          else
             error('Wrong number of input arguments')
          end
+      end
+      
+      function newVar = addLinearConstraint(obj,A,b,c)
+         % NEWVAR = ADDEXTRALINCONSTRAINT(OBJ,A,B,C) returns the new
+         % VariableList object with added linear constraints on the
+         % variables satisfying A*x <= b if nargin < 4. Otherwise returns
+         % the new VariableList object with added linear constraints that
+         % b <= A*x <= c.
+         
+         if nargin < 4
+            if size(b,1) == 1
+               b = b';
+            end
+            newVar = obj;
+            [nC, nVar] = size(A);
+            if nVar ~= obj.Length
+               error('Invalid input matrix dimension')
+            end
+            if nC ~= length(b)
+               error('Invalid input vector dimension')
+            end
+            [idA,id] = intersect(A,-A,'rows','stable');
+            nint = 0.5*size(idA,1);
+            nuni = nC - 2*nint;
+            A0 = zeros(nint+nuni,nVar);
+            LB = zeros(nint+nuni,1);
+            UB = zeros(nint+nuni,1);
+            if ~isempty(idA)
+               count = 1;
+               for i = 1:2*nint
+                  idx = find(idA(i,:),1);
+                  if idA(i,idx) > 0
+                     A0(count,:) = idA(i,:);
+                     [~,id1] = intersect(A,idA(i,:),'rows');
+                     [~,id2] = intersect(-A,idA(i,:),'rows');
+                     UB(count) = b(id1);
+                     LB(count) = -b(id2);
+                     count = count+1;
+                  end
+               end
+            end
+            tmpA = A;
+            tmpb = b;
+            A(id,:) = [];
+            b(id,:) = [];
+            A0(nint+1:end,:) = A;
+            UB(nint+1:end) = b;
+            for i = 1:nuni
+               tmpC = A(i,:);
+               LB(nint+i) = finddirectionmin(obj,tmpA,tmpb,tmpC);
+            end
+            for i = 1:nuni
+               idx = find(A0(nint+i,:),1);
+               if A0(nint+i,idx) < 0
+                  A0(nint+i,:) = -A(i,:);
+                  tmpLB = -UB(nint+i);
+                  UB(nint+i) = -LB(nint+i);
+                  LB(nint+i) = tmpLB;
+               end
+            end
+            if ~isempty(obj.ExtraLinConstraint.A)
+               Ai = obj.ExtraLinConstraint.A;
+               Li = obj.ExtraLinConstraint.LB;
+               Ui = obj.ExtraLinConstraint.UB;
+               [~,id1,id2] = intersect(Ai,A0,'rows','stable');
+               if ~isempty(id1)
+                  %                LB(LB(id2) < Li(id1)) = Li(id1);
+                  LB(id2) = max([LB(id2), Li(id1)],[],2);
+                  %                UB(UB(id2) > Ui(id1)) = Ui(id1);
+                  UB(id2) = min([UB(id2), Ui(id1)],[],2);
+               end
+               Ai(id1,:) = [];
+               Li(id1) = [];
+               Ui(id1) = [];
+               A0 = [A0;Ai];
+               LB = [LB;Li];
+               UB = [UB;Ui];
+            end
+            newVar.ExtraLinConstraint.A = A0;
+            newVar.ExtraLinConstraint.LB = LB;
+            newVar.ExtraLinConstraint.UB = UB;
+         else
+            if size(A,1) ~= length(b)
+               error('Wrong lower bound dimension')
+            end
+            if size(A,1) ~= length(c)
+               error('Wrong upper bound dimension')
+            end
+            newVar = obj;
+            newVar.ExtraLinConstraint.A = A;
+            newVar.ExtraLinConstraint.LB = b;
+            newVar.ExtraLinConstraint.UB = c;
+         end
+         newVar.ScalingVector = [];
       end
       
       function newVar = makeSubset(obj,varIdx)
@@ -278,20 +312,53 @@ classdef VariableList < B2BDC.Util.IContainer
          % including only a subset of the original VariableList object
          % specifed by the index input
          
+         vName = {obj.Values.Name}';
          if ischar(varIdx)
-            [~,id,~] = intersect(varIdx,{obj.Values.Name});
+            [~,~,id] = intersect(varIdx,{obj.Values.Name},'stable');
          elseif isvector(varIdx)
             id = varIdx;
          else
             error('Wrong input index type or length')
          end
-         vName = {obj.Values.Name};
+         if ~isempty(obj.ExtraLinConstraint.A)
+            A = obj.ExtraLinConstraint.A;
+            tA = A(:,id);
+            if any(tA)
+               error('Extra linear constraints contain variables outside the subset')
+            end
+         end
          H = obj.calBound;
          newName = vName(id);
          newH = H(id,:);
          newVar = generateVar(newName, newH);
+         if ~isempty(obj.ExtraLinConstraint.A)
+            A = obj.ExtraLinConstraint.A;
+            LB = obj.ExtraLinConstraint.LB;
+            UB = obj.ExtraLinConstraint.UB;
+            A = A(:,id);
+            idA = true(size(A,1),1);
+            for i = 1:size(A,1)
+               tmpid = find(A(i,:));  
+               if length(tmpid) > 1
+                  idA(i) = false;
+               end
+            end
+            A(idA,:) = [];
+            if ~isempty(A)
+               LB(idA) = [];
+               UB(idA) = [];
+               newVar = newVar.addLinearConstraint(A,LB,UB);
+%                newVar = newVar.addLinearConstraint([A;-A],[UB;-LB]);
+            end
+         end
       end
- 
+      
+      function newVar = clearExtraConstraint(obj)
+         newVar = obj;
+         newVar.ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
+         newVar.ScalingVector = [];
+      end
+      
    end
    
    methods (Hidden = true)
@@ -312,7 +379,11 @@ classdef VariableList < B2BDC.Util.IContainer
                obj.Container{ind}.UpperBound = variable.UpperBound;
             end
          end
+         if ~isempty(obj.ExtraLinConstraint.A)
+            obj.ExtraLinConstraint.A = [A, zeros(size(A,1),1)];
+         end
       end
    end
+   
    
 end

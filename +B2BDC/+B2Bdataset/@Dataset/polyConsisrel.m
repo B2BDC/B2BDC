@@ -1,57 +1,88 @@
 function polyConsisrel(obj,opt)
+% POLYCONSISREL(OBJ,OPT) calculate the consistency measure of the dataset
+% when all dataset units have polynomial surrogate models and at least one
+% of them is not quadratic function.
 
-% This function is used to calculate the relative consistency measure for a
-% dataset consists of only polynomial surrogate and prediction models.
+%  Created: Dec 16, 2016     Wenyu Li
 
-%  Created: Nov 30, 2015     Wenyu Li
-
-vars = obj.Variables;
-optimalVar = generateVar({'eps'},[-1e10,1e10]);
-newVar = vars.addList(optimalVar);
-nVar = vars.Length;
-nUnit = obj.Length;
-ineqPoly = cell(2*nUnit,1);
-bds = obj.calBound;
-ob = obj.calObserve;
-unc = bds-repmat(ob,1,2);
-tep_eps = zeros(1,nVar+1);
-tep_eps(end) = 1;
-for i = 1:nUnit
-   pm1 = obj.DatasetUnits.Values(i).SurrogateModel;
-   pm2 = pm1.clone;
-   pm1 = pm1.expandDimension(newVar);
-   pm2 = pm2.expandDimension(newVar);
-   pm2.Coefficient = -pm2.Coefficient;
-   [~,id] = intersect(pm1.Basis.Value,zeros(1,nVar+1),'rows');
-   pm1.Coefficient(id) = pm1.Coefficient(id)-bds(i,1);
-   [~,id] = intersect(pm2.Basis.Value,zeros(1,nVar+1),'rows');
-   pm2.Coefficient(id) = pm2.Coefficient(id)+bds(i,2);
-   pm1.Basis.Value = [pm1.Basis.Value; tep_eps];
-   pm1.Coefficient(end+1) = unc(i,1);
-   pm2.Basis.Value = [pm2.Basis.Value; tep_eps];
-   pm2.Coefficient(end+1) = -unc(i,2);
-   ineqPoly{2*i-1}.typeCone = 1;
-   ineqPoly{2*i-1}.degree = pm1.Basis.calDegree;
-   ineqPoly{2*i-1}.dimVar = nVar+1;
-   ineqPoly{2*i-1}.noTerms = pm1.Basis.Length;
-   ineqPoly{2*i-1}.supports = pm1.Basis.Value;
-   ineqPoly{2*i-1}.coef = pm1.Coefficient;
-   ineqPoly{2*i}.typeCone = 1;
-   ineqPoly{2*i}.degree = pm2.Basis.calDegree;
-   ineqPoly{2*i}.dimVar = nVar+1;
-   ineqPoly{2*i}.noTerms = pm2.Basis.Length;
-   ineqPoly{2*i}.supports = pm2.Basis.Value;
-   ineqPoly{2*i}.coef = pm2.Coefficient;
+if nargin < 2
+   opt = generateOpt;
 end
-objPoly.typeCone = 1;
-objPoly.degree = 1;
-objPoly.dimVar = nVar+1;
-objPoly.noTerms = 1;
-objPoly.supports = tep_eps;
-objPoly.coef = -1;
-xbds = newVar.calBound;
-param.relaxOrder = opt.SOSrelaxOrder;
-[param,SDPobjValue,POP,cpuTime,SDPsolverInfo,SDPinfo] =...
-   sparsePOP(objPoly,ineqPoly,xbds(:,1),xbds(:,2),param);
-clc;
+disflag = opt.Display;
+units = obj.DatasetUnits.Values;
+n_units = length(units);
+abE = zeros(n_units,1);
+bds = obj.calBound;
+obs = obj.calObserve;
+if opt.AddFitError
+   obj.FeasibleFlag = true;
+   for i = 1:n_units
+      if ~isempty(units(i).SurrogateModel.ErrorStats.absMax)
+         abE(i) = units(i).SurrogateModel.ErrorStats.absMax;      
+      end
+   end
+end
+bds = bds + [-abE, abE];
+allNames = obj.VarNames;
+vars = obj.Variables;
+cm = generateVar({'CM'},[-1e10,1],0);
+vars = vars.addList(cm);
+xbd = vars.calBound;
+nall = vars.Length;
+tS = zeros(1,nall);
+tS(end) = 1;
+tPoly = generateModel(-1,tS,vars);
+objPoly = tPoly.createSparsePOP;
+ineqPolySys = cell(1,2*n_units);
+d = 0;
+for i = 1:n_units
+   if isa(units(i).SurrogateModel,'B2BDC.B2Bmodels.QModel')
+      tModel = units(i).SurrogateModel.convertToPoly;
+   else
+      tModel = units(i).SurrogateModel;
+   end
+   d = max(d,tModel.Degree);
+   tName = tModel.VarNames;
+   nM = length(tModel.Coefficient);
+   [~,~,id] = intersect(tName,allNames,'stable');
+   ts = zeros(nM+1,nall);
+   ts(1:end-1,id) = tModel.SupportMatrix;
+   ts(end,end) = 1;
+   c1 = tModel.Coefficient;
+   c1(end+1) = bds(i,1) - obs(i);
+   p1 = generateModel(c1,ts,vars);
+   c2 = -c1;
+   c2(end) = obs(i)-bds(i,2);
+   p2 = generateModel(c2,ts,vars);
+   p1 = p1.addConstant(-bds(i,1));
+   p2 = p2.addConstant(bds(i,2));
+   ineqPolySys{2*i-1} = p1.createSparsePOP;
+   ineqPolySys{2*i} = p2.createSparsePOP;
+end
+param = opt.POPOption.Value;
+if param.relaxOrder == -1
+   param.relaxOrder = ceil(0.5*d);
+end
 
+if disflag
+   disp('=======================================================');
+   disp('Calculating consistency measure...');
+   disp('=======================================================');
+end
+   
+[param,SDPobjValue,POP,elapsedTime,SDPsolverInfo,SDPinfo] = ...
+   sparsePOP(objPoly,ineqPolySys,xbd(:,1),xbd(:,2),param);
+x0 = POP.xVectL(1:end-1);
+if obj.isFeasiblePoint(x0)
+   obj.FeasiblePoint = x0;
+   obj.ConsistencyMeasure = [-POP.objValueL -SDPobjValue];
+   if disflag
+      disp(' ')
+      disp('The calculation is done')
+      disp(['Consistency LB: ' num2str(-POP.objValueL)])
+      disp(['Consistency UB: ' num2str(-SDPobjValue)])
+   end
+else
+   obj.FeasibleFlag = false;
+   disp('The calculation is failed, try to use a different POP solver')
+end

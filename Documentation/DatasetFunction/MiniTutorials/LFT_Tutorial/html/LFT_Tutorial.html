@@ -1,0 +1,385 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Modeling LFT LPV Systems</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-20"><meta name="DC.source" content="LFT_Tutorial.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Modeling LFT LPV Systems</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Introduction</a></li><li><a href="#2">Example of LFT construction</a></li><li><a href="#3">LFT-based LPV Synthesis</a></li><li><a href="#8">LPV Analysis Incorporating Rate-Bounds</a></li><li><a href="#10">Pointwise LTI Analysis of LFT-Based LPV Systems</a></li><li><a href="#14">LPV Simulation</a></li><li><a href="#16">References</a></li></ul></div><h2>Introduction<a name="1"></a></h2><p>A key component of the LFT-based LPVTools infrastructure is the core LFT data structure object, referred to as a <tt>tvreal</tt> (denoting a time-varying parameter). The <tt>tvreal</tt> object is used to create a time-varying, real valued scalar object. The <tt>tvreal</tt> has a range, denoting the maximum and minimum value that the time-varying scalar can assume, and a rate-bound denoting the maximum and minimum rate of change of the time-varying scalar. The <tt>tvreal</tt> is used to model individual time-varying parameters, and construct parameter dependent LFT matrices and systems. LPVTools represents LFT-based parameter varying matrices and state-space systems by <tt>plftmat</tt> and <tt>plftss</tt> data objects, respectively. The <tt>plftmat</tt>, and <tt>plftss</tt> objects are constructed using <tt>tvreal</tt> elements, using a syntax that is a direct parallel to the <tt>ureal</tt> syntax that is used to define <tt>umat</tt> and <tt>uss</tt> objects in the Robust Control Toolbox.</p><h2>Example of LFT construction<a name="2"></a></h2><p>We will design a LFT-based LPV controller for the system <img src="LFT_Tutorial_eq00171321353201330515.png" alt="$G(\rho)$">:</p><p><img src="LFT_Tutorial_eq10185677885570011777.png" alt="$$\begin{array}{l@{}l}&#xA; \dot{x} &{}= -\rho x + \rho u\\&#xA; y &{}= x&#xA;\end{array} \ \ \ \ \ \ \ (1)$$"></p><p>LFT-based LPV models are restricted to systems with rational parameter dependence, which the system in Equation (1) satisfies. Hence we can construct <img src="LFT_Tutorial_eq00171321353201330515.png" alt="$G(\rho)$"> as a LFT-based LPV system using a <tt>tvreal</tt>. The first argument of <tt>tvreal</tt> is the name of the parameter, the second argument is the range of the parameter, and the third argment is the range for the parameter's rate of variation. Lets model <img src="LFT_Tutorial_eq00171321353201330515.png" alt="$G(\rho)$"> for <img src="LFT_Tutorial_eq04643076906581464834.png" alt="$1 \leq \rho \leq 10$"> and <img src="LFT_Tutorial_eq02207983535633976857.png" alt="$-1 \leq \dot{\rho} \leq 1$">.</p><pre class="codeinput"><span class="comment">% Define a time-varying real parameter.</span>
+rho = tvreal(<span class="string">'rho'</span>,[1 10],[-1 1]);
+
+<span class="comment">% Construct a parameter varying LFT state-space systems:</span>
+P = ss(-rho,rho,1,0)
+</pre><pre class="codeoutput">Continuous-time PLFTSS with 1 outputs, 1 inputs, 1 states.                   
+The model consists of the following blocks:                                  
+  rho: Time-varying real, range = [1,10], rate bounds = [-1,1], 1 occurrences
+</pre><h2>LFT-based LPV Synthesis<a name="3"></a></h2><p>We will use the command <tt>lpvsyn</tt> to synthesize a LFT-based LPV controller for this system. <tt>lpvsyn</tt> requires that the closed-loop performance objectives be characterized in terms of a weighted interconnection (analogous to <a href="matlab:open(fullfile(docroot,'robust/gs/h-infinity-performance.html'))"><img src="LFT_Tutorial_eq01493845927355890391.png" alt="$H_\infty$"> performance problems</a>) so we define one using a set of dynamic weights and the command <tt>sysic</tt>.</p><p>The exogenous signal passing through the weight <tt>Wd</tt> is added to the control signal from the controller. The weight <tt>Wu</tt> acts on the disturbed control signal going from the control to the plant input. The weight <tt>We</tt> acts on the error between the reference signal and the plant output.</p><p>The <tt>Wu</tt> weight expresses the requirement that the control signal should be less than 10 up to 1 rad/s, roll off and cross over at 10 rad/s, and be less than 0.1 above 100 rad/s. The <tt>We</tt> weight expresses the requirement that the tracking error be less than 0.2 at frequencies below 1 rad/s, it can then increase, and must be less than 1 at 5 rad/s, and less than 5 at frequencies above 25 rad/s. The <tt>Wd</tt> expresses the fact that the disturbance on the control signal will have magnitude no larger than 0.1.</p><pre class="codeinput"><span class="comment">% Define and plot weights for synthesis problem</span>
+Wu = tf([10 10],[1 100]);
+We = tf([1 25],[5 5]);
+Wd = ss(0.1);
+
+bodemag(Wu,<span class="string">'b'</span>,We,<span class="string">'r--'</span>)
+legend(<span class="string">'Wu'</span>,<span class="string">'We'</span>)
+</pre><img vspace="5" hspace="5" src="LFT_Tutorial_01.png" alt=""> <p>Define a weighted interconnection for the synthesis problem</p><pre class="codeinput">systemnames = <span class="string">'P Wu We Wd'</span>;
+inputvar = <span class="string">'[r; d; u]'</span>;
+outputvar = <span class="string">'[We; Wu; r-P]'</span>;
+input_to_We = <span class="string">'[r-P]'</span>;
+input_to_Wu = <span class="string">'[u+Wd]'</span>;
+input_to_Wd = <span class="string">'[d]'</span>;
+input_to_P = <span class="string">'[Wu+u]'</span>;
+Pg = sysic
+</pre><pre class="codeoutput">Continuous-time PLFTSS with 3 outputs, 3 inputs, 3 states.                   
+The model consists of the following blocks:                                  
+  rho: Time-varying real, range = [1,10], rate bounds = [-1,1], 1 occurrences
+</pre><p>Next we will synthesize a LFT-based LPV controller that minimizes the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm of the weighted interconnection <img src="LFT_Tutorial_eq04458652147229820956.png" alt="$Pg$">. The first argument of <tt>lpvsyn</tt> is the weighted interconnection. The second argument is the number of measurments available to the controller. The third argument is the number of control inputs available to the controller:</p><pre class="codeinput"><span class="comment">% Perform LPV design with LFT approach</span>
+nmeas = 1;
+ncon = 1;
+[KbLFT,GAMbLFT,INFObLFT] = lpvsyn(Pg,nmeas,ncon);
+</pre><p>The LFT-based controller <tt>KbLFT</tt> is guarenteed to acheive a induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm of <tt>GAMbLFT</tt>:</p><pre class="codeinput">GAMbLFT
+</pre><pre class="codeoutput">GAMbLFT =
+    2.1480
+</pre><p>There are two important points to note. First, the algorithm implemented in <tt>lpvsyn</tt> for LFT-based LPV systems (see [1,2,3,4] for details), does not take into account the bounds on the parameter rate-of-variation. Hence, <tt>GAMbLFT</tt> is a bound on the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm when there are no limits to how fast the parameter can change with time. Second, <tt>GAMbLFT</tt> is only an upper bound on the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm achived by <tt>KbLFT</tt> Hence, for input signals that have induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norms bounded by 1, the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm is guarenteed to be no larger than <tt>GAMbLFT</tt>. for any parameter trajectory such that: <img src="LFT_Tutorial_eq02826241707122458899.png" alt="$1 \leq \rho(t) \leq 10$"></p><h2>LPV Analysis Incorporating Rate-Bounds<a name="8"></a></h2><p>The system does have  rate-bounds on the parameter <img src="LFT_Tutorial_eq17334332337613292611.png" alt="$-1 \leq \dot{\rho}(t) \leq 1$">. We will now compute a induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm achived by <tt>KbLFT</tt> when these bounds are taken into account. To do this we use the function <tt>lpvnorm</tt>, which will detect the rate-bounds in the system and incorporate them into the analysis:</p><pre class="codeinput"><span class="comment">% Form weighted interconnection with controller in the loop:</span>
+IC = lft(Pg,KbLFT);
+
+<span class="comment">% Compute the induced $L_2$ norm achived by KbLFT</span>
+Gamma = lpvnorm(IC)
+</pre><pre class="codeoutput">Gamma =
+    1.7317
+</pre><p><tt>Gamma</tt> is the upper bound on the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm achived by <tt>KbLFT</tt>. Hence, for input signals that have induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norms bounded by 1, <tt>KbLFT</tt> is guarenteed to achieve an induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm that is no greater than <tt>Gamma</tt> for all <a href="..\..\..\..\Concepts\PermissibleTrajectories\html\PermissibleTrajectories.html">permissible parameter trajectories</a> (in this case: <img src="LFT_Tutorial_eq02826241707122458899.png" alt="$1 \leq \rho(t) \leq 10$"> and <img src="LFT_Tutorial_eq17334332337613292611.png" alt="$-1 \leq \dot{\rho}(t) \leq 1$">). We note that the induced <img src="LFT_Tutorial_eq14766676290793252675.png" alt="$L_2$"> norm achived by <tt>KbLFT</tt> is significantly lower when the rate-bounds on the parameter are taken into account.</p><h2>Pointwise LTI Analysis of LFT-Based LPV Systems<a name="10"></a></h2><p>A LFT-based LPV system can be transformed into a Linear Time-Invariant (LTI) system by holding its parameters at a constant value. Hence, it is possible to apply standard LTI analysis techniques to evaluate the pointwise performance of the LFT-based LPV controller. We will evaluate its performance on a grid of 5 points: <img src="LFT_Tutorial_eq11421988862769186366.png" alt="$\rho \in [1,2,3,4,5]$">. The syntax to perform pointwise LTI analysis requires the user to pass in a <tt>rgrid</tt> object that specifies the grid of parameter values that the LFT-based LPV system should be evaluated at. Hence, we define the <tt>rgrid</tt> object <tt>Domain</tt> to specify the desired grid points:</p><pre class="codeinput"><span class="comment">% Define the grid of parameter values:</span>
+Domain = rgrid(<span class="string">'rho'</span>,1:5,[-1 1])
+</pre><pre class="codeoutput">RGRID with the following parameters:                       
+  rho: Gridded real, 5 points in [1,5], rate bounds [-1,1].
+</pre><p>Multiple LTI analysis and simulation functions are overloaded for <tt>plftss</tt> objects. Lets use them to study the frequency response of the closed-loop system. Start by forming the closed-loop system consisting of the controller and plant, without any of the weights:</p><pre class="codeinput"><span class="comment">% Form closed-loop system without weights:</span>
+systemnames = <span class="string">'P KbLFT'</span>;
+inputvar = <span class="string">'[r; d; u]'</span>;
+outputvar = <span class="string">'[r-P; KbLFT;P]'</span>;
+input_to_KbLFT = <span class="string">'[r-P]'</span>;
+input_to_P = <span class="string">'[KbLFT+d]'</span>;
+CL = sysic;
+CL.InputName ={<span class="string">'r'</span>,<span class="string">'d'</span>,<span class="string">'u'</span>};
+CL.OutputName = {<span class="string">'e'</span>,<span class="string">'u'</span>,<span class="string">'y'</span>};
+</pre><p>Now plot a Bode plot of the performance requirement, expressed by <tt>We</tt> and compare it against the closed-loop response from the referene to the error.</p><pre class="codeinput">bodemag(1/We)
+hold <span class="string">on</span>
+bodemag(CL(<span class="string">'e'</span>,<span class="string">'r'</span>),Domain)
+legend(<span class="string">'1/We'</span>,<span class="string">'Closed-loop: r to e'</span>)
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="LFT_Tutorial_02.png" alt=""> <p>The performance requirement is not satisfied at <img src="LFT_Tutorial_eq05928335589623368184.png" alt="$\rho = 1$">, <img src="LFT_Tutorial_eq03833098170419408115.png" alt="$\rho =2$">, and <img src="LFT_Tutorial_eq14594184045526174105.png" alt="$\rho = 3$"> in the frequency band 1-6 rad/s.</p><p>Lets look at the LTI step response from reference to output:</p><pre class="codeinput">step(CL(<span class="string">'y'</span>,<span class="string">'r'</span>),Domain)
+</pre><img vspace="5" hspace="5" src="LFT_Tutorial_03.png" alt=""> <h2>LPV Simulation<a name="14"></a></h2><p>The step response is well behaved and has less than 20% steady state tracking error, which satisfies the design specification expressed by <tt>We</tt>.</p><p>The LPV system is time-varying, and LTI analysis does not capture the time-varying nature of the model. We can evaluate the performance of the LFT controller as the parameter varies with time by using time-domain simulation for a particular parameter trajectory. LPVTools provides a set of functions for LPV simulation: <tt>lpvlsim</tt>, <tt>lpvstep</tt>, <tt>lpvinitial</tt>, and <tt>lpvimpulse</tt>.</p><p>Lets look at the step response of the closed-loop system as the parameter traverses the trajectory: <img src="LFT_Tutorial_eq00254728332723601008.png" alt="$\rho(t) = 4\sin(0.25t)+5$"></p><pre class="codeinput"><span class="comment">% Define the trajectories of the parameters:</span>
+t =0:0.01:5;
+ptraj.time = t;
+ptraj.rho = 4*sin(0.25*t)+5;
+
+<span class="comment">% Perform LPV simulation:</span>
+lpvstep(CL(<span class="string">'y'</span>,<span class="string">'r'</span>),ptraj);
+</pre><img vspace="5" hspace="5" src="LFT_Tutorial_04.png" alt=""> <p>The tracking response is excellent for this particular parameter trajectory, and settles down to a steady state error of approximatly 20%.</p><h2>References<a name="16"></a></h2><div><ol><li>A. Packard, "Gain Scheduling via Linear Fractional Transformations," <i>System and Control Letters</i>, 1994.</li><li>P. Apkarian and P. Gahinet, "A Convex Characterization of Gain-Scheduled H-Infinity Controllers," <i>IEEE Transactions on Automatic Control,</i> Vol. 40, No. 5 pp. 853-864, 1995.</li><li>P. Apkarian and P. Gahinet, "Erratum to: A Convex Characterization of Gain-Scheduled H-Infinity Controllers," <i>IEEE Transactions on Automatic Control,</i> 1995.</li><li>P. Gahinet, "Explicit Controller Formulas for LMI-based H-Infinity Synthesis," <i>Automatica</i>, Vol. 32, No. 7, pp. 1007-1014, 1996.</li></ol></div><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Modeling LFT LPV Systems
+%
+%% Introduction
+% 
+% A key component of the LFT-based LPVTools infrastructure 
+% is the core LFT data structure object, referred to as a |tvreal|  
+% (denoting a time-varying parameter). 
+% The |tvreal| object is used to create a time-varying, real
+% valued scalar object. The |tvreal| has a range, denoting
+% the maximum and minimum value that the time-varying scalar
+% can assume, and a rate-bound denoting the maximum
+% and minimum rate of change of the time-varying scalar.
+% The |tvreal| is used to model individual time-varying
+% parameters, and construct parameter dependent LFT matrices
+% and systems. 
+% LPVTools represents LFT-based parameter varying matrices and state-space
+% systems by |plftmat| and |plftss| data objects, respectively. 
+% The |plftmat|, and |plftss| objects are constructed
+% using |tvreal| elements, using a syntax that is a direct parallel 
+% to the |ureal| syntax that is used to define 
+% |umat| and |uss| objects in the Robust Control Toolbox.
+
+%% Example of LFT construction
+%
+% We will design a LFT-based LPV controller for the system $G(\rho)$:
+%
+% $$\begin{array}{l@{}l}
+%  \dot{x} &{}= -\rho x + \rho u\\
+%  y &{}= x
+% \end{array} \ \ \ \ \ \ \ (1)$$ 
+% 
+% LFT-based LPV models are restricted to systems with rational parameter
+% dependence, which the system in Equation (1) satisfies.
+% Hence we can construct $G(\rho)$ as a LFT-based LPV system using a
+% |tvreal|. The first argument of |tvreal| is the
+% name of the parameter, the second argument is the range of the parameter,
+% and the third argment is the range for the parameter's rate of variation.
+% Lets model $G(\rho)$ for $1 \leq \rho \leq 10$ and $-1 \leq \dot{\rho} \leq 1$.
+
+% Define a time-varying real parameter. 
+rho = tvreal('rho',[1 10],[-1 1]);
+
+% Construct a parameter varying LFT state-space systems:
+P = ss(-rho,rho,1,0)
+
+%% LFT-based LPV Synthesis
+% 
+% We will use the command |lpvsyn| to synthesize a LFT-based LPV controller
+% for this system. |lpvsyn| requires that the closed-loop performance 
+% objectives be characterized in terms of a weighted interconnection
+% (analogous to 
+% <matlab:open(fullfile(docroot,'robust/gs/h-infinity-performance.html')) 
+% $H_\infty$ performance problems>)
+% so we define one using a set of
+% dynamic weights and the command |sysic|. 
+% 
+% The exogenous signal passing through the weight |Wd| is added to the
+% control signal from the controller.
+% The weight |Wu| acts on the disturbed control signal going from the 
+% control to the plant input. The weight |We| acts on the error between the 
+% reference signal and the plant output.
+%
+% The |Wu| weight expresses the requirement that the control signal should 
+% be less than 10 up to 1 rad/s, roll off and cross over at 10
+% rad/s, and be less than 0.1 above 100 rad/s.
+% The |We| weight expresses the requirement that the tracking error be less
+% than 0.2 at frequencies below 1 rad/s, it can then increase, and must be
+% less than 1 at 5 rad/s, and less than 5 at frequencies above 25 rad/s.
+% The |Wd| expresses the fact that the disturbance on the control signal 
+% will have magnitude no larger than 0.1. 
+
+
+% Define and plot weights for synthesis problem
+Wu = tf([10 10],[1 100]);
+We = tf([1 25],[5 5]);
+Wd = ss(0.1);
+
+bodemag(Wu,'b',We,'rREPLACE_WITH_DASH_DASH')
+legend('Wu','We')
+
+
+%%
+% Define a weighted interconnection for the synthesis problem
+systemnames = 'P Wu We Wd';
+inputvar = '[r; d; u]';
+outputvar = '[We; Wu; r-P]';
+input_to_We = '[r-P]';
+input_to_Wu = '[u+Wd]';
+input_to_Wd = '[d]';
+input_to_P = '[Wu+u]';
+Pg = sysic
+
+
+%%
+% Next we will synthesize a LFT-based LPV controller that minimizes the
+% induced $L_2$ norm of the weighted interconnection $Pg$. The first argument 
+% of |lpvsyn| is the weighted interconnection. The second argument is the
+% number of measurments available to the controller. The third argument is
+% the number of control inputs available to the controller:
+
+% Perform LPV design with LFT approach
+nmeas = 1;
+ncon = 1;
+[KbLFT,GAMbLFT,INFObLFT] = lpvsyn(Pg,nmeas,ncon);
+
+%% 
+% The LFT-based controller |KbLFT| is guarenteed to acheive a induced 
+% $L_2$ norm of |GAMbLFT|:
+GAMbLFT
+
+%% 
+% There are two important points to note. First,
+% the algorithm implemented in |lpvsyn| for LFT-based LPV systems
+% (see [1,2,3,4] for details),
+% does not take into account the bounds on the parameter rate-of-variation.
+% Hence, |GAMbLFT| is a bound on the induced $L_2$ norm when there are no
+% limits to how fast the parameter can change with time.
+% Second,
+% |GAMbLFT| is only an upper bound on the induced $L_2$ norm achived by |KbLFT|
+% Hence, for input signals that have induced $L_2$ norms bounded by 1, 
+% the induced $L_2$ norm is guarenteed to be no larger than |GAMbLFT|.
+% for any parameter trajectory such that: $1 \leq \rho(t) \leq 10$
+%
+%% LPV Analysis Incorporating Rate-Bounds
+% 
+% The system does have  rate-bounds on the parameter 
+% $-1 \leq \dot{\rho}(t) \leq 1$. 
+% We will now compute a induced $L_2$ norm achived by |KbLFT| when these
+% bounds are taken into account. To do this we use the function |lpvnorm|, 
+% which will detect the rate-bounds in the system and incorporate them
+% into the analysis:
+
+% Form weighted interconnection with controller in the loop:
+IC = lft(Pg,KbLFT);
+
+% Compute the induced $L_2$ norm achived by KbLFT
+Gamma = lpvnorm(IC)
+
+
+%%
+% |Gamma| is the upper bound on the induced $L_2$ norm achived by |KbLFT|.
+% Hence, for input signals that have induced $L_2$ norms bounded by 1, 
+% |KbLFT| is guarenteed to achieve an induced $L_2$ norm that is no
+% greater than |Gamma| for all 
+% <..\..\..\..\Concepts\PermissibleTrajectories\html\PermissibleTrajectories.html 
+% permissible parameter trajectories>
+% (in this case: $1 \leq \rho(t) \leq 10$ and $-1 \leq \dot{\rho}(t) \leq 1$).
+% We note that the induced $L_2$ norm achived by |KbLFT| is significantly 
+% lower when the rate-bounds on the parameter are taken into account. 
+
+
+%% Pointwise LTI Analysis of LFT-Based LPV Systems
+% 
+% A LFT-based LPV system can be transformed into a 
+% Linear Time-Invariant (LTI) system by holding
+% its parameters at a constant value. Hence, 
+% it is possible to apply standard LTI analysis techniques 
+% to evaluate the pointwise performance of the LFT-based LPV controller. 
+% We will evaluate its performance on a grid of 5 points: $\rho \in
+% [1,2,3,4,5]$.
+% The syntax to perform pointwise LTI analysis requires the user to pass in
+% a |rgrid| object that specifies the grid of parameter values that the
+% LFT-based LPV system should be evaluated at. Hence, we define the 
+% |rgrid| object |Domain| to specify the desired grid points:
+
+
+% Define the grid of parameter values:
+Domain = rgrid('rho',1:5,[-1 1])
+
+%% 
+% Multiple LTI analysis and simulation functions are overloaded for
+% |plftss| objects. Lets use them to study the frequency response of the
+% closed-loop system. Start by forming the closed-loop system consisting 
+% of the controller and plant, without any of the weights:
+
+% Form closed-loop system without weights:
+systemnames = 'P KbLFT';
+inputvar = '[r; d; u]';
+outputvar = '[r-P; KbLFT;P]';
+input_to_KbLFT = '[r-P]';
+input_to_P = '[KbLFT+d]';
+CL = sysic;
+CL.InputName ={'r','d','u'};
+CL.OutputName = {'e','u','y'};
+
+%%
+% Now plot a Bode plot of the performance requirement, expressed by |We| 
+% and compare it against the closed-loop response from the referene to the
+% error. 
+
+bodemag(1/We)
+hold on
+bodemag(CL('e','r'),Domain)
+legend('1/We','Closed-loop: r to e')
+hold off
+
+%%
+% The performance requirement is not satisfied at $\rho = 1$, $\rho =2$, 
+% and $\rho = 3$ in the frequency band 1-6 rad/s.
+%
+% Lets look at the LTI step response from reference to output:
+step(CL('y','r'),Domain)
+
+%% LPV Simulation
+% The step response is well behaved and has less than 20% steady state 
+% tracking error, which satisfies the design
+% specification expressed by |We|. 
+%
+% The LPV system is time-varying, and LTI
+% analysis does not capture the time-varying nature of the model. We can
+% evaluate the performance of the LFT controller as the parameter varies 
+% with time by using time-domain simulation for a particular parameter
+% trajectory. LPVTools provides a set of functions for LPV simulation:
+% |lpvlsim|, |lpvstep|, |lpvinitial|, and |lpvimpulse|.
+%
+% Lets look at the step response of the closed-loop system as the parameter
+% traverses the trajectory: $\rho(t) = 4\sin(0.25t)+5$
+
+
+% Define the trajectories of the parameters:
+t =0:0.01:5;
+ptraj.time = t;
+ptraj.rho = 4*sin(0.25*t)+5;
+
+% Perform LPV simulation:
+lpvstep(CL('y','r'),ptraj);
+
+
+%%
+% The tracking response is excellent for this particular parameter
+% trajectory, and settles down to a steady state error of approximatly 20%.
+
+%% References
+% 
+% # A. Packard, "Gain Scheduling via Linear Fractional Transformations," 
+% _System and Control Letters_, 1994.
+% # P. Apkarian and P. Gahinet, "A Convex Characterization of 
+% Gain-Scheduled H-Infinity Controllers," _IEEE Transactions on 
+% Automatic Control,_ Vol. 40, No. 5 pp. 853-864, 1995.
+% # P. Apkarian and P. Gahinet, "Erratum to: A Convex Characterization of 
+% Gain-Scheduled H-Infinity Controllers," _IEEE Transactions on 
+% Automatic Control,_ 1995.
+% # P. Gahinet, "Explicit Controller Formulas for LMI-based H-Infinity 
+% Synthesis," _Automatica_, Vol. 32, No. 7, pp. 1007-1014, 1996.
+
+
+
+##### SOURCE END #####
+--></body></html>

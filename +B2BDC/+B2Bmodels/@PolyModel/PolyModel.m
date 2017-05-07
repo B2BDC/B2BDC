@@ -6,34 +6,27 @@ classdef PolyModel < B2BDC.B2Bmodels.Model
    
    
    properties
-      Basis = []; % A PolyBasis object
+      SupportMatrix = []; % A support matrix of size nMonomial-by-nVar
       Coefficient = []; % The coefficient for each monomial in the model
    end
    
-   properties (SetAccess = private)
-      PredictionRange = [];
+   properties (Dependent)
+      Degree = [];
    end
    
    methods
-      function  obj = PolyModel(basis, coefVec, vars, dataStats, err)
+      function  obj = PolyModel(sMatrix, coefVec, vars, err)
          % Create a polynomial model object.
          % The input arguments are:
-         %   basis - The PolyBasis object specifies the monomials
+         %   sMatrix - The support matrix specifies the monomials
          %   coefVec - The coefficient vector for the monomials
          %   vars - A VariableList object contains information of all variables associated with the model 
-         %   dataStats - Statistical information about the data (if any) used to fit the model
          %   err - Statistical information about the fitting error (if any)
          if nargin > 0
-            if isa(basis,'B2BDC.B2Bvariables.PolyBasis')
-               obj.Basis = basis;
-            else
-               error('Wrong input polynomial basis object')
-            end
-         else
-            obj.Basis = B2BDC.B2Bvariables.PolyBasis();
+            obj.SupportMatrix = sMatrix;
          end
          if nargin > 1
-            if isvector(coefVec) && length(coefVec) == basis.Length
+            if isvector(coefVec) && length(coefVec) == size(sMatrix,1)
                if isrow(coefVec)
                   obj.Coefficient = coefVec';
                else
@@ -41,27 +34,27 @@ classdef PolyModel < B2BDC.B2Bmodels.Model
                end
                id = find(obj.Coefficient == 0);
                if ~isempty(id)
-                  obj.Basis.Value(id,:) = [];
+                  obj.SupportMatrix(id,:) = [];
                   obj.Coefficient(id) = [];
                end
             else
                error('Wrong input coefficient size or class')
             end
+         else
+            obj.Coefficient = ones(size(sMatrix,1),1);
          end
          if nargin > 2
-            if vars.Length == basis.Dimension
+            if vars.Length == size(sMatrix,2)
                obj.Variables = vars;
             else
                error('Input VariablesList object has a wrong dimension')
             end
+         else
+            nV = size(sMatrix,2);
+            vars = generateVar([],repmat([-1,1],nV,1));
+            obj.Variables = vars;
          end
          if nargin > 3
-            obj.DataStats.mx = dataStats.mx;
-            obj.DataStats.sx = dataStats.sx;
-            obj.DataStats.my = dataStats.my;
-            obj.DataStats.sy = dataStats.sy;
-         end
-         if nargin > 4
             obj.ErrorStats.absMax = err.absMax;
             obj.ErrorStats.absAvg = err.absAvg;
             obj.ErrorStats.relMax = err.relMax;
@@ -70,8 +63,8 @@ classdef PolyModel < B2BDC.B2Bmodels.Model
       end
       
       function y = eval(obj, X, varObj)
-         % Evaluate values of the model at sample points from X. X   
-         % should be a tall matrix with size nSample-by-nVariable. 
+         % Evaluate values of the model at sample points from X. X
+         % should be a tall matrix with size nSample-by-nVariable.
          % It returns a nSample-by-1 vector of calculated values. If there
          % are 3 input arguments, then the columns of X should be specified
          % by the input VariableList.
@@ -81,107 +74,39 @@ classdef PolyModel < B2BDC.B2Bmodels.Model
             [~,~,id] = intersect(oldVar, newVar, 'stable');
             X = X(:,id);
          end
-         if obj.Basis.Dimension ~= size(X,2)
+         if obj.Variables.Length ~= size(X,2)
             error('Wrong input dimension of variables')
          else
-            y = zeros(size(X,1),1);
-            if ~isempty(obj.DataStats.mx)
-               ns = size(X,1);
-               mx = obj.DataStats.mx;
-               sx = obj.DataStats.sx;
-               X = (X-repmat(mx,ns,1))*diag(1./sx);
-            end
-            for i = 1:size(X,1)
-               x = X(i,:);
-               for j = 1:obj.Basis.Length
-                  bs = obj.Basis.Value(j,:);
-                  y(i) = y(i)+obj.Coefficient(j)*prod(x.^bs);
-               end
-            end
-            if ~isempty(obj.DataStats.my);
-               my = obj.DataStats.my;
-               sy = obj.DataStats.sy;
-               y = y*sy+my;
+            c1 = obj.Coefficient;
+            s1 = obj.SupportMatrix;
+            nM = size(s1,1);
+            nS = size(X,1);
+            y = zeros(nS,1);
+            for i = 1:nS
+               x = repmat(X(i,:),nM,1);
+               b1 = prod(realpow(x,s1),2);
+               y(i) = c1'*b1;
             end
          end
       end
       
-      function newPModel = plus(obj,pModel)
-         % Returns a new polynomial model which is the sum of the two input
-         % component polynomial models.
-         if isa(pModel,'B2BDC.B2Bmodels.PolyModel')
-            basis1 = obj.Basis;
-            basis2 = pModel.Basis;
-            var1 = obj.Variables;
-            var2 = pModel.Variables;
-            newVar = var1.addList(var2);
-            basis1 = expandDimension(basis1,var1,newVar);
-            basis2 = expandDimension(basis2,var2,newVar);
-            newBasis = basis1+basis2;
-            coef = zeros(newBasis.Length,1);
-            coef1 = obj.Coefficient;
-            coef2 = pModel.Coefficient;
-            [~,id1,id2] = intersect(basis1.Value,newBasis.Value,'rows');
-            coef(id2) = coef(id2)+coef1(id1);
-            [~,id1,id2] = intersect(basis2.Value,newBasis.Value,'rows');
-            coef(id2) = coef(id2)+coef2(id1);
-            newPModel = B2BDC.B2Bmodels.PolyModel(newBasis,coef,newVar);
-         else
-            error('Wrong input class type')
-         end
+      function y = get.Degree(obj)
+         s1 = obj.SupportMatrix;
+         dm = sum(s1,2);
+         y = max(dm);
       end
-      
-      function newPModel = mtimes(obj, pModel)
-         % Returns a new polynomial model which is the product of the two 
-         % input component polynomial models.
-         if isa(pModel,'B2BDC.B2Bmodels.PolyModel')
-            basis1 = obj.Basis;
-            basis2 = pModel.Basis;
-            coef1 = obj.Coefficient;
-            coef2 = pModel.Coefficient;
-            var1 = obj.Variables;
-            var2 = pModel.Variables;
-            newVar = var1.addList(var2);
-            basis1 = expandDimension(basis1,var1,newVar);
-            basis2 = expandDimension(basis2,var2,newVar);
-            newBasis = basis1*basis2;
-            coef = zeros(newBasis.Length,1);
-            for i = 1:basis1.Length
-               for j = 1:basis2.Length
-                  tepBasis = basis1.Value(i,:)+ basis2.Value(j,:);
-                  tepCoef = coef1(i)*coef2(j);
-                  [~,id] = intersect(newBasis.Value,tepBasis,'rows');
-                  coef(id) = coef(id)+tepCoef;
-               end
-            end
-            newPModel = B2BDC.B2Bmodels.PolyModel(newBasis,coef,newVar);
-         else
-            error('Wrong input class type')
-         end
-      end
-
-      function polyModel = clone(obj)
-         % Returns a cloned input polynomial model object.
-         basis = obj.Basis;
-         Coef = obj.Coefficient;
-         vars = obj.Variables;
-         dataStat = obj.DataStats;
-         err = obj.ErrorStats;
-         polyModel = B2BDC.B2Bmodels.PolyModel(basis,Coef,vars,dataStat,err);
-      end
-      
    end
    
    methods (Hidden = true)
       function dispPoly(obj)
          % Displys the information of the polynomial model.
-         n1 = obj.Basis.Length;
-         n2 = obj.Basis.Dimension;
+         s1 = obj.SupportMatrix;
+         [n1,n2] = size(s1);
          disp(['The polynomial has ' num2str(n2) ' variables and ' num2str(n1) ' monomials'])
          disp('The variables are ordered as')
          disp(obj.VarNames)
          disp('The monomials are ordered as')
-         disp(obj.Basis.Value)
+         disp(s1)
          disp('The coefficient are ordered as')
          disp(obj.Coefficient)
       end

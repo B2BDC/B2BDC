@@ -45,8 +45,8 @@ RQmodel = generateModel(Ncoef,Dcoef,varList,k);
 
 %% Create a rational quadratic model (2)
 % To create a B2BDC.B2Bmodels.RQModel object by input the coefficient matrix
-% of both numerator and denominator and variable information. The
-% positivity condition of the denominator is then checked.
+% of both numerator and denominator and vairable information. The
+% posisitivity condition of the denominator is then checked.
 
 % Create a random coefficient matrix for nominator
 Ncoef = rand(nVar+1);
@@ -67,8 +67,7 @@ D2(1,1) = -1;
 % Create the RQModel object with D1
 RQmodel = generateModel(Ncoef,D1,varList);
 
-% Create the RQModel object with D2, the following code will fail due to
-% the non-positivity of the denominator D2
+% Create the RQModel object with D2
 RQmodel = generateModel(Ncoef,D2,varList);
 
 %% Evaluate a function value at given x values

@@ -5,12 +5,12 @@ classdef QModel < B2BDC.B2Bmodels.Model
    % Created: June 17, 2015     Wenyu Li
    % Modified: Nov 1, 2015     Wenyu Li (error stats added)
    
-   properties
+   properties (Dependent)
       NormalizedCoefMatrix = []; % The normalized symmetric coefficient matrix of the quadratic model of size (nVar+1)-by-(nVar+1)
    end
    
-   properties (Dependent)
-      CoefMatrix = [];  % The scaled symmetric coefficient matrix of the quadratic model of size (nVar+1)-by-(nVar+1)
+   properties 
+      CoefMatrix = [];  % The original symmetric coefficient matrix of the quadratic model of size (nVar+1)-by-(nVar+1)
    end
    
    properties (Dependent, Hidden = true)
@@ -33,7 +33,7 @@ classdef QModel < B2BDC.B2Bmodels.Model
             
          if nargin > 0
             if issymmetric(coef)
-               obj.NormalizedCoefMatrix = coef;
+               obj.CoefMatrix = coef;
             else
                error('Coefficient matrix must be symmetric')
             end
@@ -48,30 +48,24 @@ classdef QModel < B2BDC.B2Bmodels.Model
                y = obj.eval(x);
                my = mean(y);
                dy = 0.5*(max(y)-min(y));
-               if abs(dy) < 1e-5
+               if abs(dy) < 1e-3
                   dy = 1;
                end
-               obj.NormalizedCoefMatrix(1,1) = obj.NormalizedCoefMatrix(1,1) - my;
-               obj.NormalizedCoefMatrix = obj.NormalizedCoefMatrix / dy;
-            else
-               my = yScale.my;
-               dy = yScale.dy;
+               yScale.my = my;
+               yScale.dy = dy; 
             end
-            obj.yScale.my = my;
-            obj.yScale.dy = dy;
+            obj.yScale = yScale;
          else
             nVar = obj.Variables.Length;
             x = obj.Variables.makeLHSsample(nVar*(nVar+1));
             y = obj.eval(x);
             my = mean(y);
             dy = 0.5*(max(y)-min(y));
-            if abs(dy) < 1e-5
+            if abs(dy) < 1e-3
                dy = 1;
             end
             obj.yScale.my = my;
             obj.yScale.dy = dy;
-            obj.NormalizedCoefMatrix(1,1) = obj.NormalizedCoefMatrix(1,1) - my;
-            obj.NormalizedCoefMatrix = obj.NormalizedCoefMatrix / dy;
          end
          if nargin > 3
             obj.ErrorStats.absMax = err.absMax;
@@ -99,44 +93,38 @@ classdef QModel < B2BDC.B2Bmodels.Model
             [~,~,id] = intersect(oldVar, newVar, 'stable');
             X = X(:,id);
          end
-         if size(obj.NormalizedCoefMatrix,1) ~= size(X,2)+1
+         if size(obj.CoefMatrix,1) ~= size(X,2)+1
             error('Wrong input dimension of variables')
          else
             nSample = size(X,1);
             x1 = [ones(nSample,1), X];
-            T = obj.Variables.TransMatrix;
-            x2 = T*x1';
-            x2 = x2';
-            xNew = B2BDC.Fitting.expandBasis(x2(:,2:end));
-            covec = B2BDC.Fitting.coef2vec(obj.NormalizedCoefMatrix);
-            y = xNew * covec;
-            if ~isempty(obj.yScale)
-               my = obj.yScale.my;
-               dy = obj.yScale.dy;
-               y = y*dy+my;
-            end
+            xNew = B2BDC.Fitting.expandBasis(x1(:,2:end));
+            covec = B2BDC.Fitting.coef2vec(obj.CoefMatrix);
+            y = xNew*covec;
+%             coef = obj.CoefMatrix;
+%             y = diag(x1 * coef * x1');
          end
       end
       
       function y = get.Hessian(obj)
-         y = 2 * obj.NormalizedCoefMatrix(2:end,2:end);
+         y = 2 * obj.CoefMatrix(2:end,2:end);
       end
       
-      function y = get.CoefMatrix(obj)
+      function y = get.NormalizedCoefMatrix(obj)
          T = obj.Variables.TransMatrix;
-         Q = obj.NormalizedCoefMatrix;
-         y = T'*Q*T;
-         y = y*obj.yScale.dy;
-         y(1,1) = y(1,1) + obj.yScale.my;
+         Q = obj.CoefMatrix;
+         y = T'\Q/T;
+         y(1,1) = y(1,1) - obj.yScale.my;
+         y = y/obj.yScale.dy;
          y = 0.5*(y + y');
       end
    end
    
    methods (Hidden = true)
       function [A,b] = calGradient(obj)
-         quadCoef = obj.NormalizedCoefMatrix(2:end,2:end);
+         quadCoef = obj.CoefMatrix(2:end,2:end);
          A = 2 * quadCoef;
-         b = 2 * obj.NormalizedCoefMatrix(2:end,1);
+         b = 2 * obj.CoefMatrix(2:end,1);
       end
    end
    

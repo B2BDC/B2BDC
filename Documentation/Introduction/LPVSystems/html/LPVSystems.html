@@ -1,0 +1,199 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Linear Parameter-Varying Systems</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-20"><meta name="DC.source" content="LPVSystems.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Linear Parameter-Varying Systems</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Linear Parameter-Varying Systems</a></li><li><a href="#2">Grid-Based LPV Models</a></li><li><a href="#3">LFT-Based LPV Models</a></li></ul></div><h2>Linear Parameter-Varying Systems<a name="1"></a></h2><p>LPV systems are time-varying, state-space models of the form:</p><p><img src="LPVSystems_eq12313534934502497485.png" alt="$$\left[ \begin{array}{c} \dot x (t) \\ y (t)\end{array} \right]&#xA;= \left[ \begin{array}{cc} A(\rho(t)) &amp; B(\rho(t)) \\ C(\rho(t)) &amp; D(\rho(t))&#xA;\end{array} \right] \left[ \begin{array}{c} x (t) \\ u (t)\end{array} \right]&#xA;\ \ \ \ \ \ \ (1)$$"></p><p>where <img src="LPVSystems_eq04699245618552696836.png" alt="$\rho \in \mathcal{R}^{n_\rho}$"> is a vector of measurable parameters, <img src="LPVSystems_eq18310886064519335070.png" alt="$y \in \mathcal{R}^{n_y}$"> is a vector of outputs, <img src="LPVSystems_eq10503651933861830198.png" alt="$x \in \mathcal{R}^{n_x}$"> is the state vector, <img src="LPVSystems_eq17381826063452410240.png" alt="$u \in \mathcal{R}^{n_u}$"> is a vector of inputs, and <img src="LPVSystems_eq12360041428994997409.png" alt="$A\in \mathcal{R}^{n_x \times n_x}$">, <img src="LPVSystems_eq04269405753391622990.png" alt="$B\in \mathcal{R}^{n_x \times n_u}$">, <img src="LPVSystems_eq00627091781239678105.png" alt="$C\in \mathcal{R}^{n_y \times n_x}$"> and <img src="LPVSystems_eq07080944360012221644.png" alt="$D\in \mathcal{R}^{n_y \times n_u}$"> are parameter dependent matrices.</p><p>The LPV system in Equation 1 depends on a set of time-varying parameters <img src="LPVSystems_eq11905270608999804013.png" alt="$\rho$">. The trajectories of the parameters are assumed to take on values in a known compact set <img src="LPVSystems_eq11751239583881263375.png" alt="$\mathcal{P} \subseteq \mathcal{R}^{n_\rho}$">, and to have known bounds on their derivatives with respect to time: <img src="LPVSystems_eq01507068271926391489.png" alt="$\overline{\nu} \leq \dot{\rho} \leq \underline{\nu}$">, where <img src="LPVSystems_eq14354977855961682094.png" alt="$\overline{\nu}$"> and <img src="LPVSystems_eq17370597931700912223.png" alt="$\underline{\nu} \in \mathcal{R}^{n_\rho}$">. A trajectory is said to be "rate unbounded" if <img src="LPVSystems_eq03373346420063307508.png" alt="$\overline{\nu} = \infty$"> and <img src="LPVSystems_eq02799696907762919065.png" alt="$\underline{\nu} = -\infty$">.</p><p>For control design in the LPV framework, it is further assumed that time variations of <img src="LPVSystems_eq10967996549329579195.png" alt="$\rho(t)$"> are not known in advance, and that the parameter values are measured and available in real-time with sensors. The controller produced is itself a LPV system which is optimized for the parameter trajectories in <img src="LPVSystems_eq01160279029267856529.png" alt="$\rho \in P$"> subject to <img src="LPVSystems_eq01507068271926391489.png" alt="$\overline{\nu} \leq \dot{\rho} \leq \underline{\nu}$">, and dependent on real-time measurements of the parameter.</p><p>LPVTools implements data structures for two types of LPV modeling approaches: i) Linearizations on a gridded domain, and ii) Linear Fractional Transformations (LFT).</p><h2>Grid-Based LPV Models<a name="2"></a></h2><p>Linearizations on a gridded domain are referred to as <i>grid-based LPV models</i>, because they require the user to divide the parameter domain into a grid of parameter values, and then specify the linear dynamics at each grid point. Linearizations on the gridded domain are obtained through Jacobian linearization at each grid point (e.g. batch linearization of Simulink models). All the linearized systems on the grid have identical inputs <img src="LPVSystems_eq11776305044305525613.png" alt="$u$">, outputs <img src="LPVSystems_eq08830444604280721118.png" alt="$y$"> and state vectors <img src="LPVSystems_eq12428413953531653171.png" alt="$x$">. Each linearization approximates the system's dynamics in the vicinity of a particular grid point, and the grid of linearizations captures the system's parameter dependence implicitly.</p><p>Figure 1 illustrates the concept. A nonlinear model is linearized along a grid of Mach and altitude values, resulting in an array of linear systems. Together the linearizations form a LPV system approximation of the original system. Linearization based LPV models do not require any special dependence on the parameter vector. This approach is motivated by the traditional gain-scheduling framework in aircraft flight control, for which models are typically constructed as linearizations around various flight operating points.</p><p><img vspace="5" hspace="5" src="LPVArray.png" alt=""> </p><p><i>Figure 1: LPV model defined on a rectangular grid.</i></p><p><b>Further Reading</b></p><div><ol><li>Marcos, A. and Balas G., "Development of Linear-Parameter-Varying Models for Aircraft," <i>Journal of Guidance, Control, and Dynamics</i>, Vol. 27, no. 2, 2004, pp 218-228, doi: 10.2514/1.9165.</li><li>B. Takarics and P. Seiler, "Gain Scheduling for Nonlinear Systems via Integral Quadratic Constraints," <i>accepted to the American Control Conference</i>, 2015.</li></ol></div><h2>LFT-Based LPV Models<a name="3"></a></h2><p>An LPV model in Linear Fractional Transformation (LFT) form is an interconnection of a block that represents the plant's nominal dynamics (linear, time invariant), and a block that contains the time-varying parameters which the system depends on.</p><p>In the LFT-based approach the LPV system in Equation 1 is expressed as the interconnection of the blocks <img src="LPVSystems_eq00802513524912003067.png" alt="$M$"> and  <img src="LPVSystems_eq18349611728003548694.png" alt="$\Delta_\rho$">, as seen in Figure 2.</p><p><img vspace="5" hspace="5" src="LFT1.png" alt=""> </p><p><i>Figure 2: An LPV system in LFT form.</i></p><p>where <img src="LPVSystems_eq00802513524912003067.png" alt="$M$"> is a constant matrix such that</p><p><img src="LPVSystems_eq01015106267646614627.png" alt="$$\left[ \begin{array}{c} z(t) \\ y (t) \\ \dot x (t) \end{array} \right]&#xA;= M \left[ \begin{array}{c} w (t) \\ u (t) \\ x (t)\end{array} \right]&#xA;\ \ \ \ \ \ \ (2)$$"></p><p>and <img src="LPVSystems_eq18349611728003548694.png" alt="$\Delta_\rho$"> is a diagonal matrix</p><p><img src="LPVSystems_eq04426069807405764766.png" alt="$$\Delta_\rho =&#xA;\left[ \begin{array}{cccc} \rho_1 (t) I_{r_1} &amp; 0 &amp; \ldots &amp; 0 \\&#xA;0 &amp; \rho_2 (t) I_{r_2} &amp; \ldots &amp; 0 \\&#xA;\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\&#xA;0 &amp; 0 &amp; \ldots &amp; \rho_{n_\rho} (t) I_{r_{n_\rho}}&#xA;\end{array} \right] \ \ \ \ \ \ \ (3)$$"></p><p>such that <img src="LPVSystems_eq16623203438072173627.png" alt="$w = \Delta_\rho z$">. Where <img src="LPVSystems_eq11450727439320906984.png" alt="$I_{r_i}$"> indicates a <img src="LPVSystems_eq14321410347195526444.png" alt="$r_i \times r_i$"> identity matrix, for positive integers <img src="LPVSystems_eq02821073562430917561.png" alt="$r_1,\ldots,r_{n_\rho}$">, and <img src="LPVSystems_eq08820235591665319360.png" alt="$\rho_1,\ldots,\rho_{n_\rho}$"> represent the elements of the parameter vector <img src="LPVSystems_eq11905270608999804013.png" alt="$\rho$">. Note that the parameter dependence of a LFT model is modeled explicitly, and the LFT form can only be used to model LPV systems whose state matrices are rational functions of the parameters.</p><p><b>Further Reading</b></p><div><ol><li>Cockburn, J. C. and Morton, B. G. "Linear Fractional Representations of Uncertain Systems," <i>Automatica</i>, Vol. 33, no. 7, 1997, pp 1263-1271, doi: 10.1016/S0005-1098(97)00049-6.</li><li>J. Doyle, A. Packard, and K. Zhou, "Review of LFTs, LMIs, and <img src="LPVSystems_eq05371638286043275527.png" alt="$\mu$">," <i>Proceedings of the 30th IEEE Conference on Decision and Control</i>, 1991, doi: 10.1109/CDC.1991.261572.</li><li>J.F. Magni, S. Bennani, J. P. Dijkgraaf, "An Overview of System Modelling in LFT Form," in <i>Advanced Techniques for Clearance of Flight Control Laws</i>, Springer-Verlag, Germany, pp. 169-195, 2002, doi: 10.1007/3-540-45864-6_11.</li></ol></div><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Linear Parameter-Varying Systems
+%
+%% Linear Parameter-Varying Systems
+%
+% LPV systems are time-varying, state-space models of the form:
+% 
+% $$\left[ \begin{array}{c} \dot x (t) \\ y (t)\end{array} \right]
+% = \left[ \begin{array}{cc} A(\rho(t)) & B(\rho(t)) \\ C(\rho(t)) & D(\rho(t))
+% \end{array} \right] \left[ \begin{array}{c} x (t) \\ u (t)\end{array} \right]
+% \ \ \ \ \ \ \ (1)$$
+%
+% where $\rho \in \mathcal{R}^{n_\rho}$ is a vector of measurable parameters, 
+% $y \in \mathcal{R}^{n_y}$ is a vector of outputs,
+% $x \in \mathcal{R}^{n_x}$ is the state vector, $u \in \mathcal{R}^{n_u}$ is a vector 
+% of inputs, and 
+% $A\in \mathcal{R}^{n_x \times n_x}$, $B\in \mathcal{R}^{n_x \times n_u}$, 
+% $C\in \mathcal{R}^{n_y \times n_x}$ and $D\in \mathcal{R}^{n_y \times n_u}$ are parameter 
+% dependent matrices. 
+% 
+% The LPV system in Equation 1 depends on a set of time-varying parameters $\rho$. 
+% The trajectories of the parameters are assumed to take on values in a 
+% known compact set $\mathcal{P} \subseteq \mathcal{R}^{n_\rho}$, and to have known 
+% bounds on their derivatives with respect to time: $\overline{\nu} \leq \dot{\rho} \leq \underline{\nu}$, 
+% where $\overline{\nu}$ and $\underline{\nu} \in \mathcal{R}^{n_\rho}$.  
+% A trajectory is said to be "rate unbounded" if $\overline{\nu} = \infty$ 
+% and $\underline{\nu} = -\infty$.
+% 
+% For control design in the LPV framework, it is further assumed 
+% that time variations of $\rho(t)$ are not known in advance, and 
+% that the parameter values are measured and available in real-time with sensors.
+% The controller produced is itself a LPV system 
+% which is optimized for the parameter trajectories 
+% in $\rho \in P$ subject to $\overline{\nu} \leq \dot{\rho} \leq \underline{\nu}$, 
+% and dependent on real-time measurements of the parameter.
+%
+%  
+% LPVTools implements data structures for two types of LPV modeling 
+% approaches: i) Linearizations on a gridded domain, and ii) Linear Fractional Transformations (LFT).
+% 
+%% Grid-Based LPV Models
+%
+% Linearizations on a gridded domain are referred to as _grid-based LPV
+% models_, because they require the user to divide the parameter domain
+% into a grid of parameter values, and then specify the linear dynamics at
+% each grid point.
+% Linearizations on the gridded domain are obtained through Jacobian linearization 
+% at each grid point (e.g. batch linearization of Simulink models).
+% All the linearized systems on the grid have identical inputs $u$, outputs $y$ and state vectors $x$.
+% Each linearization approximates the system's dynamics in the vicinity of a particular grid point, and
+% the grid of linearizations captures the system's parameter dependence implicitly. 
+%
+%
+% Figure 1 illustrates the concept. A nonlinear model is linearized along a grid of 
+% Mach and altitude values, resulting in an array of linear systems. 
+% Together the linearizations form a LPV system approximation of the original system.
+% Linearization based LPV models do not require any special dependence on the parameter vector.
+% This approach is motivated by the traditional gain-scheduling framework 
+% in aircraft flight control, for which models are typically constructed as 
+% linearizations around various flight operating points.
+% 
+% <<LPVArray.png>>
+%
+% _Figure 1: LPV model defined on a rectangular grid._
+%
+% *Further Reading*
+%
+% # Marcos, A. and Balas G., "Development of Linear-Parameter-Varying
+% Models for Aircraft," _Journal of Guidance, Control, and Dynamics_, Vol.
+% 27, no. 2, 2004, pp 218-228, doi: 10.2514/1.9165.
+% # B. Takarics and P. Seiler, "Gain Scheduling for Nonlinear Systems 
+% via Integral Quadratic Constraints," _accepted to the 
+% American Control Conference_, 2015. 
+%
+%% LFT-Based LPV Models
+% 
+% An LPV model in Linear Fractional
+% Transformation (LFT) form is an interconnection of a block that represents the 
+% plant's nominal dynamics (linear, time invariant), and a block 
+% that contains the time-varying parameters which the system depends on. 
+%
+% In the LFT-based approach the LPV system in Equation 1 is expressed
+% as the interconnection of the blocks $M$ and  $\Delta_\rho$, as seen in
+% Figure 2.
+%
+% <<LFT1.png>>
+%
+% _Figure 2: An LPV system in LFT form._
+%
+% where $M$ is a constant matrix such that
+%
+% $$\left[ \begin{array}{c} z(t) \\ y (t) \\ \dot x (t) \end{array} \right]
+% = M \left[ \begin{array}{c} w (t) \\ u (t) \\ x (t)\end{array} \right]
+% \ \ \ \ \ \ \ (2)$$
+%
+% and $\Delta_\rho$ is a diagonal matrix
+% 
+% $$\Delta_\rho = 
+% \left[ \begin{array}{cccc} \rho_1 (t) I_{r_1} & 0 & \ldots & 0 \\ 
+% 0 & \rho_2 (t) I_{r_2} & \ldots & 0 \\ 
+% \vdots & \vdots & \ddots & \vdots \\
+% 0 & 0 & \ldots & \rho_{n_\rho} (t) I_{r_{n_\rho}}
+% \end{array} \right] \ \ \ \ \ \ \ (3)$$
+%
+% such that $w = \Delta_\rho z$. Where $I_{r_i}$ indicates a $r_i \times r_i$ identity matrix, 
+% for positive integers $r_1,\ldots,r_{n_\rho}$, and 
+% $\rho_1,\ldots,\rho_{n_\rho}$ represent the elements of the parameter vector $\rho$.
+% Note that the parameter dependence of a LFT model is modeled explicitly, and 
+% the LFT form can only be used to model LPV systems 
+% whose state matrices are rational functions of the parameters. 
+%
+% *Further Reading*
+%
+% # Cockburn, J. C. and Morton, B. G. "Linear Fractional
+% Representations of Uncertain Systems," _Automatica_, Vol. 33, no. 7, 1997,
+% pp 1263-1271, doi: 10.1016/S0005-1098(97)00049-6.
+% # J. Doyle, A. Packard, and K. Zhou, "Review of LFTs, LMIs, and $\mu$," 
+% _Proceedings of the 30th IEEE Conference on Decision and Control_, 1991,
+% doi: 10.1109/CDC.1991.261572.
+% # J.F. Magni, S. Bennani, J. P. Dijkgraaf, "An Overview of
+% System Modelling in LFT Form," in _Advanced Techniques for Clearance of
+% Flight Control Laws_, Springer-Verlag, Germany, pp. 169-195, 2002,
+% doi: 10.1007/3-540-45864-6_11.
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>

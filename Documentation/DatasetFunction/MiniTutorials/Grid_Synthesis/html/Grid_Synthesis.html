@@ -1,0 +1,399 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Synthesis for gridded LPV systems</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-20"><meta name="DC.source" content="Grid_Synthesis.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Synthesis for gridded LPV systems</h1><!--introduction--><p>Lets consider a rate-dependent, output-feedback control problem involving stabilization, tracking, disturbance rejection and input penalty. The problem is taken from a</p><div><ol><li>G. Meyer, and L. Cicolani, &#8220;Application of nonlinear systems inverses to automatic flight control design-system concepts and flight evaluations,&#8221; <i>AGARDograph: Theory and Applications 01 Optimal Control in Aerospace Systems</i>, No. 251,1981.</li><li>F. Wu, X. H. Yang, A. Packard, and G. Becker, &#8220;Induced L2-norm control for LPV systems with bounded parameter variation rates,&#8221; <i>Int. J Robust and Nonlinear Control</i>, Vol. 6, Issue 9-10, pp. 983-998, 1996, doi: 10.1002/(SICI)1099-1239(199611)6:9/10&lt;983::AID-RNC263&gt;3.0.CO;2-C.</li></ol></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">The System</a></li><li><a href="#2">Problem Formulation</a></li><li><a href="#4">Synthesis</a></li><li><a href="#8">Pointwise analysis in the LTI framework</a></li><li><a href="#15">LPV Simulation</a></li></ul></div><h2>The System<a name="1"></a></h2><p>The generalized plant model, <tt>G</tt>, is created from 3 subsystems as seen in Figure 1, an unstable continuous-time plant, <tt>P</tt>, a parameter-dependent rotation matrix, <tt>R</tt>, and two 1st order actuator models.</p><p><img vspace="5" hspace="5" src="GridSynthesis_System.png" alt=""> </p><p><i>Figure 1: The parameter-dependent system <tt>G</tt>.</i></p><p><tt>G</tt> is an LPV system with three inputs (<img src="Grid_Synthesis_eq18096895394918367257.png" alt="$f$">, <img src="Grid_Synthesis_eq01172196929062917706.png" alt="$u_1$">, <img src="Grid_Synthesis_eq09545947833240664896.png" alt="$u_2$">), two outputs (<img src="Grid_Synthesis_eq14532394993968910913.png" alt="$v_1$">, <img src="Grid_Synthesis_eq03007134714359720275.png" alt="$v_2$">), and four states. <tt>G</tt> can be written in the standard form as a parameter varying state-space system:</p><p><img src="Grid_Synthesis_eq09329330081923492225.png" alt="$$&#xA;\left[ \begin{array}{c}&#xA;\dot{x}_1(t) \\ \dot{x}_2(t) \\&#xA;\dot{x}_3(t) \\ \dot{x}_4(t) \end{array} \right]&#xA;= \left[ \begin{array}{cccc}&#xA;0.75 &amp; 2 &amp; cos(\rho) &amp; sin(\rho) \\&#xA;0 &amp; 0.5 &amp; -sin(\rho) &amp; cos(\rho) \\&#xA;0 &amp;0 &amp;-10 &amp; 0 \\&#xA;0 &amp; 0&amp; 0 &amp; -10&#xA;\end{array} \right]&#xA;\left[ \begin{array}{c} x_1 (t) \\ x_2 (t) \\ x_3 (t) \\ x_4 (t)\end{array} \right]&#xA;\left[ \begin{array}{ccc}&#xA;0 &amp; 0 &amp;0 \\&#xA;3 &amp; 0 &amp; 0 \\&#xA;0 &amp; 10 &amp;0  \\&#xA;0 &amp; 0 &amp; 10&#xA;\end{array} \right]&#xA;\left[ \begin{array}{c}&#xA;f \\&#xA;u_1 \\&#xA;u_2&#xA;\end{array} \right]&#xA;\ \ \ \ \ \ \ (1)$$"></p><p><img src="Grid_Synthesis_eq12730198841437368816.png" alt="$$&#xA;\left[ \begin{array}{c}&#xA;v_1 \\&#xA;v_2&#xA;\end{array} \right]&#xA;=&#xA;\left[ \begin{array}{cccc}&#xA;1 &amp; 0  &amp; 0 &amp; 0 \\&#xA;0 &amp; 1 &amp; 0 &amp; 0&#xA;\end{array} \right]&#xA;\ \ \ \ \ \ \ (2)$$"></p><p>The following commands create a grid-based LPV model of the parameter dependent system in Equation (1):</p><pre class="codeinput"><span class="comment">% Define the time-varying real parameter.</span>
+rho = pgrid(<span class="string">'rho'</span>,linspace(-pi,pi,7));
+rho.RateBounds = [-5 5];
+
+<span class="comment">% Define the A, B, C, and D matrices of the LPV system in Equation (1)</span>
+pcos = cos(rho);
+psin = sin(rho);
+A = [0.75 2 pcos psin;0 0.5 -psin pcos;0 0 -10 0; 0 0 0 -10];
+B = [0 0 0;3 0 0;0 10 0;0 0 10];
+C = [1 0 0 0;0 1 0 0];
+D = zeros(2,3);
+
+<span class="comment">% Form the grid-based parameter-varying state-space system:</span>
+G = pss(A,B,C,D)
+</pre><pre class="codeoutput">PSS with 4 States, 2 Outputs, 3 Inputs, Continuous System.        
+The PSS consists of the following blocks:                         
+  rho: Gridded real, 7 points in [-3.14,3.14], rate bounds [-5,5].
+</pre><h2>Problem Formulation<a name="2"></a></h2><p><img vspace="5" hspace="5" src="GridSynthesis_IC.png" alt=""> </p><p><i>Figure 2: Weighted interconnection for synthesis (from [2])</i></p><p>The control interconnection structure is given in Figure 2, and the weights are defined as follows (from [2])</p><p><img src="Grid_Synthesis_eq16035236890228243383.png" alt="$$ \begin{array}{ccccc} W_\rho = I_2 &amp; W_n = \frac{10(s+10)}{s+1000} &amp;&#xA;W_f = 1 &amp; W_u = \frac{1}{280}I_2 &amp; W_r = \frac{20}{s+0.2}I_2\end{array}$$"></p><p>The weights are generated using the following commands:</p><pre class="codeinput"><span class="comment">% Weights</span>
+Wp = eye(2);
+Wn = ss(10*tf([1 10],[1 1000]))*eye(2);
+Wf = 1;
+Wu = (1/280)*eye(2);
+Wr = ss(tf(20,[1 0.2]))*eye(2);
+</pre><p>The control problem interconnection with the weighting function is denoted as <tt>H</tt>, and is generated using the <tt>sysic</tt> command:</p><pre class="codeinput"><span class="comment">% Control Interconnection Structure</span>
+systemnames  = <span class="string">'G Wp Wn Wf Wu Wr'</span>;
+input_to_G   = <span class="string">'[ Wf; u ]'</span>;
+input_to_Wp  = <span class="string">'[ G-Wr ]'</span>;
+input_to_Wn  = <span class="string">'[ dn ]'</span>;
+input_to_Wf  = <span class="string">'[ df ]'</span>;
+input_to_Wu  = <span class="string">'[ u ]'</span>;
+input_to_Wr  = <span class="string">'[ dr ]'</span>;
+inputvar     = <span class="string">'[ df; dr(2); dn(2); u(2)]'</span>;
+outputvar    = <span class="string">'[ Wu; Wp; G-Wr+Wn ]'</span>;
+H = sysic
+</pre><pre class="codeoutput">PSS with 8 States, 6 Outputs, 7 Inputs, Continuous System.        
+The PSS consists of the following blocks:                         
+  rho: Gridded real, 7 points in [-3.14,3.14], rate bounds [-5,5].
+</pre><h2>Synthesis<a name="4"></a></h2><p>The original system <tt>G</tt> depends on the time-varying parameter <img src="Grid_Synthesis_eq11905270608999804013.png" alt="$\rho$">, and the weighted interconnection <tt>H</tt> inherits this parameter dependence. Next we will synthesize a LPV controller for <tt>H</tt>. The LPV controller will be optimized for the prescribed parameter trajectories, i.e. <img src="Grid_Synthesis_eq15304323761705110792.png" alt="$-\pi \leq \rho \pi$"> and <img src="Grid_Synthesis_eq14745093335309109263.png" alt="$-5 \leq \dot{rho} \leq 5$">. The resulting LPV controller will itself be parameter dependent and will depend on the parameter <img src="Grid_Synthesis_eq11905270608999804013.png" alt="$\rho$"> and its derivative <img src="Grid_Synthesis_eq00988239620380662938.png" alt="$\dot{rho}$">.</p><p>The following code finds a controller <tt>Klpv</tt> which minimizes the induced <img src="Grid_Synthesis_eq14766676290793252675.png" alt="$L_2$"> norm of lft(H,Klpv) when the rate of variation of <img src="Grid_Synthesis_eq11905270608999804013.png" alt="$\rho$"> is constrained: <img src="Grid_Synthesis_eq17515379644446484772.png" alt="$-5 \leq \dot{\rho} \leq 5$">:</p><pre class="codeinput"><span class="comment">% Basis function,</span>
+b1 = basis(1,0);
+bcos = basis(pcos,<span class="string">'rho'</span>,-psin);
+bsin = basis(psin,<span class="string">'rho'</span>,pcos);
+Xb = [b1;bcos;bsin];
+Yb = Xb;
+
+<span class="comment">% LPV Rate-Bounded Control Design</span>
+opt = lpvsynOptions(<span class="string">'BackOffFactor'</span>,1.02);
+[Klpv,normlpv] = lpvsyn(H,2,2,Xb,Yb,opt);
+</pre><p>The LPV controller is a <tt>pss</tt> object <tt>klpv</tt></p><pre class="codeinput">Klpv
+</pre><pre class="codeoutput">PSS with 8 States, 2 Outputs, 2 Inputs, Continuous System.         
+The PSS consists of the following blocks:                          
+  rho: Gridded real, 7 points in [-3.14,3.14], rate bounds [-5,5]. 
+  rhoDot: Gridded real, 2 points in [-5,5], rate bounds [-Inf,Inf].
+</pre><p>If we close the loop around the weighted interconnection, and form <tt>lft(H,Klpv)</tt>, the controller achieves an induced <img src="Grid_Synthesis_eq14766676290793252675.png" alt="$L_2$"> norm which is bounded from above <tt>normlpv</tt>:</p><pre class="codeinput">normlpv
+</pre><pre class="codeoutput">normlpv =
+    0.9250
+</pre><h2>Pointwise analysis in the LTI framework<a name="8"></a></h2><p>Lets apply <tt>Klpv</tt> to the original system <tt>G</tt>, and compare the open-loop vs closed loop response for an <img src="Grid_Synthesis_eq18096895394918367257.png" alt="$f$"> input:</p><p>Start by forming the closed loop system:</p><pre class="codeinput">CL = feedback(G,Klpv,[2 3],[1 2],+1)
+</pre><pre class="codeoutput">PSS with 12 States, 2 Outputs, 3 Inputs, Continuous System.        
+The PSS consists of the following blocks:                          
+  rho: Gridded real, 7 points in [-3.14,3.14], rate bounds [-5,5]. 
+  rhoDot: Gridded real, 2 points in [-5,5], rate bounds [-Inf,Inf].
+</pre><p>Set the input and output names for CL</p><pre class="codeinput">CL.InputName = {<span class="string">'f'</span>,<span class="string">'u_1'</span>,<span class="string">'u_2'</span>};
+CL.OutputName = {<span class="string">'v_1'</span>,<span class="string">'v_2'</span>};
+</pre><p>Plot the output and input sensitivity functions at each point in the domain</p><pre class="codeinput">SF = loopsens(G(:,2:3),Klpv);
+sigma(SF.So,<span class="string">'b'</span>,SF.Si,<span class="string">'r--'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Synthesis_01.png" alt=""> <p>Compute the input disk margins of the closed-loop system at each point in the domain:</p><pre class="codeinput">DMI = loopmargin(G(:,2:3),Klpv,<span class="string">'di'</span>);
+</pre><p>The smallest input disk margin in the domain has a gain margin of:</p><pre class="codeinput">lpvmin(DMI.GainMargin(2))
+</pre><pre class="codeoutput">PMAT with 1 rows and 1 columns.
+                               
+ans =
+   23.4339
+</pre><p>The smallest input disk margin in the domain has a phase margin of:</p><pre class="codeinput">lpvmin(DMI.PhaseMargin(2))
+</pre><pre class="codeoutput">PMAT with 1 rows and 1 columns.
+                               
+ans =
+   85.1130
+</pre><p>Simulate the step response of the closed-loop system to a unit <img src="Grid_Synthesis_eq18096895394918367257.png" alt="$f$"> input, at each point in the domain:</p><pre class="codeinput">step(CL(:,1))
+</pre><img vspace="5" hspace="5" src="Grid_Synthesis_02.png" alt=""> <h2>LPV Simulation<a name="15"></a></h2><p>Next, we will compute the time-domain response of the parameter dependent closed loop system as the parameter <img src="Grid_Synthesis_eq11905270608999804013.png" alt="$\rho$"> follows a particular trajectory: <img src="Grid_Synthesis_eq14027197807514321350.png" alt="$\rho = sin(t)$">. This simulation is different from the previous simulation, generated by the command <tt>step(CL(:,1))</tt>, which simlated the step LTI response of the closed-loop system at fixed <img src="Grid_Synthesis_eq11905270608999804013.png" alt="$\rho$"> values. To perform a parameter dependent simulation of the step response we use the <tt>lpvstep</tt> command:</p><pre class="codeinput"><span class="comment">% Define a time vector for the simulation</span>
+t = 0:0.01:10;
+
+<span class="comment">% Define a structure whose fields describe the trajectory of the parameter</span>
+ptraj.time = t;
+ptraj.rho = sin(t);
+ptraj.rhoDot = cos(t);
+
+<span class="comment">% Plot the parameter dependent step response for $\rho(t) = sin(t)$.</span>
+lpvstep(CL(:,1),ptraj)
+</pre><img vspace="5" hspace="5" src="Grid_Synthesis_03.png" alt=""> <p>We can also look at the time-domain response for a custom input: Plot the parameter dependent response for a unit doublet command when <img src="Grid_Synthesis_eq09402342697892027486.png" alt="$\rho(t) = sin(t)$">.</p><pre class="codeinput">u = [zeros(size(0:0.01:3)) ones(size(3.01:0.01:5)),<span class="keyword">...</span>
+     -ones(size(5.01:0.01:7)) zeros(size(7.01:0.01:10))]';
+ lpvlsim(CL(:,1),ptraj,u,t);
+</pre><img vspace="5" hspace="5" src="Grid_Synthesis_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Synthesis for gridded LPV systems
+% 
+% 
+% Lets consider a rate-dependent, output-feedback control problem involving 
+% stabilization, tracking, disturbance rejection and input penalty. 
+% The problem is taken from a 
+% 
+% # G. Meyer, and L. Cicolani, “Application of nonlinear systems inverses 
+% to automatic flight control design-system concepts and flight evaluations,” 
+% _AGARDograph: Theory and Applications 01 Optimal Control in Aerospace Systems_, 
+% No. 251,1981.
+% # F. Wu, X. H. Yang, A. Packard, and G. Becker, “Induced L2-norm control 
+% for LPV systems with bounded parameter variation rates,” _Int. J Robust 
+% and Nonlinear Control_, Vol. 6, Issue 9-10, pp. 983-998, 1996, doi:
+% 10.1002/(SICI)1099-1239(199611)6:9/10<983::AID-RNC263>3.0.CO;2-C.
+% 
+% 
+%% The System
+% 
+% 
+% The generalized plant model, |G|, is created from 3 subsystems as seen in 
+% Figure 1, an unstable continuous-time plant, |P|, a parameter-dependent 
+% rotation matrix, |R|, and two 1st order actuator models.
+% 
+% <<GridSynthesis_System.png>>
+% 
+% _Figure 1: The parameter-dependent system |G|._
+% 
+% 
+% |G| is an LPV system with three inputs ($f$, $u_1$, $u_2$), 
+% two outputs ($v_1$, $v_2$), and four states.
+% |G| can be written in the standard form as a parameter varying
+% state-space system:
+% 
+% $$
+% \left[ \begin{array}{c}  
+% \dot{x}_1(t) \\ \dot{x}_2(t) \\ 
+% \dot{x}_3(t) \\ \dot{x}_4(t) \end{array} \right]
+% = \left[ \begin{array}{cccc} 
+% 0.75 & 2 & cos(\rho) & sin(\rho) \\
+% 0 & 0.5 & -sin(\rho) & cos(\rho) \\
+% 0 &0 &-10 & 0 \\
+% 0 & 0& 0 & -10
+% \end{array} \right] 
+% \left[ \begin{array}{c} x_1 (t) \\ x_2 (t) \\ x_3 (t) \\ x_4 (t)\end{array} \right]
+% \left[ \begin{array}{ccc} 
+% 0 & 0 &0 \\
+% 3 & 0 & 0 \\
+% 0 & 10 &0  \\
+% 0 & 0 & 10
+% \end{array} \right]
+% \left[ \begin{array}{c}
+% f \\
+% u_1 \\ 
+% u_2 
+% \end{array} \right]
+% \ \ \ \ \ \ \ (1)$$
+%
+% $$
+% \left[ \begin{array}{c}
+% v_1 \\ 
+% v_2
+% \end{array} \right]
+% =
+% \left[ \begin{array}{cccc}
+% 1 & 0  & 0 & 0 \\
+% 0 & 1 & 0 & 0
+% \end{array} \right]
+% \ \ \ \ \ \ \ (2)$$
+% 
+% The following commands create a grid-based LPV model of the 
+% parameter dependent system in Equation (1):
+
+% Define the time-varying real parameter. 
+rho = pgrid('rho',linspace(-pi,pi,7));
+rho.RateBounds = [-5 5];
+
+% Define the A, B, C, and D matrices of the LPV system in Equation (1)
+pcos = cos(rho);
+psin = sin(rho);
+A = [0.75 2 pcos psin;0 0.5 -psin pcos;0 0 -10 0; 0 0 0 -10];
+B = [0 0 0;3 0 0;0 10 0;0 0 10];
+C = [1 0 0 0;0 1 0 0];
+D = zeros(2,3);
+
+% Form the grid-based parameter-varying state-space system:
+G = pss(A,B,C,D)
+
+
+%% Problem Formulation
+% 
+% 
+% <<GridSynthesis_IC.png>>
+% 
+% _Figure 2: Weighted interconnection for synthesis (from [2])_
+%
+% The control interconnection structure is given in Figure 2, and the
+% weights are defined as follows (from [2])
+% 
+% $$ \begin{array}{ccccc} W_\rho = I_2 & W_n = \frac{10(s+10)}{s+1000} & 
+% W_f = 1 & W_u = \frac{1}{280}I_2 & W_r = \frac{20}{s+0.2}I_2\end{array}$$
+% 
+% The weights are generated using the following commands:
+
+% Weights
+Wp = eye(2);
+Wn = ss(10*tf([1 10],[1 1000]))*eye(2);
+Wf = 1;
+Wu = (1/280)*eye(2);
+Wr = ss(tf(20,[1 0.2]))*eye(2);
+
+%%
+% The control problem interconnection with the weighting function is 
+% denoted as |H|, and is generated using the |sysic| command:
+
+% Control Interconnection Structure
+systemnames  = 'G Wp Wn Wf Wu Wr';
+input_to_G   = '[ Wf; u ]';
+input_to_Wp  = '[ G-Wr ]';
+input_to_Wn  = '[ dn ]';
+input_to_Wf  = '[ df ]';
+input_to_Wu  = '[ u ]';
+input_to_Wr  = '[ dr ]';
+inputvar     = '[ df; dr(2); dn(2); u(2)]';
+outputvar    = '[ Wu; Wp; G-Wr+Wn ]';
+H = sysic
+ 
+
+%% Synthesis
+%
+% The original system |G| depends on the time-varying parameter $\rho$, 
+% and the weighted interconnection |H| inherits this parameter dependence.
+% Next we will synthesize a LPV controller for |H|. 
+% The LPV controller will be optimized for the prescribed parameter
+% trajectories, i.e. $-\pi \leq \rho \pi$ and $-5 \leq \dot{rho} \leq 5$.
+% The resulting LPV controller will itself be parameter dependent and 
+% will depend on the parameter $\rho$ and its derivative $\dot{rho}$.
+
+
+%%
+% The following code finds a controller |Klpv| which minimizes the 
+% induced $L_2$ norm of lft(H,Klpv) when the rate of
+% variation of $\rho$ is constrained: $-5 \leq \dot{\rho} \leq 5$:
+
+% Basis function, 
+b1 = basis(1,0);
+bcos = basis(pcos,'rho',-psin);
+bsin = basis(psin,'rho',pcos);
+Xb = [b1;bcos;bsin]; 
+Yb = Xb;
+
+% LPV Rate-Bounded Control Design
+opt = lpvsynOptions('BackOffFactor',1.02);
+[Klpv,normlpv] = lpvsyn(H,2,2,Xb,Yb,opt);
+
+%%
+% The LPV controller is a |pss| object |klpv|
+Klpv
+
+%% 
+% If we close the loop around the weighted interconnection, and form 
+% |lft(H,Klpv)|, the controller achieves an induced $L_2$ norm which is 
+% bounded from above |normlpv|:
+normlpv
+
+%% Pointwise analysis in the LTI framework
+% 
+% Lets apply |Klpv| to the original system |G|, and 
+% compare the open-loop vs closed loop response for an $f$ input:
+% 
+% Start by forming the closed loop system:
+CL = feedback(G,Klpv,[2 3],[1 2],+1)
+
+%%
+% Set the input and output names for CL
+CL.InputName = {'f','u_1','u_2'};
+CL.OutputName = {'v_1','v_2'};
+
+%% 
+% Plot the output and input sensitivity functions at each point in the domain
+SF = loopsens(G(:,2:3),Klpv);
+sigma(SF.So,'b',SF.Si,'rREPLACE_WITH_DASH_DASH')
+
+%% 
+% Compute the input disk margins of the closed-loop system at 
+% each point in the domain:
+DMI = loopmargin(G(:,2:3),Klpv,'di');
+
+%%
+% The smallest input disk margin in the domain has a gain margin of:
+lpvmin(DMI.GainMargin(2))
+
+%%
+% The smallest input disk margin in the domain has a phase margin of:
+lpvmin(DMI.PhaseMargin(2))
+
+
+%% 
+% Simulate the step response of the closed-loop system to a unit $f$ input,
+% at each point in the domain:
+step(CL(:,1))
+
+%% LPV Simulation
+% 
+% Next, we will compute the time-domain response of the parameter dependent 
+% closed loop system as the parameter $\rho$ follows a particular
+% trajectory: $\rho = sin(t)$. This simulation is different from the 
+% previous simulation, generated by the command |step(CL(:,1))|, which 
+% simlated the step LTI response of the closed-loop system at fixed 
+% $\rho$ values.
+% To perform a parameter dependent simulation of the step response 
+% we use the |lpvstep| command:
+
+% Define a time vector for the simulation
+t = 0:0.01:10;
+
+% Define a structure whose fields describe the trajectory of the parameter
+ptraj.time = t;
+ptraj.rho = sin(t);
+ptraj.rhoDot = cos(t);
+
+% Plot the parameter dependent step response for $\rho(t) = sin(t)$.
+lpvstep(CL(:,1),ptraj)
+
+%%
+% We can also look at the time-domain response for a custom input:
+% Plot the parameter dependent response for a unit doublet command when 
+% $\rho(t) = sin(t)$.
+
+u = [zeros(size(0:0.01:3)) ones(size(3.01:0.01:5)),...
+     -ones(size(5.01:0.01:7)) zeros(size(7.01:0.01:10))]';
+ lpvlsim(CL(:,1),ptraj,u,t);
+
+
+
+    
+
+
+##### SOURCE END #####
+--></body></html>

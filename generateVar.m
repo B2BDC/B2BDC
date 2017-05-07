@@ -22,7 +22,15 @@ function y = generateVar (varName, H, val)
 % Created: July 13, 2015     Wenyu Li
 %  Modified: Jan 13, 2016     Wenyu Li (comments edited)
 
-n_variable = length(varName);
+if isempty(varName)
+   n_variable = size(H,1);
+   varName = cell(n_variable,1);
+   for i = 1:n_variable
+      varName{i} = ['Variable ' num2str(i)];
+   end
+else
+   n_variable = length(varName);
+end
 if n_variable ~= size(H,1)
    error('generateVar:InputAlignment',...
        'The input variable name and variable bounds have different dimension.')

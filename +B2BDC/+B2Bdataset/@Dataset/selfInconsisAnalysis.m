@@ -18,6 +18,7 @@ function dsNew = selfInconsisAnalysis(obj,opt)
  if nargin < 2
     opt = generateOpt;
     opt.Display = false;
+    opt.ExtraLinFraction = -1;
  end
  self_incon_dsunits = dsNew.checkSelfConsistency(opt);
  allName = obj.VarNames;

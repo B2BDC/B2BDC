@@ -1,0 +1,291 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Modeling Gridded LPV Systems</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-20"><meta name="DC.source" content="Grid_Modeling.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Modeling Gridded LPV Systems</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Introduction</a></li><li><a href="#2">Construction from Data</a></li><li><a href="#7">Construction from analytical model</a></li><li><a href="#11">A study of the pointwise LTI dynamics</a></li><li><a href="#18">Properties of a gridded LPV model</a></li></ul></div><h2>Introduction<a name="1"></a></h2><p>Let <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> represent a state-space system, which depends on Mach (<img src="Grid_Modeling_eq00802513524912003067.png" alt="$M$">) and altitude (<img src="Grid_Modeling_eq08062630503172331818.png" alt="$h$">) values, that has the standard form:</p><p><img src="Grid_Modeling_eq12313534934502497485.png" alt="$$\left[ \begin{array}{c} \dot x (t) \\ y (t)\end{array} \right]&#xA;= \left[ \begin{array}{cc} A(\rho(t)) &amp; B(\rho(t)) \\ C(\rho(t)) &amp; D(\rho(t))&#xA;\end{array} \right] \left[ \begin{array}{c} x (t) \\ u (t)\end{array} \right]&#xA;\ \ \ \ \ \ \ (1)$$"></p><p>where <img src="Grid_Modeling_eq04018682923455346154.png" alt="$\rho = [M,h]^T$">.</p><p>A grid-based LPV model of this system is a collection of linearizations on a gridded domain of parameter values, as seen in Figure 1. Each linearization approximates the system's dynamics in the vicinity of a particular grid point, and the grid of linearizations captures the system's parameter dependence implicitly.</p><p><img vspace="5" hspace="5" src="LPVArray.png" alt=""> </p><p>Figure 1: Approximate <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> as a grid-based LPV model on a <img src="Grid_Modeling_eq00241872179369006508.png" alt="$(M,h)$"> grid.</p><p>In LPVTools there are two ways to construct gridded LPV systems. When an analytical model of the LPV system is available it can be constructed using <tt>pgrid</tt> objects. More commonly,  it is constructed directly from numerical data representing the linearized model at various grid points (e.g. data from batch linearization of Simulink models).</p><h2>Construction from Data<a name="2"></a></h2><p>Jacobian Linearization is the predominant method of constructing grid-based LPV models. Lets assume <img src="Grid_Modeling_eq07365524530707038546.png" alt="$G$"> has been linearized at a grid of Mach and altitude values: <img src="Grid_Modeling_eq13834150337063148808.png" alt="$(M,h) = [0.5 0.6 0.7 0.8] \times [5000,6000,7000]~ft$"> yielding a 4x3 <tt>ss</tt> array of linearizations. The process of creating a gridded LPV model from this data is as follows:</p><p>Load <tt>Gss</tt>, a 4x3 <tt>ss</tt> array of linearizations of <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$">. Every model in the <tt>ss</tt> array shares the same state vector, input vector, and output vector. This is required for the the construction of <tt>pss</tt> systems.</p><pre class="codeinput">load <span class="string">GData</span>
+size(Gss)
+</pre><pre class="codeoutput">4x3 array of state-space models.
+Each model has 1 outputs, 1 inputs, and 1 states.
+</pre><p>Define an <tt>rgrid</tt> object to represent the grid of Mach and altitude values:</p><pre class="codeinput">Mach = [0.5 0.6 0.7 0.8];
+altitude = [5000,6000,7000];
+Domain = rgrid({<span class="string">'M'</span>,<span class="string">'h'</span>},{Mach,altitude})
+</pre><pre class="codeoutput">RGRID with the following parameters:                                 
+  M: Gridded real, 4 points in [0.5,0.8], rate bounds [-Inf,Inf].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><p>Combine the state-space array in <tt>Gss</tt> with the <tt>rgrid</tt> object to form a <tt>pss</tt>:</p><pre class="codeinput">Glpv = pss(Gss,Domain)
+</pre><pre class="codeoutput">PSS with 1 States, 1 Outputs, 1 Inputs, Continuous System.           
+The PSS consists of the following blocks:                            
+  M: Gridded real, 4 points in [0.5,0.8], rate bounds [-Inf,Inf].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><p>Note that an explicit model of the parameter dependence in <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> is not required to construct <tt>Glpv</tt>. Instead the array of linearizations captures the parameter dependence of <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> implicitly. This is an advantage when dealing with complex nonlinear models, for which an analytical linearization may not be available.</p><h2>Construction from analytical model<a name="7"></a></h2><p>Lets assume an analytical model of <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> is available:</p><p><img src="Grid_Modeling_eq04748801494346129029.png" alt="$$\begin{array}{l@{}l}&#xA; \dot{x} &{}= -Mx +M h u \\&#xA; y &{}= x&#xA;\end{array} \ \ \ \ \ \ \ (2)$$"></p><p>In this case the <tt>pss</tt> can be constructed using a <tt>pgrid</tt> object. The <tt>pgrid</tt> represents a time-varying real parameter and its values.</p><p>Define the Mach number as a time-varying parameter with 4 points in the range [0.5 0.8]</p><pre class="codeinput">M = pgrid(<span class="string">'M'</span>,0.5:0.1:0.8)
+</pre><pre class="codeoutput">Gridded real parameter "M" with 4 points in [0.5,0.8] and rate bounds [-Inf,Inf].
+</pre><p>Define thealtitude as a time-varying parameter with 3 points in the range [5000 7000]</p><pre class="codeinput">h = pgrid(<span class="string">'h'</span>,[5000 6000 7000])
+</pre><pre class="codeoutput">Gridded real parameter "h" with 3 points in [5e+03,7e+03] and rate bounds [-Inf,Inf].
+</pre><p>Define the <tt>pss</tt> representation of <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$">:</p><pre class="codeinput">Glpv2 = ss(-M,M*h,1,0)
+</pre><pre class="codeoutput">PSS with 1 States, 1 Outputs, 1 Inputs, Continuous System.           
+The PSS consists of the following blocks:                            
+  M: Gridded real, 4 points in [0.5,0.8], rate bounds [-Inf,Inf].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><h2>A study of the pointwise LTI dynamics<a name="11"></a></h2><p>A Bode plot of Glpv demonstrates how the dynamics of of <img src="Grid_Modeling_eq00171321353201330515.png" alt="$G(\rho)$"> change as a function of Mach and altitude. Each frequency response in the Bode plot corresponds to the LTI dynamics at a single grid point, when the Mach and altitude is held fixed at that grid point.</p><pre class="codeinput">bode(Glpv)
+</pre><img vspace="5" hspace="5" src="Grid_Modeling_01.png" alt=""> <p>The dynamics at a particular <img src="Grid_Modeling_eq00241872179369006508.png" alt="$(M,h)$"> grid point at easily retrieved from the <tt>pss</tt> using the <tt>.value</tt> method:</p><p>Grab the LTI system associated with <img src="Grid_Modeling_eq05573848672910352507.png" alt="$M = 0.8$"> and <img src="Grid_Modeling_eq12161251596474039967.png" alt="$h = 5000$">:</p><pre class="codeinput">Gpoint = Glpv.value(<span class="string">'M'</span>,0.8,<span class="string">'h'</span>,5000);
+</pre><p>Compare the dynamics associated with <img src="Grid_Modeling_eq05573848672910352507.png" alt="$M = 0.8$"> and <img src="Grid_Modeling_eq12161251596474039967.png" alt="$h = 5000$"> against the dynamics at the other points:</p><pre class="codeinput">bode(Glpv)
+hold <span class="string">on</span>
+bode(Gpoint,<span class="string">'r.'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Modeling_02.png" alt=""> <p>Its also possible to retrieve the data associated with several grid points. To illustrate this we will look at the Bode plot of the dynamics associated with <img src="Grid_Modeling_eq05573848672910352507.png" alt="$M = 0.8$"> and <img src="Grid_Modeling_eq17688025318112893519.png" alt="$h = [5000 6000 7000]$">.</p><p>Start by grabbing the data associated with <img src="Grid_Modeling_eq05573848672910352507.png" alt="$M = 0.8$"> and <img src="Grid_Modeling_eq17688025318112893519.png" alt="$h = [5000 6000 7000]$"></p><pre class="codeinput">Gmach = lpvsplit(Glpv,<span class="string">'M'</span>,0.8)
+</pre><pre class="codeoutput">PSS with 1 States, 1 Outputs, 1 Inputs, Continuous System.           
+The PSS consists of the following blocks:                            
+  M: Gridded real, 1 points in [0.8,0.8], rate bounds [-Inf,Inf].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><p>Compare the dynamics associated with <img src="Grid_Modeling_eq05573848672910352507.png" alt="$M = 0.8$"> and <img src="Grid_Modeling_eq17688025318112893519.png" alt="$h = [5000 6000 7000]$"> against the dynamics at the other points:</p><pre class="codeinput">bode(Glpv)
+hold <span class="string">on</span>
+bode(Gmach,<span class="string">'k.'</span>)
+</pre><img vspace="5" hspace="5" src="Grid_Modeling_03.png" alt=""> <p>The pointwise gain of <tt>Glpv</tt> is computed using the <tt>norm</tt> function. The results are returned as a <tt>pmat</tt> object, representing a parameter varying matrix:</p><pre class="codeinput">ng = norm(Glpv,inf)
+</pre><pre class="codeoutput">PMAT with 1 rows and 1 columns.                                      
+The PMAT consists of the following blocks:                           
+  M: Gridded real, 4 points in [0.5,0.8], rate bounds [-Inf,Inf].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><p><tt>ng</tt> is an array of <tt>double</tt> values arranged on a grid of Mach and altitude values. <tt>ng</tt> contains the infinity norm of <tt>Glpv</tt> computd pointwise at each of the grid points in <tt>Domain</tt>. Lets plot how the value of the infinity norm changes as a function of Mach and altitude:</p><pre class="codeinput">rcplot(ng)
+</pre><img vspace="5" hspace="5" src="Grid_Modeling_04.png" alt=""> <h2>Properties of a gridded LPV model<a name="18"></a></h2><p>The time-varying parameters that underlie the gridded LPV objects can be accessed through the "Parameter" field.</p><pre class="codeinput">Glpv.Parameter
+</pre><pre class="codeoutput">ans = 
+    M: [1x1 pgrid]
+    h: [1x1 pgrid]
+</pre><p>It is possible to change the properties of the time-varying parameters by accessing their properties trough the "Parameter" field. Lets change the rate-bounds of the parameter <tt>M</tt> to be <img src="Grid_Modeling_eq00562936064166589049.png" alt="$\pm 0.3$"></p><pre class="codeinput">Glpv.Parameter.M.RateBounds = [-0.3 0.3]
+</pre><pre class="codeoutput">PSS with 1 States, 1 Outputs, 1 Inputs, Continuous System.           
+The PSS consists of the following blocks:                            
+  M: Gridded real, 4 points in [0.5,0.8], rate bounds [-0.3,0.3].    
+  h: Gridded real, 3 points in [5e+03,7e+03], rate bounds [-Inf,Inf].
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Modeling Gridded LPV Systems
+%
+%% Introduction
+% 
+% Let $G(\rho)$ represent a state-space system,
+% which depends on Mach ($M$) and altitude ($h$) values, that has the
+% standard form:
+%
+% $$\left[ \begin{array}{c} \dot x (t) \\ y (t)\end{array} \right]
+% = \left[ \begin{array}{cc} A(\rho(t)) & B(\rho(t)) \\ C(\rho(t)) & D(\rho(t))
+% \end{array} \right] \left[ \begin{array}{c} x (t) \\ u (t)\end{array} \right]
+% \ \ \ \ \ \ \ (1)$$
+% 
+% where $\rho = [M,h]^T$.
+%
+% A grid-based LPV model of this system is a collection of linearizations 
+% on a gridded domain of parameter values, as seen in Figure 1.
+% Each linearization approximates the system's dynamics in the 
+% vicinity of a particular grid point, and the grid of linearizations 
+% captures the system's parameter dependence implicitly.
+%
+% <<LPVArray.png>>
+%
+% Figure 1: Approximate $G(\rho)$ as a grid-based LPV model on a $(M,h)$ grid.
+% 
+% In LPVTools there are two ways to construct gridded LPV systems. 
+% When an analytical model of the LPV system is available it can be
+% constructed using |pgrid| objects. More commonly,  it is constructed
+% directly from numerical data representing the linearized
+% model at various grid points (e.g. data from batch linearization of
+% Simulink models).
+
+
+%% Construction from Data
+% 
+% Jacobian Linearization is the predominant method of constructing grid-based LPV models.
+% Lets assume $G$ has been linearized at a grid of Mach and altitude
+% values: $(M,h) = [0.5 0.6 0.7 0.8] \times [5000,6000,7000]~ft$
+% yielding a 4x3 |ss| array of linearizations.
+% The process of creating a gridded LPV model from this data is as follows:
+
+%% 
+% Load |Gss|, a 4x3 |ss| array of linearizations of $G(\rho)$. Every model
+% in the |ss| array shares the same state vector, input vector, and output
+% vector. This is required for the the construction of |pss| systems.
+
+load GData
+size(Gss)
+
+
+%%
+% Define an |rgrid| object to represent the grid of Mach and
+% altitude values:
+
+Mach = [0.5 0.6 0.7 0.8];
+altitude = [5000,6000,7000];
+Domain = rgrid({'M','h'},{Mach,altitude})
+
+%%
+% Combine the state-space array in |Gss| with the |rgrid| object to form a
+% |pss|:
+
+Glpv = pss(Gss,Domain)
+
+%%
+% Note that an explicit model of the parameter dependence in $G(\rho)$ 
+% is not required to construct |Glpv|. Instead the array of linearizations
+% captures the parameter dependence of $G(\rho)$ implicitly. This is an
+% advantage when dealing with complex nonlinear models, for which an
+% analytical linearization may not be available.
+
+%% Construction from analytical model
+%
+% Lets assume an analytical model of $G(\rho)$ is available:
+%
+% $$\begin{array}{l@{}l}
+%  \dot{x} &{}= -Mx +M h u \\
+%  y &{}= x 
+% \end{array} \ \ \ \ \ \ \ (2)$$
+%
+% In this case the |pss| can be constructed using a |pgrid| object. 
+% The |pgrid| represents a time-varying real parameter and its values.
+
+%%
+% Define the Mach number as a time-varying parameter with 4 points in the range [0.5 0.8]
+M = pgrid('M',0.5:0.1:0.8)
+
+%%
+% Define thealtitude as a time-varying parameter with 3 points in the range [5000 7000]
+h = pgrid('h',[5000 6000 7000])
+
+%% 
+% 
+% Define the |pss| representation of $G(\rho)$:
+Glpv2 = ss(-M,M*h,1,0)
+
+%% A study of the pointwise LTI dynamics
+% A Bode plot of Glpv demonstrates how the dynamics of of $G(\rho)$ change
+% as a function of Mach and altitude. Each frequency response in the Bode 
+% plot corresponds to the LTI dynamics at a single grid point, when the
+% Mach and altitude is held fixed at that grid point.
+
+bode(Glpv)
+
+%% 
+% The dynamics at a particular $(M,h)$ grid point at easily retrieved from
+% the |pss| using the |.value| method:
+% 
+% Grab the LTI system associated with $M = 0.8$ and $h = 5000$:
+Gpoint = Glpv.value('M',0.8,'h',5000);
+
+%%
+% 
+% Compare the dynamics associated with $M = 0.8$ and $h = 5000$ against the
+% dynamics at the other points:
+bode(Glpv)
+hold on
+bode(Gpoint,'r.')
+
+
+%%
+% Its also possible to retrieve the data associated with several grid
+% points. To illustrate this we will look at the Bode plot of the dynamics
+% associated with $M = 0.8$ and $h = [5000 6000 7000]$.
+% 
+% Start by grabbing the data associated with $M = 0.8$ and $h = [5000 6000 7000]$
+Gmach = lpvsplit(Glpv,'M',0.8)
+
+%%
+% 
+% Compare the dynamics associated with $M = 0.8$ and $h = [5000 6000 7000]$ 
+% against the dynamics at the other points:
+bode(Glpv)
+hold on
+bode(Gmach,'k.')
+
+
+%% 
+% The pointwise gain of |Glpv| is computed using the |norm|
+% function. The results are returned as a |pmat| object, representing a
+% parameter varying matrix:
+
+ng = norm(Glpv,inf)
+
+%% 
+% |ng| is an array of |double| values arranged on a grid of Mach and
+% altitude values. |ng| contains the infinity norm of |Glpv| computd pointwise 
+% at each of the grid points in |Domain|. Lets plot how the value of the
+% infinity norm changes as a function of Mach and altitude:
+
+rcplot(ng)
+
+%% Properties of a gridded LPV model
+%
+% The time-varying parameters that underlie the gridded LPV objects can be accessed
+% through the "Parameter" field.
+Glpv.Parameter
+
+%%
+% It is possible to change the properties of the time-varying parameters 
+% by accessing their properties trough the "Parameter" field. Lets change 
+% the rate-bounds of the parameter |M| to be $\pm 0.3$
+Glpv.Parameter.M.RateBounds = [-0.3 0.3]
+
+
+
+
+##### SOURCE END #####
+--></body></html>

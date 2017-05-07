@@ -1,8 +1,8 @@
 function  y = generateOpt(varargin)
-% Returns a B2BDC.Option object. The input can be variant number
+% Returns a B2BDC.Option.Option object. The input can be variant number
 %  of 'Property_Name' and 'Property_Value' pairs. The valid property
 % names and property values are:
-% ---------------------------------------------------------------------
+   % ---------------------------------------------------------------------
    % ConsistencyMeasure:
    %   'relative' -  Calculate consistency measure in the way that
    %                  maximize              y
@@ -17,7 +17,7 @@ function  y = generateOpt(varargin)
    %                 subject to   LB(i) + y < M(i)
    %                              M(i) < UB(i) - y
    %   'DClab'    -  Calculate consistency measure from DClab package
-% ---------------------------------------------------------------------
+   % ---------------------------------------------------------------------
    % ExtraLinFraction:
    %   1 ~ 100  -  Include the indicated number of fraction of extra
    %               linear pairs in outer bound calculation
@@ -48,23 +48,27 @@ function  y = generateOpt(varargin)
    %           before showing the final stats
    %   false - Show final stats directly
    % ---------------------------------------------------------------------
-   % SOSrelaxOrder:
-   %     N   - A positive integer that defines the order of SOS relaxations
-   %           in SOS optimization process for polynomial models.
+   % Optimization:
+   %   LS-F - Least square of the errors constrained to feasible set
+   %   1N-F - 1-norm of parameters constrained to feasible set
+   %   LS-H - Least square of errors constrained to prior
    % ---------------------------------------------------------------------
-   % MaxPWsubdom: 
-   %     N   - A positive integer that defines the maximum subdomains a
-   %           piecewise model can have
+   % Prediction:
+   %   both - Both outer and inner bounds are returned
+   %   inner - Only inner bounds are returned
+   %   outer - Only outer bounds are returned
    % ---------------------------------------------------------------------
-   % PWTol:
-   %    tol  - A numerical factor specifies the stop criteria for domain
-   %           dividing.
+   % SampleOption:
+   %   A B2BDC.Option.SampleOption object
+   % ---------------------------------------------------------------------
+   % POPOption:
+   %   A B2BDC.Option.POPOption object
 
 
 % Created: July 15, 2015    Wenyu Li
 
 if nargin > 0
-   y = B2BDC.Option(varargin);
+   y = B2BDC.Option.Option(varargin);
 else
-   y = B2BDC.Option();
+   y = B2BDC.Option.Option();
 end

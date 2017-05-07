@@ -32,7 +32,7 @@ for i = 1:nUnit
    else
       varID = {sm(i).OptimizationVariables.varId};
    end
-   [~,idx] = intersect(varID,allID);
+   [~,~,idx] = intersect(varID,allID,'stable');
    varName = allName(idx);
    varLB = LBall(idx);
    varUB = UBall(idx);

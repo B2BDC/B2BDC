@@ -1,0 +1,288 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Converting between LFT- and Grid-based LPV Systems</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-20"><meta name="DC.source" content="GridToLFT.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Converting between LFT- and Grid-based LPV Systems</h1><!--introduction--><p>LPVTools provides tools to convert a LFT-based LPV system into a grid-based LPV system, and vice versa. In this example we will showcase the functionality of these tools. We will utilize them to take a grid-based LPV system and transform it into LFT-based form to do control design. Finally, the LFT-based controller will be transformed into grid-based form for evaluation.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Define a Grid-Based LPV Model</a></li><li><a href="#2">Converting a Grid-based LPV Model into a LFT-based LPV Model</a></li><li><a href="#3">LPV Design problem</a></li><li><a href="#5">LFT-based LPV Synthesis</a></li><li><a href="#7">Convert LFT-Based System to Grid-Based System</a></li></ul></div><h2>Define a Grid-Based LPV Model<a name="1"></a></h2><p>We have a LPV model <img src="GridToLFT_eq00171321353201330515.png" alt="$G(\rho)$">:</p><p><img src="GridToLFT_eq14922862276111233840.png" alt="$$\begin{array}{l@{}l}&#xA; \dot{x}_G &{}= -\rho_1 x_G + \rho_2 u_G \\&#xA; y &{}= \rho_1*\rho_2 x_G&#xA;\end{array} \ \ \ \ \ \ \ (1)$$"></p><p>which is modeled as a grid-based LPV model using <tt>pss</tt> and <tt>pgrid</tt> objects:</p><pre class="codeinput"><span class="comment">% Define a time-varying real parameter.</span>
+rho1 = pgrid(<span class="string">'rho1'</span>,1:10,[-1 1]);
+rho2 = pgrid(<span class="string">'rho2'</span>,1:3,[-10 10]);
+
+<span class="comment">% Construct a grid-based LPV system:</span>
+P = ss(-rho1,rho2,rho1*rho2,0);
+</pre><h2>Converting a Grid-based LPV Model into a LFT-based LPV Model<a name="2"></a></h2><p>Lets transform <tt>P</tt> from a grid-based LPV system into a LFT-based system. This is accomplished using the function <tt>grid2lft</tt>, which transforms a grid-based LPV model into a LFT-based LPV model by approximating the parameter dependence of the underlying data and expressing it as a rational function of the parameter, which can then be rewritten in LFT form.</p><p>A grid-based LPV system consists of an array of state-space models, arranged on a grid of parameter values. The current implementation of <tt>grid2lft</tt> takes each element of these parameter dependent state-space matrices and finds a polynomial function of the parameter, which captures how that element changes as a function of the parameter. Once the array of state-space models has been replaced by a single state-space model whose matrix elements are polynomial functions of the parameters, it can be rewritten as a LFT.</p><p>The user can specify the desired form the the polynomial function used to fit the matrix elements. In this example we will use a polynomial of the form: (1,x,y,x^2,x*y,y^2) to fit the grid-based data.</p><p>We will use <tt>grid2lft</tt> to transform <tt>P</tt> into a LFT-based model <tt>Plft</tt>. The first argument to <tt>grid2lft</tt> is the grid-based model that will be approximated as a LFT. The second argument is the desired order of the polynomial used for the fit, in this case (1,x,y,x^2,x*y,y^2) corresponds to a second order polynomial, so we put in the number 2:</p><pre class="codeinput"><span class="comment">% Transfrom P into a LFT model:</span>
+Plft = grid2lft(P,2)
+</pre><pre class="codeoutput">Continuous-time PLFTSS with 1 outputs, 1 inputs, 1 states.                     
+The model consists of the following blocks:                                    
+  rho1: Time-varying real, range = [1,10], rate bounds = [-1,1], 1 occurrences 
+  rho2: Time-varying real, range = [1,3], rate bounds = [-10,10], 2 occurrences
+</pre><h2>LPV Design problem<a name="3"></a></h2><p>We can define the control design problem as follows:</p><pre class="codeinput"><span class="comment">% Define and plot weights for synthesis problem</span>
+Wu = tf([10 10],[1 100]);
+We = tf([1 25],[5 5]);
+Wd = ss(0.1);
+
+bodemag(Wu,<span class="string">'b'</span>,We,<span class="string">'r--'</span>)
+legend(<span class="string">'Wu'</span>,<span class="string">'We'</span>)
+</pre><img vspace="5" hspace="5" src="GridToLFT_01.png" alt=""> <p>Define a weighted interconnection for the synthesis problem</p><pre class="codeinput">systemnames = <span class="string">'Plft Wu We Wd'</span>;
+inputvar = <span class="string">'[r; d; u]'</span>;
+outputvar = <span class="string">'[We; Wu; r-Plft]'</span>;
+input_to_We = <span class="string">'[r-Plft]'</span>;
+input_to_Wu = <span class="string">'[u+Wd]'</span>;
+input_to_Wd = <span class="string">'[d]'</span>;
+input_to_Plft = <span class="string">'[Wu+u]'</span>;
+Gweights = sysic
+</pre><pre class="codeoutput">Continuous-time PLFTSS with 3 outputs, 3 inputs, 3 states.                     
+The model consists of the following blocks:                                    
+  rho1: Time-varying real, range = [1,10], rate bounds = [-1,1], 1 occurrences 
+  rho2: Time-varying real, range = [1,3], rate bounds = [-10,10], 2 occurrences
+</pre><h2>LFT-based LPV Synthesis<a name="5"></a></h2><p>We will use <tt>lpvsyn</tt> to synthesize the LFT controller:</p><pre class="codeinput"><span class="comment">% Perform LPV design with LFT approach</span>
+nmeas = 1;
+ncont = 1;
+[Klft,GammaLFT] = lpvsyn(Gweights,nmeas,ncont);
+</pre><p>The LFT-based controller <tt>Klft</tt> is guarenteed to acheive a induced <img src="GridToLFT_eq14766676290793252675.png" alt="$L_2$"> norm of <tt>GammaLFT</tt>:</p><pre class="codeinput">GammaLFT
+</pre><pre class="codeoutput">GammaLFT =
+    4.8339
+</pre><h2>Convert LFT-Based System to Grid-Based System<a name="7"></a></h2><p>We can transform the LFT controller into a grid-based LPV controller. This is accomplished using the <tt>lft2grid</tt> function. The process of transforming a LFT based system into a grid-based LPV system is simple: First, pick a desired grid of parameter values for the resulting grid-based system. Second, evaluate the LFT-based system at each grid point by replacing the time-varying parameter in the LFT, with a parameter values at each grid point. The resulting array of state-space models and assocaited grid of parameter values constitutes a grid-based LPV model approximation of the LFT-based model. Lets transform <tt>Klft</tt> into a grid-based LPV system.</p><pre class="codeinput"><span class="comment">% We will use the parameter grid from the original system P</span>
+Domain = P.Domain;
+</pre><pre class="codeinput"><span class="comment">% Transform Klft into a grid-based LPV system:</span>
+Kg = lft2grid(Klft,Domain)
+</pre><pre class="codeoutput">PSS with 3 States, 1 Outputs, 1 Inputs, Continuous System.    
+The PSS consists of the following blocks:                     
+  rho1: Gridded real, 10 points in [1,10], rate bounds [-1,1].
+  rho2: Gridded real, 3 points in [1,3], rate bounds [-10,10].
+</pre><p>We transform the weighted interconnection <tt>Gweights</tt> into grid-based model, and compute the induced <img src="GridToLFT_eq14766676290793252675.png" alt="$L_2$"> norm achieved by the grid-based version of the controller:</p><pre class="codeinput"><span class="comment">% Transform the  weighted interconnection into a grid-based system</span>
+GweightsGRID = lft2grid(Gweights,Domain)
+</pre><pre class="codeoutput">PSS with 3 States, 3 Outputs, 3 Inputs, Continuous System.    
+The PSS consists of the following blocks:                     
+  rho1: Gridded real, 10 points in [1,10], rate bounds [-1,1].
+  rho2: Gridded real, 3 points in [1,3], rate bounds [-10,10].
+</pre><pre class="codeinput"><span class="comment">% Closed the loop around the controller and the weighted interconnection:</span>
+WeightedCL = lft(GweightsGRID,Kg)
+</pre><pre class="codeoutput">PSS with 6 States, 2 Outputs, 2 Inputs, Continuous System.    
+The PSS consists of the following blocks:                     
+  rho1: Gridded real, 10 points in [1,10], rate bounds [-1,1].
+  rho2: Gridded real, 3 points in [1,3], rate bounds [-10,10].
+</pre><pre class="codeinput"><span class="comment">% Compute the induced $L_2$ norm:</span>
+GammaGrid = lpvnorm(WeightedCL)
+</pre><pre class="codeoutput">GammaGrid =
+    2.4102
+</pre><p>The induced <img src="GridToLFT_eq14766676290793252675.png" alt="$L_2$"> norm computed for the grid-based version of the controller is substantially lower than the induced <img src="GridToLFT_eq14766676290793252675.png" alt="$L_2$"> norm computed for the LFT version. There are a few issues that can explain this. First, the computed induced <img src="GridToLFT_eq14766676290793252675.png" alt="$L_2$"> norm is in both cases only an upper bound, hence the results are not inconsistent. Second, the LFT-based LPV model is a smooth function of the parameter, and includes every intermediary parameter value between the grid points in <tt>Domain</tt> (the grid of parameter values which underlies the grid-based LPV model). The dynamics at these intermediary points was approximated from the existing grid-based model. Hence, if this approximation is inaccurate, the LFT-based analysis will be taking into account dynamics that are not really there.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Converting between LFT- and Grid-based LPV Systems
+%
+% LPVTools provides tools to convert a LFT-based LPV system into a
+% grid-based LPV system, and vice versa. In this example we will showcase 
+% the functionality of these tools. We will utilize
+% them to take a grid-based LPV system and transform it into LFT-based 
+% form to do control design. Finally, the LFT-based controller will be
+% transformed into grid-based form for evaluation.
+
+%% Define a Grid-Based LPV Model
+%
+% We have a LPV model $G(\rho)$:
+%
+% $$\begin{array}{l@{}l}
+%  \dot{x}_G &{}= -\rho_1 x_G + \rho_2 u_G \\
+%  y &{}= \rho_1*\rho_2 x_G 
+% \end{array} \ \ \ \ \ \ \ (1)$$ 
+% 
+% which is modeled as a grid-based LPV model using |pss| and |pgrid|
+% objects:
+
+% Define a time-varying real parameter. 
+rho1 = pgrid('rho1',1:10,[-1 1]);
+rho2 = pgrid('rho2',1:3,[-10 10]);
+
+% Construct a grid-based LPV system:
+P = ss(-rho1,rho2,rho1*rho2,0);
+
+%% Converting a Grid-based LPV Model into a LFT-based LPV Model
+% 
+% Lets transform |P| from a grid-based LPV system into a LFT-based system. 
+% This is accomplished using the function |grid2lft|, which 
+% transforms a grid-based LPV model into a LFT-based LPV model by 
+% approximating the parameter dependence of the underlying data 
+% and expressing it as a rational function of the parameter, 
+% which can then be rewritten in LFT form. 
+% 
+% A grid-based LPV system consists of an array of state-space models,
+% arranged on a grid of parameter values. The current implementation of 
+% |grid2lft| takes each element of these parameter dependent state-space 
+% matrices and finds a polynomial function of the parameter, which captures 
+% how that element changes as a function of the parameter. Once the array
+% of state-space models has been replaced by a single state-space model 
+% whose matrix elements are polynomial functions of the parameters, it can 
+% be rewritten as a LFT.
+% 
+% The user can specify the desired form the the polynomial function used to
+% fit the matrix elements. In this example we will use a polynomial of the
+% form: (1,x,y,x^2,x*y,y^2) to fit the grid-based data. 
+% 
+% We will use |grid2lft| to transform |P| into a LFT-based 
+% model |Plft|. The first argument to |grid2lft| is the grid-based model
+% that will be approximated as a LFT. The second argument is the desired
+% order of the polynomial used for the fit, in this case
+% (1,x,y,x^2,x*y,y^2) corresponds to a second order polynomial, 
+% so we put in the number 2:
+
+% Transfrom P into a LFT model:
+Plft = grid2lft(P,2)
+
+
+%% LPV Design problem
+% 
+% We can define the control design problem as follows:
+
+% Define and plot weights for synthesis problem
+Wu = tf([10 10],[1 100]);
+We = tf([1 25],[5 5]);
+Wd = ss(0.1);
+
+bodemag(Wu,'b',We,'rREPLACE_WITH_DASH_DASH')
+legend('Wu','We')
+
+
+%%
+% Define a weighted interconnection for the synthesis problem
+systemnames = 'Plft Wu We Wd';
+inputvar = '[r; d; u]';
+outputvar = '[We; Wu; r-Plft]';
+input_to_We = '[r-Plft]';
+input_to_Wu = '[u+Wd]';
+input_to_Wd = '[d]';
+input_to_Plft = '[Wu+u]';
+Gweights = sysic
+
+%% LFT-based LPV Synthesis
+% We will use |lpvsyn| to synthesize the LFT controller:
+
+% Perform LPV design with LFT approach
+nmeas = 1;
+ncont = 1;
+[Klft,GammaLFT] = lpvsyn(Gweights,nmeas,ncont);
+
+%% 
+% The LFT-based controller |Klft| is guarenteed to acheive a induced 
+% $L_2$ norm of |GammaLFT|:
+GammaLFT
+
+%% Convert LFT-Based System to Grid-Based System
+% 
+% We can transform the LFT controller into a grid-based LPV controller.
+% This is accomplished using the |lft2grid| function. The process of
+% transforming a LFT based system into a grid-based LPV system is simple:
+% First, pick a desired grid of parameter values for the resulting
+% grid-based system. Second, evaluate the LFT-based system at each grid
+% point by replacing the time-varying parameter in the LFT, with a
+% parameter values at each grid point. The resulting array of state-space
+% models and assocaited grid of parameter values constitutes a grid-based
+% LPV model approximation of the LFT-based model. Lets transform |Klft|
+% into a grid-based LPV system.
+
+% We will use the parameter grid from the original system P
+Domain = P.Domain;
+
+%%
+
+% Transform Klft into a grid-based LPV system:
+Kg = lft2grid(Klft,Domain)
+
+
+%% 
+% We transform the weighted interconnection |Gweights| into grid-based
+% model, and compute the induced $L_2$ norm achieved by the grid-based
+% version of the controller:
+
+% Transform the  weighted interconnection into a grid-based system
+GweightsGRID = lft2grid(Gweights,Domain)
+
+%%
+
+% Closed the loop around the controller and the weighted interconnection:
+WeightedCL = lft(GweightsGRID,Kg)
+
+%% 
+
+% Compute the induced $L_2$ norm:
+GammaGrid = lpvnorm(WeightedCL)
+
+%%
+% The induced $L_2$ norm computed for the grid-based
+% version of the controller is substantially lower than the induced $L_2$ 
+% norm computed for the LFT version. There are a few issues that can 
+% explain this.
+% First, the computed induced $L_2$ norm is in both cases only an upper
+% bound, hence the results are not inconsistent. Second, the LFT-based
+% LPV model is a smooth function of the parameter, and includes every
+% intermediary parameter value between the grid points in |Domain| 
+% (the grid of parameter values which underlies the grid-based LPV model). 
+% The dynamics at these intermediary points was approximated from the
+% existing grid-based model. Hence, if this approximation is inaccurate,
+% the LFT-based analysis will be taking into account dynamics that are not
+% really there. 
+
+
+##### SOURCE END #####
+--></body></html>

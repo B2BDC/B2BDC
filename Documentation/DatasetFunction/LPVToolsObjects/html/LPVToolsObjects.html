@@ -1,0 +1,138 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>LPVTools Data Structures</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-02-25"><meta name="DC.source" content="LPVToolsObjects.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>LPVTools Data Structures</h1><p>LPVTools is implemented using object-oriented programming. The toolbox introduces several class-based data structures for modeling LPV systems. These data structures extend the functionality associated with standard MATLAB data structures from the Control Systems Toolbox and the Robust Control Toolbox into the LPV framework. This is pictorially represented in Table 1.</p><p><img vspace="5" hspace="5" src="LPVToolsDataObjects.PNG" alt=""> </p><p><i>Table 1: Relation between LPVTools and MATLAB objects.</i></p><p>Table 1 shows the relation between the core LPVTools data objects and existing MATLAB objects. The first row of the table (``Nominal'') shows the basic MATLAB objects: Matrices are <tt>double</tt> objects, state-space systems are <tt>ss</tt> objects, and frequency responses are <tt>frd</tt> objects. The third row of the table (``Nominal Gridded LPV'') shows the corresponding core grid-based LPV objects. The core data structure for grid-based LPV models is the <tt>pss</tt> (denoting parameter-varying state space model), which stores the LPV system as a state space array (<tt>ss</tt>) defined on a finite, gridded domain. The notions of parameter-varying matrices and parameter-varying frequency responses arise naturally to complement the <tt>pss</tt> objects.  LPV systems are time-varying and hence frequency responses can not be used to represent the system behavior as parameters vary. However frequency responses are useful to gain intuition about the system performance at fixed locations in the operating domain. LPVTools represents parameter varying matrices and frequency responses by <tt>pmat</tt> and <tt>pfrd</tt> data objects, respectively.  These two data objects are both stored as a data array defined on a gridded domain. A <tt>pmat</tt> stores a <tt>double</tt> array, while a <tt>pfrd</tt> stores an array of frequency responses (<tt>frd</tt> object in the Control System Toolbox). The (<tt>pmat</tt>, <tt>pss</tt>, <tt>pfrd</tt>) objects should be viewed as parameter-varying extensions of the standard MATLAB and Control Systems Toolbox objects (<tt>double</tt>, <tt>ss</tt>, <tt>frd</tt>).</p><p>The second row of the table (``Uncertain'') shows the equivalent objects used to represent uncertainty: Uncertain matrices, state space systems, and frequency responses are represented by <tt>umat</tt>, <tt>uss</tt>, and <tt>ufrd</tt> objects, respectively (from the Robust Control Toolbox). The fourth row of Table 1 (``Uncertain Gridded LPV'') shows the corresponding parameter-varying objects with uncertainty: Uncertain parameter-varying matrices, state space systems, and frequency responses are represented by <tt>upmat</tt>, <tt>upss</tt>, and <tt>upfrd</tt> objects, respectively. These objects enable the integration of uncertainty into LPV models. The (<tt>upmat</tt>, <tt>upss</tt>, <tt>upfrd</tt>) objects should be viewed as parameter-varying extensions of the uncertain Robust Control Toolbox objects (<tt>umat</tt>, <tt>uss</tt>, <tt>ufrd</tt>).</p><p>LPVTools represents LFT-based parameter varying matrices and state-space systems by <tt>plftmat</tt> and <tt>plftss</tt> data objects, respectively. Uncertainty can be integrated into the <tt>plftmat</tt>, and <tt>plftss</tt> objects, allowing these data objects to model systems with, and without uncertainty. The <tt>plftmat</tt> and <tt>plftss</tt> objects should be viewed as LFT-based parameter-varying extensions of the standard MATLAB, Control System Toolbox, and Robust Control Toolbox objects <tt>double</tt>, <tt>ss</tt>, <tt>umat</tt>, and <tt>uss</tt>, as seen in rows five ("Nominal LFT LPV") and six ("Uncertain LFT LPV") in Table 1.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% LPVTools Data Structures
+% 
+% 
+% LPVTools is implemented using object-oriented programming. 
+% The toolbox introduces several class-based data structures for modeling LPV systems. 
+% These data structures extend the functionality associated with standard MATLAB data structures 
+% from the Control Systems Toolbox and the Robust Control Toolbox into the LPV 
+% framework. This is pictorially represented in Table 1. 
+% 
+% <<LPVToolsDataObjects.PNG>>
+% 
+% _Table 1: Relation between LPVTools and MATLAB objects._
+%
+% Table 1 shows the relation between the core 
+% LPVTools data objects and existing MATLAB objects. 
+% The first row of the table (``Nominal'') shows the basic MATLAB objects:
+% Matrices are |double| objects, state-space systems are
+% |ss| objects, and frequency responses are |frd| objects.
+% The third row of the table
+% (``Nominal Gridded LPV'') shows the corresponding core grid-based LPV objects.  
+% The core data structure for grid-based LPV models is the 
+% |pss| (denoting parameter-varying state space model), 
+% which stores the LPV system as a state space array (|ss|)
+% defined on a finite, gridded domain.
+% The notions of parameter-varying matrices and parameter-varying
+% frequency responses arise naturally to complement the |pss|
+% objects.  LPV systems are time-varying and hence frequency responses
+% can not be used to represent the system behavior as parameters vary.
+% However frequency responses are useful to gain intuition about the
+% system performance at fixed locations in the operating domain.
+% LPVTools represents parameter varying matrices and frequency
+% responses by |pmat| and |pfrd| data objects,
+% respectively.  These two data objects are both stored as a data array
+% defined on a gridded domain. 
+% A |pmat| stores a |double| array, while a |pfrd| stores 
+% an array of frequency responses (|frd| object in the Control System Toolbox). 
+% The (|pmat|, |pss|, |pfrd|) objects should be viewed
+% as parameter-varying extensions of the standard MATLAB and
+% Control Systems Toolbox objects (|double|, |ss|, |frd|).
+%
+% The second row of the table (``Uncertain'') shows the equivalent
+% objects used to represent uncertainty: Uncertain matrices, state space
+% systems, and frequency responses are represented by |umat|,
+% |uss|, and |ufrd| objects, respectively (from the Robust Control Toolbox).
+% The fourth row of Table 1 (``Uncertain Gridded LPV'')
+% shows the corresponding parameter-varying objects with uncertainty:
+% Uncertain parameter-varying matrices, state space systems, and
+% frequency responses are represented by |upmat|, |upss|,
+% and |upfrd| objects, respectively. These objects enable the integration
+% of uncertainty into LPV models. 
+% The (|upmat|, |upss|, |upfrd|) objects should be viewed
+% as parameter-varying extensions of the uncertain Robust Control Toolbox 
+% objects (|umat|, |uss|, |ufrd|).
+%
+% LPVTools represents LFT-based parameter varying matrices and state-space
+% systems by |plftmat| and |plftss| data objects, respectively.
+% Uncertainty can be integrated into the |plftmat|, and |plftss| objects, 
+% allowing these data objects to model systems with, and without uncertainty.
+% The |plftmat| and |plftss| objects should be viewed
+% as LFT-based parameter-varying extensions of the standard MATLAB,
+% Control System Toolbox, and Robust Control Toolbox objects 
+% |double|, |ss|, |umat|, and |uss|, as seen in 
+% rows five ("Nominal LFT LPV") and six ("Uncertain LFT LPV") in Table 1.
+
+
+
+##### SOURCE END #####
+--></body></html>

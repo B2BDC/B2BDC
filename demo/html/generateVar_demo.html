@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>generateVar_demo</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-13"><meta name="DC.source" content="generateVar_demo.m"><style type="text/css">
+      --><title>generateVar_demo</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="generateVar_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -75,11 +75,17 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 </pre><h2>Create a numberOfVariables-by-1 column vector containing the nominal<a name="4"></a></h2><p>values of the variables</p><pre class="codeinput">varNominalVals = zeros(3,1);
 </pre><h2>Create a <tt>VariableList</tt> object<a name="5"></a></h2><pre class="codeinput">varList1 = generateVar(varNames,varBounds,varNominalVals);
 </pre><h2>Verify the class of varList1<a name="6"></a></h2><pre class="codeinput">class(varList1)
-</pre><pre class="codeoutput">ans =
+</pre><pre class="codeoutput">
+ans =
+
 B2BDC.B2Bvariables.VariableList
+
 </pre><h2>Verify varList1 consists of three variables<a name="7"></a></h2><pre class="codeinput">length(varList1)
-</pre><pre class="codeoutput">ans =
+</pre><pre class="codeoutput">
+ans =
+
      3
+
 </pre><h2>Append a VariableList to another VariableList<a name="8"></a></h2><p>The <tt>addList</tt> method can append a <tt>VariableList</tt> object to another <tt>VariableList</tt> First let's create another <tt>VariableList</tt> object</p><pre class="codeinput">varNames = {<span class="string">'time'</span>,<span class="string">'length'</span>};
 varBounds = repmat([-2,2],[2,1]);
 
@@ -93,15 +99,21 @@ varList3 = varList1.addList(varList2);
 
 <span class="comment">% Verify varList3 consists of five variables</span>
 varList3.Length
-</pre><pre class="codeoutput">ans =
+</pre><pre class="codeoutput">
+ans =
+
      5
+
 </pre><h2>Create a sample by latin-hypercube design in the variable space<a name="9"></a></h2><p>This function creates a nSample-by-nVar matrix that samples the parameter space by latin-hypercube-design method</p><pre class="codeinput">nSample = 20;
 varSample = varList3.makeLHSsample(nSample);
 
 <span class="comment">% varSample is 20-by-5</span>
 size(varSample)
-</pre><pre class="codeoutput">ans =
+</pre><pre class="codeoutput">
+ans =
+
     20     5
+
 </pre><h2>Conclusion<a name="10"></a></h2><p>In this demo, we saw how to create a <tt>VariableList</tt> object and how to appened another <tt>VariableList</tt> object together.  We also saw how to sample the domain defined by the <tt>VariableList</tt> object. More information can be found with <tt>help</tt>.</p><pre class="codeinput">help <span class="string">generateVar</span>
 </pre><pre class="codeoutput">   Returns a VariableList object from array of Names and Bounds
  
@@ -123,7 +135,7 @@ size(varSample)
      V = generateVar(NAMES,BOUNDS,NOMINAL) sets the nominal value for each
      parameter as the corresponding element in the N-by-1 array NOMINAL.
 
-</pre><h2>Attribution<a name="11"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><h2>Attribution<a name="11"></a></h2><p>UC Berkeley, PSAAP team.  Fall 2015</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 % This is a demo showing how to use generateVar function to create a 
 % B2BDC.B2Bvariables.VariableList object and its commonly used methods.

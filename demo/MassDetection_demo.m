@@ -151,6 +151,7 @@ end
 % |GRIMech_demo2.m| demo for details.
 
 predResultQ = dsQ.calVarBounds([1:nUncertainMass],Opt);
+posteriorQ = [predResultQ.OuterBound];
 
 %% Plot predictions (and hidden true values)
 % The posterior bounds are plotted as red bars, the prior bounds are plotted as
@@ -158,7 +159,7 @@ predResultQ = dsQ.calVarBounds([1:nUncertainMass],Opt);
 
 priorQ = [ [dsQ.Variables.Values.LowerBound]' [dsQ.Variables.Values.UpperBound]'];
 figure;
-plotBounds(priorQ,predResultQ, varName);
+plotBounds(priorQ,posteriorQ, varName);
 plot(Mtrue,'ko','MarkerFaceColor','k');
 xlabel('Mass Index');
 ylabel('Mass Prediction');
@@ -224,6 +225,7 @@ end
 
 Opt = generateOpt('Display',false,'AddFitError',false);
 predResultRQ = dsRQ.calVarBounds([1:nUncertainMass],Opt);
+posteriorRQ = [predResultQ.OuterBound];
 
 %% Plot predictions (and hidden true values)
 % The posterior bounds are plotted as red bars, the prior bounds are plotted as
@@ -231,7 +233,7 @@ predResultRQ = dsRQ.calVarBounds([1:nUncertainMass],Opt);
 
 priorRQ= [ [dsRQ.Variables.Values.LowerBound]' [dsRQ.Variables.Values.UpperBound]'];
 figure;
-plotBounds(priorRQ,predResultRQ, varName);
+plotBounds(priorRQ,posteriorRQ, varName);
 plot(Mtrue,'ko','MarkerFaceColor','k');
 xlabel('Mass Index');
 ylabel('Mass Prediction');

@@ -28,10 +28,11 @@ classdef Dataset < handle
    
    properties (SetAccess = private, GetAccess = public)
       ConsistencyMeasure = [];      % Lower and upper bounds to the consistency measure, [lowerBound upperBound]                
+      ConsistencySensitivity = [];  % Structure array of sensitivity to consistency measure
    end
    
    properties (SetAccess = private, GetAccess = public, Hidden = true)
-      ConsistencySensitivity = [];  % Structure array of sensitivity to consistency measure
+      FeasibleFlag = false; % Whether the feasibility includes fitting error
    end
    
    methods
@@ -99,6 +100,10 @@ classdef Dataset < handle
          end
       end
       
+      function y = length(obj)
+         y = obj.Length;
+      end
+      
       function y = isConsistent(obj,opt)
          %   Y = ISCONSISTENT(OBJ) returns a logical true if the
          %   conistency measure of the dataset OBJ is positive.
@@ -108,26 +113,30 @@ classdef Dataset < handle
          %   OPT must be a B2BDC.Option object.
          
          if nargin > 1
-            if ~isa(opt,'B2BDC.Option')
+            if ~isa(opt,'B2BDC.Option.Option')
                error(['Option input must be a B2BDC.Option object. ' ...
                    'Use generateOpt to create a B2BDC.Option object.'])
             end
          else
-            opt = B2BDC.Option();
+            opt = generateOpt;
          end
          flag1 = opt.ConsistencyMeasure;
          switch flag1
             case 'relative'
                if isempty(obj.ConsistencyMeasure)
                   if polytest(obj)
-                     obj.polyConsisrel(opt)
+                     obj.polyConsisrel(opt);
                   else
                      obj.evalConsistencyrel(opt);
                   end
                end
             case 'absolute'
                if isempty(obj.ConsistencyMeasure)
-                  obj.evalConsistencyabs(opt);
+                  if polytest(obj)
+                     obj.polyConsisabs(opt);
+                  else
+                     obj.evalConsistencyabs(opt);
+                  end
                end
             case 'DClab'
                if isempty(obj.ConsistencyMeasure)
@@ -150,40 +159,40 @@ classdef Dataset < handle
          end
       end
       
-        function deletedUnits = deleteUnit(obj,id)
-            %   DELETEDUNITS = DELETEUNIT(OBJ, ID) removes specified
-            %   DatasetUnits from the dataset OBJ and will return an
-            %   n-by-1 array of deleted DatasetUnits in DELETEDUNITS.
-            %   ID will specify which DatasetUnits to delete by either a cell
-            %   array of the DatasetUnit names or a vector of indicies of the
-            %   n number of DatasetUnits to be removed.
-            
-            deletedUnits = [];
-            idx = [];
-            if iscell(id)
-                allName = {obj.DatasetUnits.Values.Name};
-                [~,idx] = intersect(allName, id);
-            elseif isa(id, 'B2BDC.B2Bdataset.DatasetUnit')
-                allName = {obj.DatasetUnits.Values.Name};
-                idNames = {id.Name};
-                [~,idx] = intersect(allName, idNames);
-            elseif isa(id, 'double') && all(id <= obj.DatasetUnits.Length) && all(id > 0)
-                    idx = id;
-            end
-            if isempty(idx)
-                error(['The ID to be removed was not found ', ...
-                        'or exceeded the dataset length.'])
-            end
-            units = obj.DatasetUnits.Values;
-            obj.clearDataset;
-            if ~isempty(idx)
-                deletedUnits = units(idx);
-                units(idx) = [];
-            end
-            obj.addDSunit(units);
-        end
+      function deletedUnits = deleteUnit(obj,id)
+          %   DELETEDUNITS = DELETEUNIT(OBJ, ID) removes specified 
+          %   DatasetUnits from the dataset OBJ and will return an
+          %   n-by-1 array of deleted DatasetUnits in DELETEDUNITS. 
+          %   ID will specify which DatasetUnits to delete by either a cell
+          %   array of the DatasetUnit names or a vector of indicies of the
+          %   n number of DatasetUnits to be removed. 
+          
+          deletedUnits = [];
+          idx = [];
+          if iscell(id)
+             allName = {obj.DatasetUnits.Values.Name};
+             [~,idx] = intersect(allName, id);
+          elseif isa(id, 'B2BDC.B2Bdataset.DatasetUnit')
+             allName = {obj.DatasetUnits.Values.Name};
+             idNames = {id.Name};
+             [~,idx] = intersect(allName, idNames);
+          elseif isa(id, 'double') && all(id <= obj.DatasetUnits.Length) && all(id > 0)
+             idx = id;
+          end
+          if isempty(idx)
+             error(['The ID to be removed was not found ', ...
+                'or exceeded the dataset length.'])
+          end
+          units = obj.DatasetUnits.Values;
+          obj.clearDataset;
+          if ~isempty(idx)
+             deletedUnits = units(idx);
+             units(idx) = [];
+          end
+          obj.addDSunit(units);
+      end
       
-      function changeBounds(obj,newBD,idx)
+      function changeBound(obj,newBD,idx)
           %   CHANGEBOUNDS(OBJ, NEWBD) returns a dataset OBJ with new
           %   bounds for all DatasetUnits. NEWDB is an nUnit-by-2 or by-3 
           %   matrix defining the LowerBound, UpperBound and ObservedValue 
@@ -191,7 +200,7 @@ classdef Dataset < handle
           %   mean of the provided LowerBound and UpperBound will be used. 
           %
           %   CHANGEBOUNDS(OBJ, NEWBD, IDX) returns a dataset OBJ with new
-          %   bounds for DatasetUnits specified by IDX. NEWDB can be either
+          %   bounds for DatasetUnits specified by IDX. NEWBD can be either
           %   n-by-2 or by-3 matrix defining the LowerBound, UpperBound
           %   and ObservedValue for the n DatasetUnits to be changed. 
           %   If ObservedValue is not provided the mean of the provided 
@@ -239,6 +248,12 @@ classdef Dataset < handle
           end   
       end
       
+      function changeVarBound(obj,newBD,idx)
+         v1 = obj.Variables;
+         v2 = v1.changeBound(newBD,idx);
+         obj.Variables = v2;
+      end
+      
       function dsUnit = findDSunit(obj,unitName)
          %   DSUNIT = FINDDSUNIT(OBJ, UNITNAME) looks for a DatasetUnit
          %   object from the dataset OBJ whose name matches the string
@@ -265,6 +280,10 @@ classdef Dataset < handle
          for i = 1:n
             dsNew.addDSunit(units(i));
          end
+         dsNew.FeasibleFlag = obj.FeasibleFlag;
+         dsNew.FeasiblePoint = obj.FeasiblePoint;
+         dsNew.ConsistencyMeasure = obj.ConsistencyMeasure;
+         dsNew.ConsistencySensitivity = obj.ConsistencySensitivity;
       end
       
       function bounds = calBound(obj)
@@ -298,7 +317,10 @@ classdef Dataset < handle
          %   indicies of the nUnit number of DatasetsUnits to be calculated.
          
          if nargin > 0
-            if size(X,2) ~= obj.Variables.Length;
+            if size(X,2) ~= obj.Variables.Length
+               X = X';
+            end
+            if size(X,2) ~= obj.Variables.Length
                error('The input number of variables does not match the number of variables in the dataset')
             end
             nSample = size(X,1);
@@ -318,7 +340,7 @@ classdef Dataset < handle
                      tmpModel = obj.DatasetUnits.Values(DSIdx(i)).SurrogateModel;
                      y(:,i) = tmpModel.eval(X, vObj);
                   end
-               elseif iscell(DSIdx);
+               elseif iscell(DSIdx)
                   nUnit = length(DSIdx);
                   y = zeros(nSample, nUnit);
                   for i = 1:nUnit
@@ -354,29 +376,28 @@ classdef Dataset < handle
          end
       end
       
+      function clearConsis(obj)
+         %   CLEARCONSIS(OBJ) removes all properties of consistency of
+         %   the dataset OBJ
+         
+         obj.ConsistencyMeasure = [];
+         obj.ConsistencySensitivity = [];
+         obj.FeasiblePoint = [];
+         obj.FeasibleFlag = false;
+      end
+      
    end
    
    methods (Static, Hidden = true)
        xval = q2sample(Mgd,idx,H,Xvals,V);
    end
    
+   methods (Static)
+      [Qall,idx] = findConicHull(Q1,Q2)
+      [Qall,idx] = approxConicHull(Q1,Q2,n)
+   end
+   
    methods (Hidden = true)
-       function y = length(obj)
-           % LENGTH(OBJ) returns the number of DatsetUnits in the Dateset
-           % OBJ
-           
-           y = obj.Length;
-       end
-       
-       function clearConsis(obj)
-          %   CLEARCONSIS(OBJ) removes all properties of consistency of
-          %   the dataset OBJ
-          
-           obj.ConsistencyMeasure = [];
-           obj.ConsistencySensitivity = [];
-           obj.FeasiblePoint = [];
-       end
-       
        function clearDataset(obj)
           %   CLEARDATASET(OBJ) returns a dataset OBJ whose dataset units
           %   and variable lists have been removed.
@@ -388,56 +409,60 @@ classdef Dataset < handle
        end
        
        function y = polytest(obj)
-           %   Y = POLYTEST(OBJ) returns a logical true if all surrogate
-           %   models of the dataset OBJ are PolyModel. A logical false is
-           %   returned if any surrogate model is not of the class
-           %   PolyModel.
+           %   Y = POLYTEST(OBJ) returns a logical output true if all surrogate models are
+           %   polynomial models and at least one of them is not quadratic model.
            
-           y = true;
-           for i = 1:obj.Length
-               tep_model = obj.DatasetUnits.Values(i).SurrogateModel;
-               if ~isa(tep_model,'B2BDC.B2Bmodels.PolyModel')
-                   y = false;
-                   break
-               end
+           y = false;
+           dsUnits = obj.DatasetUnits.Values;
+           for i = 1:length(dsUnits)
+              testModel = dsUnits(i).SurrogateModel;
+              if isa(testModel,'B2BDC.B2Bmodels.PolyModel')
+                 y = true;
+                 continue
+              elseif ~isa(testModel,'B2BDC.B2Bmodels.QModel')
+                 y = false;
+                 break;
+              end
            end
        end
        
        evalConsistencyabs(obj,b2bopt)
        evalConsistencyDClab(obj)
        evalConsistencyrel(obj,b2bopt)
-       [Qunits, Qx, Qextra, n_extra, extraIdx] = getInequalQuad(obj,bds,frac)
+       [Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ] = getInequalQuad(obj,bds,frac)
        J = getJacobian(obj)
        directionSearch(obj,theta,x0,B2Bopt)
        
        %CVX Functions
-       [y,s] = cvxconsisabs(obj,yin,frac,tolerance)
-       [y,s] = cvxconsisquadrel(obj,frac)
-       [minout,minSensitivity] = cvxminouterbound(obj,QOIobj,frac)
-       [maxout,maxSensitivity] = cvxmaxouterbound(obj,QOIobj,frac)
-       [y,s] = cvxconsisrel(obj,yin,frac,tolerance)
-       [y,s] = cvxconsisquadabs(obj,QOIobj,frac)
+       [y,s] = cvxconsisabs(obj,yin,frac,abE)
+       [y,s] = cvxconsisquadrel(obj,b2bopt,frac)
+       [yout,sensitivity] = obj.sedumiconsisquadrel_old(b2bopt, abE);
+       [minout,minSensitivity] = cvxminouterbound(obj,QOIobj,frac,abE,rflag)
+       [maxout,maxSensitivity] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
+       [y,s] = cvxconsisrel(obj,yin,frac,abE)
+       [y,s] = cvxconsisquadabs(obj,b2bopt,abE)
        
        % Sedumi Functions
        [y,s] = sedumiconsisabs(obj,opt,abE)
        [y,s] = sedumiconsisquadabs(obj,opt,abE)
        [y,s] = sedumiconsisrel(obj,yin,opt,abE)
        [y,s] = sedumiconsisquadrel(obj,opt,abE)
-       [minout,minSensitivity] = sedumiminouterbound(obj,QOIobj,frac,abE)
-       [maxout,maxSensitivity] = sedumimaxouterbound(obj,QOIobj,frac,abE)
+       [minout,minSensitivity] = sedumiminouterbound(obj,QOIobj,frac,abE,rflag)
+       [maxout,maxSensitivity] = sedumimaxouterbound(obj,QOIobj,frac,abE,rflag)
+       
        
        % Matlab Functions
-       y = addlistener()
-       y = delete()
-       y = findobj()
-       y = findprop()
-       y = notify()
-       y = le()
-       y = lt()
-       y = ne()
-       y = ge()
-       y = gt()
-       y = eq() 
+       y = addlistener(obj)
+       y = delete(obj)
+       y = findobj(obj)
+       y = findprop(obj)
+       y = notify(obj)
+       y = le(obj)
+       y = lt(obj)
+       y = ne(obj)
+       y = ge(obj)
+       y = gt(obj)
+       y = eq(obj) 
        
        
    end

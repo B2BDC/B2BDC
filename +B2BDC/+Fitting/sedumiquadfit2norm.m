@@ -9,21 +9,22 @@ function y = sedumiquadfit2norm(X,Y,vars)
 % Created: July 22, 2015    Wenyu Li
 
 [n_sample, n_variable] = size(X);
-mx = mean(vars.calBound')';
-dx = 0.5*diff(vars.calBound')';
-Tx = [1, zeros(1,n_variable);
-   -mx./dx , diag(1./dx)];
+% mx = mean(vars.calBound')';
+% dx = 0.5*diff(vars.calBound')';
+% Tx = [1, zeros(1,n_variable);
+%    -mx./dx , diag(1./dx)];
 if ~isvector(Y) || n_sample ~= length(Y)
    error('Wrong dimension of input data')
 end
 my = mean(Y);
 dy = 0.5*(max(Y)-min(Y));
-Y = (Y-my)/dy;
-x1 = [ones(n_sample,1),X];
-x2 = Tx*x1';
-x2 = x2';
-Xn = x2(:,2:end);
-xNew = B2BDC.Fitting.expandBasis(Xn);
+% Y = (Y-my)/dy;
+% x1 = [ones(n_sample,1),X];
+% x2 = Tx*x1';
+% x2 = x2';
+% Xn = x2(:,2:end);
+% xNew = B2BDC.Fitting.expandBasis(Xn);
+xNew = B2BDC.Fitting.expandBasis(X);
 n_Coef = size(xNew,2);
 n_opt = n_Coef+1+n_sample;
 A = zeros(n_sample,n_opt);
@@ -42,9 +43,9 @@ yScale.my = my;
 yScale.dy = dy;
 y = B2BDC.B2Bmodels.QModel(c1,vars,yScale);
 yhat = xNew * coefVec;
-err = dy*abs(yhat-Y);
+err = abs(yhat-Y);
 y.ErrorStats.absMax = max(err);
 y.ErrorStats.absAvg = mean(err);
-err = err./abs(Y*dy+my);
+err = err./abs(Y);
 y.ErrorStats.relMax = max(err);
 y.ErrorStats.relAvg = mean(err);

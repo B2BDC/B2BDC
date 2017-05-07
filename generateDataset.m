@@ -1,6 +1,6 @@
 function y = generateDataset(dsName)
 % Returns a B2BDC.B2Bdataset.Dataset object with no dataset units.
-% The input argument is:    
+% The input argument is:
 %
 %   dsName - A string defines the name of the dataset
 

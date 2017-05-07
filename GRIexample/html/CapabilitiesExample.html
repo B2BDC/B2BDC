@@ -1,0 +1,162 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CapabilitiesExample</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-12-08"><meta name="DC.source" content="CapabilitiesExample.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Load GRI-Mech 3.0 dataset</a></li><li><a href="#2">Check consistency</a></li><li><a href="#3">Plot sensitivity</a></li><li><a href="#4">Remove Top 2</a></li><li><a href="#5">Recheck consistency</a></li><li><a href="#6">What can explored with a consistent dataset?</a></li><li><a href="#7">Posterior bounds on Model variables</a></li></ul></div><h2>Load GRI-Mech 3.0 dataset<a name="1"></a></h2><pre class="codeinput">[~,~,experimentData] = xlsread(<span class="string">'GRIMech_expdata.xls'</span>);
+s = load(<span class="string">'GRIMech_modeldata.mat'</span>);
+modelData = s.GRIMech_modeldata;
+dsGRI = startDataset(<span class="string">'GRI Mech 3.0'</span>);
+dsGRI = addData(dsGRI,experimentData,modelData);
+</pre><h2>Check consistency<a name="2"></a></h2><pre class="codeinput">dsGRI.isConsistent;
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: -0.37248
+Consistency UB: -0.29163
+The dataset is inconsistent
+</pre><h2>Plot sensitivity<a name="3"></a></h2><pre class="codeinput">dsGRI.plotConsistencySensitivity
+</pre><img vspace="5" hspace="5" src="CapabilitiesExample_01.png" style="width:1229px;height:691px;" alt=""> <h2>Remove Top 2<a name="4"></a></h2><pre class="codeinput">dsGRI.deleteUnit([36,37])
+</pre><h2>Recheck consistency<a name="5"></a></h2><pre class="codeinput">dsGRI.isConsistent
+</pre><pre class="codeoutput">=======================================================
+Searching inner bound...
+=======================================================
+=======================================================
+Calculating outer bound...
+=======================================================
+ 
+The calculation is done
+Consistency LB: 0.12642
+Consistency UB: 0.23518
+The dataset is consistent
+
+ans =
+
+     1
+
+</pre><h2>What can explored with a consistent dataset?<a name="6"></a></h2><div><ul><li>Posterior bounds on Model variables</li><li>Posterior bounds on dataset QOIs (prediction)</li><li>Posterior bounds on unmeasured QOIs</li><li>Examine distributions and correlations</li><li>Model optimization</li></ul></div><h2>Posterior bounds on Model variables<a name="7"></a></h2><pre class="codeinput">vars = dsGRI.Variables;
+nVars = vars.Length;
+Opt = B2BDC.B2Bdataset.Option({<span class="string">'Display'</span>,false});
+<span class="keyword">for</span> i1 = 1:2 <span class="comment">%nVar</span>
+    xi = generateModel(vars.Values(i1));
+    dsGRI.setQOI2predict(xi);
+    dsGRI.predictQOI(Opt);
+    bndsPosterior(i1) = dsGRI.QOIRange;
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Load GRI-Mech 3.0 dataset
+
+[~,~,experimentData] = xlsread('GRIMech_expdata.xls');
+s = load('GRIMech_modeldata.mat');
+modelData = s.GRIMech_modeldata;
+dsGRI = startDataset('GRI Mech 3.0');
+dsGRI = addData(dsGRI,experimentData,modelData);
+
+%% Check consistency
+
+dsGRI.isConsistent;
+
+%% Plot sensitivity
+
+dsGRI.plotConsistencySensitivity
+
+%% Remove Top 2 
+
+dsGRI.deleteUnit([36,37])
+
+%% Recheck consistency
+
+dsGRI.isConsistent
+
+%% What can explored with a consistent dataset?
+%
+% * Posterior bounds on Model variables
+% * Posterior bounds on dataset QOIs (prediction)
+% * Posterior bounds on unmeasured QOIs 
+% * Examine distributions and correlations
+% * Model optimization
+
+
+%% Posterior bounds on Model variables
+vars = dsGRI.Variables;
+nVars = vars.Length;
+Opt = B2BDC.B2Bdataset.Option({'Display',false});
+for i1 = 1:2 %nVar
+    xi = generateModel(vars.Values(i1));
+    dsGRI.setQOI2predict(xi);    
+    dsGRI.predictQOI(Opt);
+    bndsPosterior(i1) = dsGRI.QOIRange;
+end
+    
+
+##### SOURCE END #####
+--></body></html>

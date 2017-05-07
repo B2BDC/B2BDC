@@ -4,8 +4,8 @@
 
 %% 
 format compact
-W = what('GriAnalysisExample');
-str = genpath(W.path);
+currentFolder = pwd;
+str = genpath([currentFolder '\GriAnalysisExample']);
 addpath(str);
 
 %% Loading GRI-Mech 3.0 dataset 
@@ -180,9 +180,10 @@ varBndsPosterior = dsGRI.calVarBounds(i1,Opt);
 % * names: an |nIndex-by-1| cell array of names
 
 varBndsPrior = [dsGRI.Variables.Values(i1).LowerBound; dsGRI.Variables.Values(i1).UpperBound]';
-varBndName = {dsGRI.Variables.Values(i1).Name};
+varBndName = varBndsPosterior.varName;
+varPosterior = varBndsPosterior.OuterBound;
 figure;
-plotBounds(varBndsPrior, varBndsPosterior, varBndName);
+plotBounds(varBndsPrior, varPosterior, varBndName)
 
 %% Example: Posterior bounds on dataset QOIs (prediction)
 % In this example, the posterior bounds for eQOIs 15 and 30 are
@@ -205,8 +206,9 @@ qoiBndsPosterior = dsGRI.calQOIBounds(i2,Opt);
 allqoiBnds = dsGRI.calBound;
 qoiBndsPrior = allqoiBnds(i2,:);
 qoiNames = {dsGRI.DatasetUnits.Values(i2).Name};
+qoiPosterior = qoiBndsPosterior.OuterBound;
 figure;
-plotBounds(qoiBndsPrior, qoiBndsPosterior, qoiNames);
+plotBounds(qoiBndsPrior, qoiPosterior, qoiNames);
 
 
 %% Example: Predicted bounds on unmeasured QOIs 
@@ -247,7 +249,7 @@ legend('Observation','Prediction')
 % documentation on scatter plots of matrices. 
 
 nSamp = 1000;
-xVals = collectSamples(dsGRI,nSamp);
+xVals = dsGRI.collectSamples(nSamp);
 figure;
 [h,ax]= plotmatrix(xVals(:,1:10));
 [ax.XLim] = deal([-1,1]);
