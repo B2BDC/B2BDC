@@ -41,8 +41,11 @@ yScale.dy = dy;
 X0 = X;
 % X = x2(:,2:end);
 nc = 0.5*(n_variable+1)*(n_variable+2);
-LB = -ones(n_variable,1);
-UB = -LB;
+% LB = -ones(n_variable,1);
+% UB = -LB;
+bds = vars.calBound;
+LB = bds(:,1);
+UB = bds(:,2);
 if nargin == 4
    if b2bopt.Display
       disp('Start cross validation to select best K value...')
