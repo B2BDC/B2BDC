@@ -5,8 +5,8 @@ classdef SampleOption < handle
    % opt = B2BDC.Option.SampleOption(PropName, PropValue ... )
    % ---------------------------------------------------------------------
    % SampleMethod:
-   %   Sobol - Rejection sampling with sobolset on rotated box
-   %   HR - Rejection sampling with hit and run in general polytope
+   %   RSH - Rejection sampling with hyperrectangle
+   %   RSP - Rejection sampling with polytope
    % ---------------------------------------------------------------------
    % UncertaintyEstimation:
    %   Outer - Outer bound of optimization
@@ -20,8 +20,8 @@ classdef SampleOption < handle
    % StepInterval:
    %   The step interval in hit and run algorithm
    % ---------------------------------------------------------------------
-   % PCTruncation:
-   %   The threshold variance value for principal direction truncation
+   % SubspaceDimension:
+   %   Subspace dimension selected by 
    % ---------------------------------------------------------------------
    % ExtraCut:
    %   The number of extra random direction cut used to generate containing
@@ -34,8 +34,6 @@ classdef SampleOption < handle
    % ParameterScaling:
    %   A logical value specifies whether scales parameter in sampling
    % ---------------------------------------------------------------------
-   % PCinfo:
-   %   A strcture specifying principal component information
    
    
    % Created: Oct 11, 2016    Wenyu Li
@@ -47,21 +45,20 @@ classdef SampleOption < handle
       UncertaintyEstimation = [];
       BatchMaxSample = [];
       StepInterval = [];
-      PCTruncation = [];
+      TruncatedPC = [];
       ExtraCut = [];
       UncertaintyTruncation = [];
       ParameterScaling = [];
       RejectionTol = [];
-      PCinfo = [];
    end
    
    methods
       function  obj = SampleOption(inputCell)
          % To generate a B2BDC.Option object
          p = {'SampleMethod','UncertaintyEstimation','BatchMaxSample',...
-            'StepInterval','PCTruncation','ExtraCut',...
+            'StepInterval','TruncatedPC','ExtraCut',...
             'UncertaintyTruncation','ParameterScaling',...
-            'RejectionTol','PCinfo'};
+            'RejectionTol'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -85,7 +82,7 @@ classdef SampleOption < handle
                      case 4
                         obj.StepInterval = inputCell{2*i};
                      case 5
-                        obj.PCTruncation = inputCell{2*i};
+                        obj.TruncatedPC = inputCell{2*i};
                      case 6
                         obj.ExtraCut = inputCell{2*i};
                      case 7
@@ -93,9 +90,7 @@ classdef SampleOption < handle
                      case 8
                         obj.ParameterScaling = inputCell{2*i};
                      case 9
-                        obj.ParameterScaling = inputCell{2*i};
-                     case 10
-                        obj.ParameterScaling = inputCell{2*i};
+                        obj.RejectionTol = inputCell{2*i};
                   end
                else
                   error('Invalid input property names')
@@ -103,7 +98,7 @@ classdef SampleOption < handle
             end
          end
          if isempty(obj.SampleMethod)
-            obj.SampleMethod = 'HR';
+            obj.SampleMethod = 'RSP';
          end
          if isempty(obj.UncertaintyEstimation)
             obj.UncertaintyEstimation = 'Sample';
@@ -114,8 +109,8 @@ classdef SampleOption < handle
          if isempty(obj.StepInterval)
             obj.StepInterval = 10;
          end
-         if isempty(obj.PCTruncation)
-            obj.PCTruncation = 0;
+         if isempty(obj.TruncatedPC)
+            obj.TruncatedPC = 0;
          end
          if isempty(obj.ExtraCut)
             obj.ExtraCut = 0;
@@ -132,7 +127,7 @@ classdef SampleOption < handle
       end
       
       function set.SampleMethod(obj,str1)
-         c = {'Sobol','HR'};
+         c = {'RSH','RSP'};
          if any(strcmp(c,str1))
             obj.SampleMethod = str1;
          else
@@ -167,9 +162,9 @@ classdef SampleOption < handle
          end
       end
       
-      function set.PCTruncation(obj,num1)
-         if num1 >=0 && num1 < 1
-            obj.PCTruncation = num1;
+      function set.TruncatedPC(obj,num1)
+         if num1 >=0
+            obj.TruncatedPC = floor(num1);
          else
             error('Invalid input property value')
          end
@@ -207,23 +202,7 @@ classdef SampleOption < handle
             error('Invalid input property value')
          end
       end
-      
-      function set.PCinfo(obj,s)
-         if isstruct(s)
-            names = fieldnames(s);
-            if numel(names) == 3
-               if strcmp(names{1},'direction') && strcmp(names{2},'variance') && strcmp(names{3},'mean')
-                  obj.PCinfo = s;
-               else
-                  error('Invalid input property value')
-               end
-            else
-               error('Invalid input property value')
-            end
-         else
-            error('Invalid input property value')
-         end
-      end
+     
    end
    
    methods (Hidden = true)

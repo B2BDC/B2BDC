@@ -328,9 +328,11 @@ classdef VariableList < B2BDC.Util.IContainer
             end
          end
          H = obj.calBound;
+         ob = [obj.Values.NominalValue]';
          newName = vName(id);
          newH = H(id,:);
-         newVar = generateVar(newName, newH);
+         newOB = ob(id,:);
+         newVar = generateVar(newName, newH, newOB);
          if ~isempty(obj.ExtraLinConstraint.A)
             A = obj.ExtraLinConstraint.A;
             LB = obj.ExtraLinConstraint.LB;

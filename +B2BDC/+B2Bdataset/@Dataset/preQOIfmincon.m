@@ -1,4 +1,4 @@
-function [Qmin, Qmax, s, xOpt, abE] = preQOIfmincon(obj,QOIobj,disflag,rflag,b2bopt)
+function [Qmin, Qmax, s, xOpt, abE] = preQOIfmincon(obj,QOIobj,disflag,rflag,b2bopt,xs_min,xs_max)
 % subfunction to calculate QOI inner bound with fmincon
 
 %  Created: Oct 10, 2016     Wenyu Li
@@ -82,9 +82,9 @@ if disflag
    disp('Searching inner bound...');
    disp('=======================================================');
 end
-[xmin,Qmin,ttt,~,ilam_min] = fmincon(@funxmin,obj.FeasiblePoint,A1,B1,Aeq,...
+[xmin,Qmin,ttt,~,ilam_min] = fmincon(@funxmin,xs_min,A1,B1,Aeq,...
    Beq,LB,UB,@neq,opt);
-[xmax,Qmax,ttt,~,ilam_max] = fmincon(@funxmax,obj.FeasiblePoint,A1,B1,Aeq,...
+[xmax,Qmax,ttt,~,ilam_max] = fmincon(@funxmax,xs_max,A1,B1,Aeq,...
    Beq,LB,UB,@neq,opt);
 Qmax = -Qmax;
 s.min.expu = -ilam_min.ineqnonlin(1:2:2*n_units).*bds;

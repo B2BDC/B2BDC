@@ -1,19 +1,23 @@
 function [vcReport, EXITFLAG] = vectorConsistency(dsObj,wY,wX, nInit, opt)
-% vectorConsistency   Evaluates the weighted vector consistency of a
-%                     dataset.
+% vectorConsistency   Evaluates the vector consistency of a given dataset
+% with given weights
 %    V = obj.vectorConsistency(wY,wX)  returns a structure containing the
-%    results of the vector consistency analysis.
+%    results of the vector consistency analysis, including the necessary
+%    relaxations to the QOI bounds and the variable bounds to render the
+%    dataset consistent.
 %
 % The inputs are:
 % --------------------------------------------------------------------------
-%     dsObj - A dataset
-%     wY    - A dsObj.Length-by-2 matrix of weights, where the first column
-%            acts on the relaxations to the QOI lower bounds and the second 
-%            column acts on the QOI upper bounds. A weight of zero enforces
-%            corresponding QOI constraint, i.e. allows no relaxation.
-%     wX    - A dsObj.Variables.Length-by-2 matrix of weights to the
-%            relaxations on the variables.
-%     nInit - number of initial conditions for fmincon, sampled from the SDP
+%     dsObj - An inconsistent dataset
+%     wY    - A obj.Length-by-2 matrix of weights, where the first column
+%            acts on the relaxations to the corresponding QOI lower bounds
+%            and the second column acts on the QOI upper bounds. A weight
+%            of zero enforces corresponding QOI constraint, i.e. allows no
+%            relaxation.
+%     wX    - A obj.Variables.Length-by-2 matrix of weights to the
+%            relaxations on the
+%            variables.
+%     nInit - number of initial conditions for fmincon, sampled from SDP
 %            result. In some cases, multiple initial conditions will
 %            improve the quality of the returned solution.
 %     opt   - a B2BDC option
@@ -72,6 +76,7 @@ if opt.AddFitError
 end
 
 % Ignore noninfluential/redundant relaxations, i.e. those with zero weight.
+% Used to build the problem with the minimum number of dimensions needed.
 
 indYLb = find(wY(:,1)>0);
 indYUb = find(wY(:,2)>0);
@@ -192,9 +197,10 @@ if any(ineqC(zFeas)>0)
     warning('Fmincon failed to find a feasible relaxation.');
     violation = norm(ineqC(zFeas))
 end
-% 
+% Nested functions
     function [Cobj, dsuConstr,varConstr] = buildObjAndConstraintMatrices() 
-       
+        % This function can be sped up by rewritting with sparse() as
+        % opposed to spalloc()
         Q_U = cell(nExp,1); %Upperbnd on QOI
         Q_L = cell(nExp,1); %Lowerbnd on QOI
         P_U = cell(nYUb,1); %Nonnegativity of upperbnd relaxation
@@ -260,6 +266,7 @@ end
         for ii = 1:nVar  %bounds on X
             l = xBnds(ii,1);
             u = xBnds(ii,2);
+            Jx = zeros(nVar,nVar);
   
             nzMaxH = 15;
             Htemp = spalloc(dim,dim,nzMaxH);
@@ -298,9 +305,9 @@ end
             if ~(isempty(ind1) || isempty(ind2))
                 
                 Htemp(1+nVar+nYLb+nYUb+ind1, ...
-                    1+nVar+nYLb+nYUb+nXLb+ind2) = -0.5*wxl(ind1)*wxu(ind2);
+                    1+nVar+nYLb+nYUb+nXLb+ind2) = wxl(ind1)*wxu(ind2);
                 Htemp(1+nVar+nYLb+nYUb+nXLb+ind2,...
-                    1+nVar+nYLb+nYUb+ind1) = -0.5*wxl(ind1)*wxu(ind2);
+                    1+nVar+nYLb+nYUb+ind1) = wxl(ind1)*wxu(ind2);
             end
             Q_H{ii} = Htemp;
         end

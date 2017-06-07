@@ -437,8 +437,8 @@ classdef Dataset < handle
        [y,s] = cvxconsisabs(obj,yin,frac,abE)
        [y,s] = cvxconsisquadrel(obj,b2bopt,frac)
        [yout,sensitivity] = obj.sedumiconsisquadrel_old(b2bopt, abE);
-       [minout,minSensitivity] = cvxminouterbound(obj,QOIobj,frac,abE,rflag)
-       [maxout,maxSensitivity] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
+       [minout,minSensitivity,xs] = cvxminouterbound(obj,QOIobj,frac,abE,rflag)
+       [maxout,maxSensitivity,xs] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
        [y,s] = cvxconsisrel(obj,yin,frac,abE)
        [y,s] = cvxconsisquadabs(obj,b2bopt,abE)
        

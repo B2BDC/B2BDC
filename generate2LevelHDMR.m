@@ -10,7 +10,7 @@ function pModel = generate2LevelHDMR(f, vars, d, x0)
 
 %  Created: Jan 6, 2016     Wenyu Li
 
-n1 = 15;
+n1 = 5;
 nVar = vars.Length;
 np = 1+nVar*d+nchoosek(nVar, 2)*0.5*d*(d-1);
 sMatrix = zeros(np,nVar);
@@ -40,7 +40,8 @@ for i = 1:nVar
    ytmp = f(dm);
    ytmp = ytmp - coefVec(1);
    xfit = expand1(xS(:,i) - x0(i));
-   coefVec(count+1:count+d) = xfit\ytmp;
+%    coefVec(count+1:count+d) = xfit\ytmp;
+   coefVec(count+1:count+d) = fitqinf(xfit,ytmp);
    sMatrix(count+1:count+d,i) = (1:d)';
    count = count+d;
 end
@@ -71,7 +72,8 @@ for i = 1:nVar-1
       ytmp = f(dm);
       ytmp = ytmp - coefVec(1)-yi-yj;
       xfit = expand2(xS(:,[i, j]) - repmat(x0([i,j]),nSample,1));
-      coefVec(count+1:count+nM) = xfit\ytmp;
+%       coefVec(count+1:count+nM) = xfit\ytmp;
+      coefVec(count+1:count+nM) = fitqinf(xfit,ytmp);
       sMatrix(count+1:count+nM,[i,j]) = tSM;
       count = count+nM;
    end
@@ -81,6 +83,7 @@ coefVec = reArrangeCoef(coefVec,x0);
 pModel = B2BDC.B2Bmodels.PolyModel(sMatrix, coefVec, vars);
 
 pModel.ErrorStats = estimateError(pModel);
+
 
 
 
@@ -156,7 +159,7 @@ pModel.ErrorStats = estimateError(pModel);
    end
 
    function err = estimateError(pModel)
-      nS = 2*np;
+      nS = min(2*np,200);
       xs = vars.makeLHSsample(nS);
       y1 = f(xs);
       y2 = pModel.eval(xs);
@@ -166,6 +169,25 @@ pModel.ErrorStats = estimateError(pModel);
       dy = abs(dy./y1);
       err.relMax = max(dy);
       err.relAvg = mean(dy);
+   end
+
+   function coef = fitqinf(x,y)
+      [n_sample,n_Coef] = size(x);
+      n_opt = n_Coef+1+2*n_sample;
+      A = zeros(2*n_sample, n_opt);
+      A(1:n_sample,n_Coef+1) = -ones(n_sample,1);
+      A(n_sample+1:end,n_Coef+1) = ones(n_sample,1);
+      A(1:n_sample,n_Coef+2:n_Coef+1+n_sample) = eye(n_sample);
+      A(n_sample+1:end,n_Coef+2+n_sample:end) = -eye(n_sample);
+      A(:,1:n_Coef) = repmat(x,2,1);
+      b = repmat(y,2,1);
+      c = zeros(n_opt,1);
+      c(n_Coef+1) = 1;
+      k.f = n_Coef;
+      k.l = 2*n_sample+1;
+      pars.fid = 0;
+      [x,y,info] = sedumi(A,b,c,k,pars);
+      coef = x(1:n_Coef);
    end
 
 

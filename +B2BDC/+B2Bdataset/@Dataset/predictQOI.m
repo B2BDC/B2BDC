@@ -66,7 +66,7 @@ end
 
 if ~strcmp(pFlag,'outer')
 %    tic;
-   [minin, maxin, s, xOpt, abE] = obj.preQOIfmincon(QOIobj,B2Bopt.Display,rflag,B2Bopt);
+   [minin, maxin, s, xOpt, abE] = obj.preQOIfmincon(QOIobj,B2Bopt.Display,rflag,B2Bopt,obj.FeasiblePoint,obj.FeasiblePoint);
 %    [minin, maxin, s, xOpt, abE] = obj.preQOIopti(QOIobj,B2Bopt.Display,rflag,B2Bopt);
 %    toc;
    QOISensitivity.Inner = s;
@@ -93,8 +93,8 @@ if ~strcmp(pFlag,'inner')
    % [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
    % [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
    warning('off','all');
-   [minout,minSens] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
-   [maxout,maxSens] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
+   [minout,minSens,xs_min] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
+   [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
    warning('on','all');
    minSens.expu = -minSens.expu;
    minSens.expl = -minSens.expl;

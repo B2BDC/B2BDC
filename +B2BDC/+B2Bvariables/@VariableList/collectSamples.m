@@ -8,12 +8,12 @@ if nargin < 4
 end
 cMax = 10^4;
 tolerance = 1e-5;
-if opt.ParameterScaling
-   obj = obj.calScale;
-   s = obj.ScalingVector;
-else
+% if opt.ParameterScaling
+%    obj = obj.calScale;
+%    s = obj.ScalingVector;
+% else
    s = ones(obj.Length,1);
-end
+% end
 A0 = obj.ExtraLinConstraint.A;
 if ~isempty(A0)
    UB = obj.ExtraLinConstraint.UB;
@@ -90,8 +90,14 @@ if nargin < 3 || isempty(xStart)
    end
 else
    if obj.isFeasiblePoint(xStart)
-      x0 = xStart./s;
+%       disp('Yep');
+      if size(xStart,1) > 1
+         x0 = xStart./s;
+      else
+         x0 = xStart'./s;
+      end
    else
+%       disp('Nah');
       iN = s<0;
       tLB = xLB./s;
       tUB = xUB./s;
@@ -156,7 +162,7 @@ Xvals = Xvals .* repmat(s',N,1);
          end
       end
       nstep = opt.StepInterval;
-      n2 = nstep*(N-1)+1;
+      n2 = nstep*N;
       nss = round(10^8/size(A,1));
       ns1 = floor(n2/nss)+1;
       ns2 = mod(n2,nss);
@@ -184,7 +190,7 @@ Xvals = Xvals .* repmat(s',N,1);
             tmax = min(tValues(pos));
             tmin = max(tValues(neg));
             t = R(i)*tmin + (1-R(i))*tmax;
-            if mod(it,nstep) == 1
+            if mod(it,nstep) == 0
                X(:,ic) = xt + t*V(:,i);
                ic = ic+1;
             end
@@ -192,6 +198,6 @@ Xvals = Xvals .* repmat(s',N,1);
             it = it+1;
          end
       end
-      X = X(:,randperm(N,N));
+%       X = X(:,randperm(N,N));
    end
 end

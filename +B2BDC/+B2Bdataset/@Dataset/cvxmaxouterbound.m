@@ -1,4 +1,4 @@
-function [maxout,s] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
+function [maxout,s,xs] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
 % Calculate the outer bound of maximum values of the dataset
 % target QOI subject to the constraints within the dataset through cvx
 % QOIobj - A B2BDC.B2Bmodel.Model object specifies the QOI
@@ -99,6 +99,7 @@ if n_extra ~= 0
 end
 cvx_end
 maxout = cvx_optval;
+xs = S(2:n_variable+1,1);
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);
 s.expu(~idRQ) = lamEU(~idRQ).*d(~idRQ)*S(1,1);
