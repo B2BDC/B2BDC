@@ -11,10 +11,7 @@ classdef VariableList < B2BDC.Util.IContainer
    
    properties (SetAccess = private)
       ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
-<<<<<<< Updated upstream
-=======
       ExtraQuaConstraint = struct('Q',[],'UB',[],'xStart',[]);
->>>>>>> Stashed changes
       ScalingVector = [];
    end
    
@@ -81,14 +78,10 @@ classdef VariableList < B2BDC.Util.IContainer
             At(:,id) = A2;
             obj = obj.addLinearConstraint(At,LB2,UB2);
 %             obj = obj.addLinearConstraint([At;-At],[UB2;-LB2]);
-<<<<<<< Updated upstream
-         end 
-=======
          end
          if ~obj.checkFeasibility
             disp('The resulted variableList is not feasible')
          end
->>>>>>> Stashed changes
       end
       
       function xSample = makeLHSsample(obj,nSample)
@@ -311,13 +304,6 @@ classdef VariableList < B2BDC.Util.IContainer
                error('Wrong upper bound dimension')
             end
             newVar = obj;
-<<<<<<< Updated upstream
-            newVar.ExtraLinConstraint.A = A;
-            newVar.ExtraLinConstraint.LB = b;
-            newVar.ExtraLinConstraint.UB = c;
-         end
-         newVar.ScalingVector = [];
-=======
             A0 = obj.ExtraLinConstraint.A;
             b0 = obj.ExtraLinConstraint.LB;
             c0 = obj.ExtraLinConstraint.UB;
@@ -330,7 +316,6 @@ classdef VariableList < B2BDC.Util.IContainer
             disp('The resulted variableList is not feasible')
             newVar = obj;
          end
->>>>>>> Stashed changes
       end
       
       function newVar = makeSubset(obj,varIdx)
@@ -346,16 +331,6 @@ classdef VariableList < B2BDC.Util.IContainer
          else
             error('Wrong input index type or length')
          end
-<<<<<<< Updated upstream
-         if ~isempty(obj.ExtraLinConstraint.A)
-            A = obj.ExtraLinConstraint.A;
-            tA = A(:,id);
-            if any(tA)
-               error('Extra linear constraints contain variables outside the subset')
-            end
-         end
-=======
->>>>>>> Stashed changes
          H = obj.calBound;
          ob = [obj.Values.NominalValue]';
          newName = vName(id);
@@ -366,21 +341,6 @@ classdef VariableList < B2BDC.Util.IContainer
             A = obj.ExtraLinConstraint.A;
             LB = obj.ExtraLinConstraint.LB;
             UB = obj.ExtraLinConstraint.UB;
-<<<<<<< Updated upstream
-            A = A(:,id);
-            idA = true(size(A,1),1);
-            for i = 1:size(A,1)
-               tmpid = find(A(i,:));  
-               if length(tmpid) > 1
-                  idA(i) = false;
-               end
-            end
-            A(idA,:) = [];
-            if ~isempty(A)
-               LB(idA) = [];
-               UB(idA) = [];
-               newVar = newVar.addLinearConstraint(A,LB,UB);
-=======
             A_new = A(:,id);
             idA = true(size(A,1),1);
             for i = 1:size(A,1)
@@ -395,20 +355,12 @@ classdef VariableList < B2BDC.Util.IContainer
                LB(idA) = [];
                UB(idA) = [];
                newVar = newVar.addLinearConstraint(A_new,LB,UB);
->>>>>>> Stashed changes
 %                newVar = newVar.addLinearConstraint([A;-A],[UB;-LB]);
             end
          end
       end
       
       function newVar = clearExtraConstraint(obj)
-<<<<<<< Updated upstream
-         newVar = obj;
-         newVar.ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
-         newVar.ScalingVector = [];
-      end
-      
-=======
          % clear extra constraints
          newVar = obj;
          newVar.ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
@@ -472,7 +424,6 @@ classdef VariableList < B2BDC.Util.IContainer
    methods (Static, Hidden = true)
        xval = q2sample(Mgd,idx,H,Xvals,V);
        xVal = quadSample(Q,H,x0,V)
->>>>>>> Stashed changes
    end
    
    methods (Hidden = true)

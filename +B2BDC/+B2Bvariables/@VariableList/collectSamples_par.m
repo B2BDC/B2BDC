@@ -15,121 +15,173 @@ else
    s = ones(obj.Length,1);
 end
 A0 = obj.ExtraLinConstraint.A;
-if ~isempty(A0)
-   UB = obj.ExtraLinConstraint.UB;
-   LB = obj.ExtraLinConstraint.LB;
-   eqTest = (UB-LB)./sum(abs(A0),2);
-   A0 = A0.*repmat(s',size(A0,1),1);
-   ieq = (eqTest <= tolerance);
-   if any(ieq)
-      Neq = sum(ieq);
-      A1 = [A0(~ieq,:); -A0(~ieq,:)];
-      B1 = [UB(~ieq); -LB(~ieq)];
-      Aeq = A0(ieq,:);
-      Beq = 0.5*(LB(ieq)+UB(ieq));
+Q = obj.ExtraQuaConstraint.Q;
+Qb = obj.ExtraQuaConstraint.UB;
+if isempty(Q)
+   if ~isempty(A0)
+      UB = obj.ExtraLinConstraint.UB;
+      LB = obj.ExtraLinConstraint.LB;
+      eqTest = (UB-LB)./sum(abs(A0),2);
+      A0 = A0.*repmat(s',size(A0,1),1);
+      ieq = (eqTest <= tolerance);
+      if any(ieq)
+         Neq = sum(ieq);
+         A1 = [A0(~ieq,:); -A0(~ieq,:)];
+         B1 = [UB(~ieq); -LB(~ieq)];
+         Aeq = A0(ieq,:);
+         Beq = 0.5*(LB(ieq)+UB(ieq));
+      else
+         A1 = [A0; -A0];
+         Aeq = [];
+         B1 = [UB; - LB];
+         Beq = [];
+      end
    else
-      A1 = [A0; -A0];
+      A1 = [];
+      B1 = [];
       Aeq = [];
-      B1 = [UB; - LB];
       Beq = [];
    end
-else
-   A1 = [];
-   B1 = [];
-   Aeq = [];
-   Beq = [];
-end
-xbd = obj.calBound;
-xLB = xbd(:,1);
-xUB = xbd(:,2);
-A2 = [diag(s); -diag(s)];
-B2 = [xUB; -xLB];
-Arw = [A1; A2];
-brw = [B1; B2];
-if ~isempty(Aeq)
-   bs1 = orth(Aeq');
-   bs2 = null(Aeq);
-   Tm = [bs2, bs1]';
-end
-
-if nargin < 3 || isempty(xStart)
-   iN = (s<0);
-   tLB = xLB./s;
-   tUB = xUB./s;
-   tt = tLB(iN);
-   tLB(iN) = tUB(iN);
-   tUB(iN) = tt;
-   if isempty(A0)
-      x0 = obj.makeLHSsample(1);
-      x0 = x0./s;
-      cc = 0;
-      while ~all(Arw*x0 < brw) && cc < cMax
-         disp('LOL')
-         x0 = obj.makeLHSsample(1);
-         x0 = x0./s;
-         cc = cc+1;
-      end
-      if cc == cMax
-         x0 = [];
-      end
-   else
-      warning('off','all');
-      opt1 = optimoptions('linprog');
-      opt1.Display = 'none';
-      x0 = linprog(zeros(size(Arw,2),1),...
-         Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-      cc = 0;
-      while ~all(Arw*x0 < brw) && cc < cMax
-         disp('LOL')
-         x0 = linprog(zeros(size(Arw,2),1),...
-            Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-      end
-      if cc == cMax
-         x0 = [];
-      end
+   xbd = obj.calBound;
+   xLB = xbd(:,1);
+   xUB = xbd(:,2);
+   A2 = [diag(s); -diag(s)];
+   B2 = [xUB; -xLB];
+   Arw = [A1; A2];
+   brw = [B1; B2];
+   if ~isempty(Aeq)
+      bs1 = orth(Aeq');
+      bs2 = null(Aeq);
+      Tm = [bs2, bs1]';
    end
-else
-   if obj.isFeasiblePoint(xStart)
-      x0 = xStart./s;
-   else
-      iN = s<0;
+   
+   if nargin < 3 || isempty(xStart)
+      iN = (s<0);
       tLB = xLB./s;
       tUB = xUB./s;
       tt = tLB(iN);
       tLB(iN) = tUB(iN);
       tUB(iN) = tt;
-      warning('off','all');
-      opt1 = optimoptions('linprog');
-      opt1.Display = 'none';
-      x0 = linprog(zeros(size(Arw,2),1),...
-         Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+      if isempty(A0)
+         x0 = obj.makeLHSsample(1);
+         x0 = x0./s;
+         cc = 0;
+         while ~all(Arw*x0 < brw) && cc < cMax
+            disp('LOL')
+            x0 = obj.makeLHSsample(1);
+            x0 = x0./s;
+            cc = cc+1;
+         end
+         if cc == cMax
+            x0 = [];
+         end
+      else
+         warning('off','all');
+         opt1 = optimoptions('linprog');
+         opt1.Display = 'none';
+         x0 = linprog(zeros(size(Arw,2),1),...
+            Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         cc = 0;
+         while ~all(Arw*x0 < brw) && cc < cMax
+            disp('LOL')
+            x0 = linprog(zeros(size(Arw,2),1),...
+               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         end
+         if cc == cMax
+            x0 = [];
+         end
+      end
+   else
+      if obj.isFeasiblePoint(xStart)
+         x0 = xStart./s;
+      else
+         iN = s<0;
+         tLB = xLB./s;
+         tUB = xUB./s;
+         tt = tLB(iN);
+         tLB(iN) = tUB(iN);
+         tUB(iN) = tt;
+         warning('off','all');
+         opt1 = optimoptions('linprog');
+         opt1.Display = 'none';
+         x0 = linprog(zeros(size(Arw,2),1),...
+            Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+      end
+   end
+   warning('on','all');
+   
+   if ~isempty(x0)
+      xInit = x0;
+   else
+      errordlg('Infeasible problem: the domain defined cannot be shown to be feasible');
+      error('collectSamples:Inconclusive',...
+         'Domain cannot be shown to be Consistent');
+   end
+   
+   if ~isempty(Aeq)
+      y0 = Tm*x0;
+      Ay = Arw*Tm';
+      by = brw - Ay(:,end-Neq+1:end) * y0(end-Neq+1:end);
+   end
+   % Check Dataset model type
+   if isempty(Aeq)
+      Xvals = HR(Arw, brw, xInit);
+   else
+      Yvals = HR(Ay(:,1:end-Neq), by, y0(1:end-Neq));
+      Yvals = [Yvals; repmat(y0(end-Neq+1:end),1,N)];
+      Xvals = Tm' * Yvals;
+   end
+   Xvals = Xvals';
+   Xvals = Xvals .* repmat(s',N,1);
+else
+   H = obj.calBound;
+   nVar = size(H,1);
+   nQ = length(Q);
+   nL = size(A0,1);
+   UB = obj.ExtraLinConstraint.UB;
+   LB = obj.ExtraLinConstraint.LB;
+   if nargin >= 3 && ~isempty(xStart) && obj.isFeasiblePoint(xStart)
+      xInit = xStart;
+   else
+      xInit = obj.ExtraQuaConstraint.xStart;
+   end
+   Mgd = cell(nQ+nL,1);
+   idx = cell(nQ+nL,1);
+   for i1 = 1:nQ
+      idx{i1} = (1:nVar)';
+      Mgd{i1} = Q{i1};
+      Mgd{i1}(1,1) = Mgd{i1}(1,1) - Qb(i1);
+   end
+   for i1 = 1:nL
+      ai = A0(i1,:);
+      ub = UB(i1);
+      lb = LB(i1);
+      tmpM = zeros(nVar+1);
+      tmpM(2:end,2:end) = ai' * ai;
+      tmpM(1) = ub*lb;
+      tmpM(1,2:end) = -0.5*(ub+lb)*ai;
+      tmpM(2:end,1) = -0.5*(ub+lb)*ai';
+      Mgd{i1+nQ} = tmpM;
+      idx{i1+nQ} = (1:nVar)';
+   end
+   Xvals = zeros(N, nVar);
+   ic = 1;
+   nstep = opt.StepInterval;
+   n2 = nstep*nVar;
+   for i1=1:n2
+      V = randn(1, nVar);
+      zPDir = find(xInit >= H*[0.01; 0.99]);
+      zNDir = find(xInit <= H*[0.99; 0.01]);
+      V(zPDir) = -abs(V(zPDir));
+      V(zNDir) = abs(V(zNDir));
+      tmpx = B2BDC.B2Bdataset.Dataset.q2sample(Mgd,idx,H,xInit,V');
+      if mod(i1,nstep) == 0
+         Xvals(ic,:) = tmpx';
+         ic = ic+1;
+      end
+      xInit = tmpx;
    end
 end
-warning('on','all');
-
-if ~isempty(x0)
-   xInit = x0;
-else
-   errordlg('Infeasible problem: the domain defined cannot be shown to be feasible');
-   error('collectSamples:Inconclusive',...
-      'Domain cannot be shown to be Consistent');
-end
-
-if ~isempty(Aeq)
-   y0 = Tm*x0;
-   Ay = Arw*Tm';
-   by = brw - Ay(:,end-Neq+1:end) * y0(end-Neq+1:end);
-end
-% Check Dataset model type
-if isempty(Aeq)
-   Xvals = HR(Arw, brw, xInit);
-else
-   Yvals = HR(Ay(:,1:end-Neq), by, y0(1:end-Neq));
-   Yvals = [Yvals; repmat(y0(end-Neq+1:end),1,N)];
-   Xvals = Tm' * Yvals;
-end
-Xvals = Xvals';
-Xvals = Xvals .* repmat(s',N,1);
 
 
    function X = HR(A,b,xFeas)
