@@ -11,6 +11,10 @@ classdef VariableList < B2BDC.Util.IContainer
    
    properties (SetAccess = private)
       ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
+<<<<<<< Updated upstream
+=======
+      ExtraQuaConstraint = struct('Q',[],'UB',[],'xStart',[]);
+>>>>>>> Stashed changes
       ScalingVector = [];
    end
    
@@ -77,7 +81,14 @@ classdef VariableList < B2BDC.Util.IContainer
             At(:,id) = A2;
             obj = obj.addLinearConstraint(At,LB2,UB2);
 %             obj = obj.addLinearConstraint([At;-At],[UB2;-LB2]);
+<<<<<<< Updated upstream
          end 
+=======
+         end
+         if ~obj.checkFeasibility
+            disp('The resulted variableList is not feasible')
+         end
+>>>>>>> Stashed changes
       end
       
       function xSample = makeLHSsample(obj,nSample)
@@ -300,11 +311,26 @@ classdef VariableList < B2BDC.Util.IContainer
                error('Wrong upper bound dimension')
             end
             newVar = obj;
+<<<<<<< Updated upstream
             newVar.ExtraLinConstraint.A = A;
             newVar.ExtraLinConstraint.LB = b;
             newVar.ExtraLinConstraint.UB = c;
          end
          newVar.ScalingVector = [];
+=======
+            A0 = obj.ExtraLinConstraint.A;
+            b0 = obj.ExtraLinConstraint.LB;
+            c0 = obj.ExtraLinConstraint.UB;
+            newVar.ExtraLinConstraint.A = [A;A0];
+            newVar.ExtraLinConstraint.LB = [b;b0];
+            newVar.ExtraLinConstraint.UB = [c;c0];
+         end
+         newVar.ScalingVector = [];
+         if ~newVar.checkFeasibility
+            disp('The resulted variableList is not feasible')
+            newVar = obj;
+         end
+>>>>>>> Stashed changes
       end
       
       function newVar = makeSubset(obj,varIdx)
@@ -320,6 +346,7 @@ classdef VariableList < B2BDC.Util.IContainer
          else
             error('Wrong input index type or length')
          end
+<<<<<<< Updated upstream
          if ~isempty(obj.ExtraLinConstraint.A)
             A = obj.ExtraLinConstraint.A;
             tA = A(:,id);
@@ -327,6 +354,8 @@ classdef VariableList < B2BDC.Util.IContainer
                error('Extra linear constraints contain variables outside the subset')
             end
          end
+=======
+>>>>>>> Stashed changes
          H = obj.calBound;
          ob = [obj.Values.NominalValue]';
          newName = vName(id);
@@ -337,6 +366,7 @@ classdef VariableList < B2BDC.Util.IContainer
             A = obj.ExtraLinConstraint.A;
             LB = obj.ExtraLinConstraint.LB;
             UB = obj.ExtraLinConstraint.UB;
+<<<<<<< Updated upstream
             A = A(:,id);
             idA = true(size(A,1),1);
             for i = 1:size(A,1)
@@ -350,17 +380,99 @@ classdef VariableList < B2BDC.Util.IContainer
                LB(idA) = [];
                UB(idA) = [];
                newVar = newVar.addLinearConstraint(A,LB,UB);
+=======
+            A_new = A(:,id);
+            idA = true(size(A,1),1);
+            for i = 1:size(A,1)
+               a1 = sum(A(i,:)~=0);
+               a2 = sum(A_new(i,:)~=0);
+               if a1 == a2
+                  idA(i) = false;
+               end
+            end
+            A_new(idA,:) = [];
+            if ~isempty(A)
+               LB(idA) = [];
+               UB(idA) = [];
+               newVar = newVar.addLinearConstraint(A_new,LB,UB);
+>>>>>>> Stashed changes
 %                newVar = newVar.addLinearConstraint([A;-A],[UB;-LB]);
             end
          end
       end
       
       function newVar = clearExtraConstraint(obj)
+<<<<<<< Updated upstream
          newVar = obj;
          newVar.ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
          newVar.ScalingVector = [];
       end
       
+=======
+         % clear extra constraints
+         newVar = obj;
+         newVar.ExtraLinConstraint = struct('A',[],'LB',[],'UB',[]);
+         newVar.ExtraQuaConstraint = struct('Q',[],'UB',[],'xStart',[]);
+         newVar.ScalingVector = [];
+      end
+      
+      function y = checkFeasibility(obj) 
+         y = true;
+         if isempty(obj.ExtraQuaConstraint.Q)
+            if ~isempty(obj.ExtraLinConstraint.A)
+               warning('off','all');
+               y = false;
+               for i = 1:10
+                  opt1 = optimoptions('linprog');
+                  opt1.Display = 'none';
+                  A = obj.ExtraLinConstraint.A;
+                  ub = obj.ExtraLinConstraint.UB;
+                  lb = obj.ExtraLinConstraint.LB;
+                  H = obj.calBound;
+                  x0 = linprog(zeros(size(A,2),1),[A;-A],[ub;-lb],[],[],H(:,1),...
+                     H(:,2),opt1);
+                  if ~isempty(x0)
+                     y = true;
+                     break
+                  end
+               end
+            end
+         else
+            x0 = obj.ExtraQuaConstraint.xStart;
+            if ~obj.isFeasiblePoint(x0')
+               y = false;
+            end
+         end
+      end
+      
+      function newVar = addQuadraticConstraint(obj,Q,UB,x0)
+         newVar = obj;
+         if size(x0,1) == 1
+            x0 = x0';
+         end
+         if ~obj.isFeasiblePoint(x0')
+            msgbox('The provided point is not feasible for the original varList')
+            return
+         end
+         Q = 0.5*(Q+Q');
+         [~,d] = eig(Q);
+         if any(diag(d) <= -1e-14)
+            msgbox('The provided quadratic constraint is not convex')
+            return
+         end
+         if [1;x0]'*Q*[1;x0] <= UB
+            newVar.ExtraQuaConstraint.Q{end+1} = Q;
+            newVar.ExtraQuaConstraint.UB(end+1) = UB;
+            newVar.ExtraQuaConstraint.xStart = x0;
+         end
+      end
+      
+   end
+   
+   methods (Static, Hidden = true)
+       xval = q2sample(Mgd,idx,H,Xvals,V);
+       xVal = quadSample(Q,H,x0,V)
+>>>>>>> Stashed changes
    end
    
    methods (Hidden = true)

@@ -54,6 +54,7 @@ Xvals = quadSamples(obj,xInit,N);
       A0 = vList.ExtraLinConstraint.A;
       if ~isempty(A0)
          nVar = vList.Length;
+<<<<<<< Updated upstream
          tolerance = 1e-5;
          A0 = vList.ExtraLinConstraint.A;
          Aub = vList.ExtraLinConstraint.UB;
@@ -63,6 +64,17 @@ Xvals = quadSamples(obj,xInit,N);
          A0 = A0(~ieq,:);
          Aub = Aub(~ieq);
          Alb = Alb(~ieq);
+=======
+%          tolerance = 1e-5;
+%          A0 = vList.ExtraLinConstraint.A;
+         Aub = vList.ExtraLinConstraint.UB;
+         Alb = vList.ExtraLinConstraint.LB;
+%          eqTest = (Aub-Alb)./sum(abs(A0),2);
+%          ieq = (eqTest <= tolerance);
+%          A0 = A0(~ieq,:);
+%          Aub = Aub(~ieq);
+%          Alb = Alb(~ieq);
+>>>>>>> Stashed changes
          nL = size(A0,1);
       else
          nL = 0;
