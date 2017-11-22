@@ -49,11 +49,6 @@ classdef Option < handle
    %           before showing the final stats
    %   false - Show final stats directly
    % ---------------------------------------------------------------------
-   % Optimization:
-   %   LS-F - Least square of the errors constrained to feasible set
-   %   1N-F - 1-norm of parameters constrained to feasible set
-   %   LS-H - Least square of errors constrained to prior
-   % ---------------------------------------------------------------------
    % Prediction:
    %   both - Both outer and inner bounds are returned
    %   inner - Only inner bounds are returned
@@ -64,6 +59,9 @@ classdef Option < handle
    % ---------------------------------------------------------------------
    % POPOption:
    %   A B2BDC.Option.POPOption object
+   % ---------------------------------------------------------------------
+   % OptimOption:
+   %   A B2BDC.Option.OptimOption object
    
    
    % Created: July 12, 2015    Wenyu Li
@@ -77,18 +75,18 @@ classdef Option < handle
       Display = [];
       AddFitError = [];
       SelfInconsisFlow = [];
-      Optimization = [];
       Prediction = [];
       SampleOption = [];
       POPOption = [];
+      OptimOption = [];
    end
    
    methods
       function  obj = Option(inputCell)
          % To generate a B2BDC.Option object
          p = {'ConsistencyMeasure','ExtraLinFraction','TolConsis','Display',...
-            'AddFitError','SelfInconsisFlow','Optimization',...
-            'Prediction','SampleOption','POPOption'};
+            'AddFitError','SelfInconsisFlow','Prediction',...
+            'SampleOption','POPOption','OptimOption'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -116,13 +114,13 @@ classdef Option < handle
                      case 6
                         obj.SelfInconsisFlow = inputCell{2*i};
                      case 7
-                        obj.Optimization = inputCell{2*i}; 
-                     case 8
                         obj.Prediction = inputCell{2*i};
-                     case 9
+                     case 8
                         obj.SampleOption = inputCell{2*i};
-                     case 10
+                     case 9
                         obj.POPOption = inputCell{2*i};
+                     case 10
+                        obj.OptimOption = inputCell{2*i};
                   end
                else
                   error('Invalid input property names')
@@ -147,9 +145,6 @@ classdef Option < handle
          if isempty(obj.SelfInconsisFlow)
             obj.SelfInconsisFlow = true;
          end
-         if isempty(obj.Optimization)
-            obj.Optimization = '1N-F';
-         end
          if isempty(obj.Prediction)
             obj.Prediction = 'both';
          end
@@ -158,6 +153,9 @@ classdef Option < handle
          end
          if isempty(obj.POPOption)
             obj.POPOption = generatePOPOpt;
+         end
+         if isempty(obj.OptimOption)
+            obj.OptimOption = generateOptimOpt;
          end
       end
       
@@ -202,15 +200,6 @@ classdef Option < handle
          end
       end
       
-      function set.Optimization(obj,str1)
-         c = {'LS-F','1N-F','LS-H'};
-         if any(strcmp(c,str1))
-            obj.Optimization = str1;
-         else
-            error('Invalid input property value')
-         end
-      end
-      
       function set.Prediction(obj,str1)
          c = {'both','inner','outer'};
          if any(strcmp(c,str1))
@@ -231,6 +220,14 @@ classdef Option < handle
       function set.POPOption(obj,opt1)
          if isa(opt1,'B2BDC.Option.POPOption')
             obj.POPOption = opt1;
+         else
+            error('Invalid input property value')
+         end
+      end
+      
+      function set.OptimOption(obj,opt1)
+         if isa(opt1,'B2BDC.Option.OptimOption')
+            obj.OptimOption = opt1;
          else
             error('Invalid input property value')
          end

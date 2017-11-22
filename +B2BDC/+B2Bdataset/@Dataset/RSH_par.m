@@ -10,6 +10,11 @@ s1 = sOpt.UncertaintyEstimation;
 vars = obj.Variables;
 nVar = vars.Length;
 nPC = nVar - sOpt.TruncatedPC;
+if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
+   savePath = sopt.DataStorePath;
+else
+   savePath = [];
+end
 if nPC < 1
    nPC = 1;
 end
@@ -28,6 +33,11 @@ if isempty(Dinfo)
    Ddiag = diag(D);
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
+   if ~isempty(savePath)
+      sampledPC.V = V;
+      sampledPC.D = diag(Ddiag);
+      save(fullfile(savePath,'PCinfo'),'sampledPC');
+   end
 else
    uqD = Dinfo.uq;
    xAve = 0.5*(uqD(:,1)+uqD(:,2))';
@@ -98,6 +108,9 @@ end
 for i = 1:nt1
    xVal = [xVal; xCand{i}];
 end
+if ~isempty(savePath)
+   save(fullfile(savePath,'xSample'),'xVal');
+end
 n1 = size(xVal,1);
 if n1 <= th2*nt1*ns
    eff = n1/nt1/ns;
@@ -107,10 +120,16 @@ if n1 <= th2*nt1*ns
 else
    if n1 >= N
       eff = n1/nt1/ns;
+      if ~isempty(savePath)
+         save(fullfile(savePath,'efficiency'),'eff');
+      end
       xVal = xVal(1:N,:);
       return
    end
    eff = n1/ns/nt1;
+   if ~isempty(savePath)
+      save(fullfile(savePath,'efficiency'),'eff');
+   end
    nEst = ceil(1.2*(N-n1)/eff/ns);
    disp(['The estimated batch of runs is: ' num2str(nEst)])
    disp(['The estimated running time is: ' num2str(t3*nEst/nt1/60) 'minutes'])
@@ -129,6 +148,9 @@ end
 for i = 1:nEst
    xVal = [xVal; xCand{i}];
 end
+if ~isempty(savePath)
+   save(fullfile(savePath,'xSample'),'xVal');
+end
 n1 = size(xVal,1);
 if n1 < N
    is = 1;
@@ -146,6 +168,9 @@ if n1 < N
    for i = 1:length(xCand)
       xVal = [xVal; xCand{i}];
    end
+   if ~isempty(savePath)
+      save(fullfile(savePath,'xSample'),'xVal');
+   end
 else
    is = 0;
 end
@@ -156,4 +181,7 @@ if n1 < N
    disp('Not enough samples are found within 120% calculating budget')
 end
 eff = n1/itt;
+if ~isempty(savePath)
+   save(fullfile(savePath,'efficiency'),'eff');
+end
 xVal = xVal(1:min(n1,N),:);

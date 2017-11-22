@@ -21,7 +21,6 @@ function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bd
 % All the inequality quadratic matrix is formed as Q <= 0
 
 % Created: August 10, 2015     Wenyu Li
-%  Updated: Nov 16, 2017    Wenyu Li (using matrix norm to select extraQ)
 
 % eps = 1e-7;
 vars = obj.Variables;
@@ -80,12 +79,8 @@ end
 for i = 1:n_variable
    lx = LB(i);
    ux = UB(i);
-   tmpQ = zeros(n_variable+1);
-   tmpQ(1,1) = lx*ux;
-   tmpQ(1,i+1) = -0.5*(lx+ux);
-   tmpQ(i+1,1) = -0.5*(lx+ux);
-   tmpQ(i+1,i+1) = 1;
-   Qx{i} = tmpQ;
+   Qx{i} = sparse([1,1,i+1,i+1],[1,i+1,1,i+1],...
+      [lx*ux,-(lx+ux)/2,-(lx+ux)/2,1],n_variable+1,n_variable+1);
 end
 for i = 1:nlX
    ai = A0(i,:);
@@ -99,54 +94,37 @@ end
 if ~isempty(A0)
    Le = A0;
 end
-Lv = eye(n_variable);
+Lv = speye(n_variable);
 if ~isempty(A0)
    L = [Lv;Le];
-   eLB = [LB; lLB];
-   eUB = [UB; lUB];
 else
    L = Lv;
-   eLB = LB;
-   eUB = UB;
 end
-if frac == 0
+if frac == -1
+   [Qextra, extraIdx] = getExtraQ;
+%    tic;
+%    [Qextra, extraIdx] = getExtraQ;
+%    [~, Idx] = B2BDC.B2Bdataset.Dataset.findConicHull([Qunits;Qx],Qe);
+%    Qextra = Qe(Idx);
+%    toc;
+%    extraIdx = extraIdx(Idx,:);
+   nextra = length(Qextra);
+elseif frac == 0
    Qextra = {};
    extraIdx = [];
    nextra = 0;
-elseif frac < 1 && frac > 0
-   if isempty(obj.ExtraQscore)
-      Js = getScore;
-      obj.ExtraQscore = Js;
-   else
-      Js = obj.ExtraQscore;
-   end
-   nextra = round(frac*nchoosek(nlX+n_variable,2));
-   Qextra = cell(2*nextra,1);
-   extraIdx = zeros(2*nextra,3);
-   [~,idJ] = sort(Js(:),'ascend');
-   for ii = 1:nextra
-      [I,J] = ind2sub(size(Js),idJ(ii));
-      LI = L(I,:);
-      LJ = L(J,:);
-      E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(I)*eUB(J);
-      E(1,2:end) = -0.5*(eLB(I)*LJ+eUB(J)*LI);
-      E(2:end,2:end) = 0.5*LI' * LJ;
-      E = E+E';
-      Qextra{2*ii-1} = E;
-      extraIdx(2*ii-1,:) = [I,J,2];
-      E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(J)*EUB(I);
-      E(1,2:end) = -0.5*(eUB(I)*LJ+eLB(J)*LI);
-      E(2:end,2:end) = 0.5*LI' * LJ;
-      E = E+E';
-      Qextra{2*ii} = E;
-      extraIdx(2*ii,:) = [I,J,3];
-   end
+elseif frac == -2
+   load idx
+   [Qe, extraIdx] = getExtraQ;
+   Qextra = Qe(Idx);
+   extraIdx = extraIdx(Idx,:);
    nextra = length(Qextra);
 else
-   [Qextra, extraIdx] = getExtraQ;
-   nextra = length(Qextra);
+   [Qe, extraIdx] = getExtraQ;
+   nextra = round(length(Qe)*frac*0.01);
+   [~, Idx] = B2BDC.B2Bdataset.Dataset.approxConicHull([Qunits;Qx],Qe,nextra);
+   Qextra = Qe(Idx);
+   extraIdx = extraIdx(Idx,:);
 end
 
 
@@ -211,34 +189,6 @@ end
             count = count+1;
          end
       end
-   end
-
-   function Js = getScore()
-      Js = ones(nlX+n_variable);
-      n1 = length(Qunits);
-      n2 = length(Qx);
-      Score = zeros(nlX+n_variable, nlX+n_variable, n1+n2);
-      for k1 = 1:n1
-         tmpQ = Qunits{k1}(2:end,2:end);
-         tmpQ = tmpQ/norm(tmpQ);
-         for i1 = 1:nlX+n_variable
-            for j1 = i1+1:nlX+n_variable
-               LL = L(i1,:)' * L(j1,:);
-               Score(i1,j1,k1) = norm(LL-tmpQ)/norm(LL);
-            end
-         end
-      end
-      for k2 = 1:n2
-         tmpQ = Qx{k2}(2:end,2:end);
-         tmpQ = tmpQ/norm(tmpQ);
-         for i1 = 1:nlX+n_variable
-            for j1 = i1+1:nlX+n_variable
-               LL = L(i1,:)' * L(j1,:);
-               Score(i1,j1,k2+k1) = norm(LL-tmpQ)/norm(LL);
-            end
-         end
-      end
-      Js = mean(Js,3);
    end
 
 end

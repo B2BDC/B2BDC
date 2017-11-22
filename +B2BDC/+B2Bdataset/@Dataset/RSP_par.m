@@ -19,6 +19,11 @@ vars = obj.Variables;
 nVar = vars.Length;
 nCut = sopt.ExtraCut;
 nPC = nVar-opt.SampleOption.TruncatedPC;
+if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
+   savePath = sopt.DataStorePath;
+else
+   savePath = [];
+end
 if nPC < 1
    nPC = 1;
 end
@@ -38,6 +43,11 @@ if nPC < nVar
    Ddiag = diag(DD);
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
+   if ~isempty(savePath)
+      sampledPC.V = V;
+      sampledPC.D = diag(Ddiag);
+      save(fullfile(savePath,'PCinfo'),'sampledPC');
+   end
 else
    vv = eye(nVar);
 end
@@ -143,6 +153,11 @@ A = [A D]';
 uq = [uq;uq2];
 if size(A,1) > 0
    sVar = sVar.addLinearConstraint(A,uq(:,1),uq(:,2));
+   if ~isempty(savePath)
+      polytope.direction = A;
+      polytope.bounds = uq;
+      save(fullfile(savePath,'polytopeInfo'),'polytope');
+   end
 end
 % if sopt.ParameterScaling
 %    sVar = sVar.calScale;
@@ -168,6 +183,9 @@ end
 for i = 1:nt1
    xVal = [xVal; xCand{i}];
 end
+if ~isempty(savePath)
+   save(fullfile(savePath,'xSample'),'xVal');
+end
 n1 = size(xVal,1);
 if n1 <= th*nt1*ns
    eff = n1/nt1/ns;
@@ -178,10 +196,16 @@ else
    if n1 >= N
       xVal = xVal(1:N,:);
       eff = n1/nt1/ns;
+      if ~isempty(savePath)
+         save(fullfile(savePath,'efficiency'),'eff');
+      end
       delete(p)
       return;
    end
    eff = n1/ns/nt1;
+   if ~isempty(savePath)
+      save(fullfile(savePath,'efficiency'),'eff');
+   end
    nEst = ceil(1.2*(N-n1)/eff/ns);
    disp(['The estimated batch of runs is: ' num2str(nEst)])
    disp(['The estimated running time is: ' num2str(t3*nEst/60/nt1) 'minutes'])
@@ -206,6 +230,9 @@ end
 for i = 1:nEst
    xVal = [xVal; xCand{i}];
 end
+if ~isempty(savePath)
+   save(fullfile(savePath,'xSample'),'xVal');
+end
 n1 = size(xVal,1);
 if n1 < N
    is = 1;
@@ -229,6 +256,9 @@ if n1 < N
    for i = 1:length(xCand)
       xVal = [xVal; xCand{i}];
    end
+   if ~isempty(savePath)
+      save(fullfile(savePath,'xSample'),'xVal');
+   end
 else
    is = 0;
 end
@@ -239,4 +269,7 @@ if n1 < N
    disp('Not enough samples are found within 120% calculating budget')
 end
 eff = n1/itt;
+if ~isempty(savePath)
+   save(fullfile(savePath,'efficiency'),'eff');
+end
 xVal = xVal(1:min(n1,N),:);

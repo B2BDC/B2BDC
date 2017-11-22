@@ -2,6 +2,7 @@ function [xVal,eff] = RSP(obj,N,xS,Dinfo,opt)
 % sub function for feasible set uniform sampling
 
 %  Created: Oct 3, 2016     Wenyu Li
+%  Modified Nov 22, 2017  (save result during the sample)  Wenyu Li
 
 % tic;
 th = opt.SampleOption.RejectionTol;
@@ -11,6 +12,11 @@ s1 = sopt.UncertaintyEstimation;
 vars = obj.Variables;
 nVar = vars.Length;
 nPC = nVar-opt.SampleOption.TruncatedPC;
+if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
+   savePath = sopt.DataStorePath;
+else
+   savePath = [];
+end
 if nPC < 1
    nPC = 1;
 end
@@ -31,6 +37,11 @@ if nPC < nVar
    Ddiag = diag(DD);
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
+   if ~isempty(savePath)
+      sampledPC.V = V;
+      sampledPC.D = diag(Ddiag);
+      save(fullfile(savePath,'PCinfo'),'sampledPC');
+   end
 else
    vv = eye(nVar);
 end
@@ -137,6 +148,11 @@ A = [A D]';
 uq = [uq;uq2];
 if size(A,1) > 0
    sVar = sVar.addLinearConstraint(A,uq(:,1),uq(:,2));
+   if ~isempty(savePath)
+      polytope.direction = A;
+      polytope.bounds = uq;
+      save(fullfile(savePath,'polytopeInfo'),'polytope');
+   end
 end
 % if sopt.ParameterScaling
 %    sVar = sVar.calScale;
@@ -146,7 +162,7 @@ end
 ic = 1;
 n1 = size(xVal,1);
 ns = sopt.BatchMaxSample;
-% h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
+h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
 while n1 < N
    xcand = sVar.collectSamples(ns,[],opt.SampleOption);
    if nPC < nVar
@@ -158,20 +174,26 @@ while n1 < N
    end
    iF = obj.isFeasiblePoint(xtmp);
    xVal = [xVal; xtmp(iF,:)];
+   if ~isempty(savePath)
+      save(fullfile(savePath,'xSample'),'xVal');
+   end
    n1 = size(xVal,1);
-%    waitbar(min(n1/N,1),h);
+   waitbar(min(n1/N,1),h);
    if n1 >= N
       eff = n1/ic/ns;
+      if ~isempty(savePath)
+         save(fullfile(savePath,'efficiency'),'eff');
+      end
       xVal = xVal(randperm(n1,N),:);
       xVal = xVal(1:N,:);
-%       close(h);
+      close(h);
       return;
    end
    if ic == 5
       if n1 <= th*ic*ns
          eff = n1/ic/ns;
          disp(['Numerical efficiency of current sampling method is ' num2str(eff)])
-%          close(h)
+         close(h)
          newCut = input('How many extra cut do you want to include? \n (negative value to exit) \n' );
          if newCut > 0
             Dinfo.D = A';

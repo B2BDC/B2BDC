@@ -34,6 +34,9 @@ classdef SampleOption < handle
    % ParameterScaling:
    %   A logical value specifies whether scales parameter in sampling
    % ---------------------------------------------------------------------
+   % DataStorePath:
+   %   A directory to save sample result
+   % ---------------------------------------------------------------------
    
    
    % Created: Oct 11, 2016    Wenyu Li
@@ -50,6 +53,7 @@ classdef SampleOption < handle
       UncertaintyTruncation = [];
       ParameterScaling = [];
       RejectionTol = [];
+      DataStorePath = [];
    end
    
    methods
@@ -58,7 +62,7 @@ classdef SampleOption < handle
          p = {'SampleMethod','UncertaintyEstimation','BatchMaxSample',...
             'StepInterval','TruncatedPC','ExtraCut',...
             'UncertaintyTruncation','ParameterScaling',...
-            'RejectionTol'};
+            'RejectionTol','DataStorePath'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -91,6 +95,8 @@ classdef SampleOption < handle
                         obj.ParameterScaling = inputCell{2*i};
                      case 9
                         obj.RejectionTol = inputCell{2*i};
+                     case 10
+                        obj.DataStorePath = inputCell{2*i};
                   end
                else
                   error('Invalid input property names')
@@ -200,6 +206,14 @@ classdef SampleOption < handle
             obj.RejectionTol = c;
          else
             error('Invalid input property value')
+         end
+      end
+      
+      function set.DataStorePath(obj,d)
+         if isdir(d)
+            obj.DataStorePath = d;
+         else
+            error('The directory is not existing')
          end
       end
      

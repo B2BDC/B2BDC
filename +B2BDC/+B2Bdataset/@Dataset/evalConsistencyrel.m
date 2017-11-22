@@ -27,9 +27,9 @@ if disflag
    disp('=======================================================');
 end
 if flag
-    [yout,sensitivity] = obj.sedumiconsisquadrel(b2bopt, abE);
+%     [yout,sensitivity] = obj.sedumiconsisquadrel(b2bopt, abE);
    warning('off','all');
-%    [yout,sensitivity] = obj.cvxconsisquadrel(b2bopt, abE);
+   [yout,sensitivity] = obj.cvxconsisquadrel(b2bopt, abE);
    warning('on','all');
    obj.ConsistencyMeasure = [yin yout];
    obj.ConsistencySensitivity.Outer = sensitivity;

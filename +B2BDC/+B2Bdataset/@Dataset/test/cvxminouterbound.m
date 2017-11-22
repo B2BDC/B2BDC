@@ -1,6 +1,6 @@
-function [minout,s] = sedumiminouterbound(obj, QOIobj, frac,abE,rflag)
+function [minout,s,xs] = cvxminouterbound(obj,QOIobj, frac,abE,rflag,Qtarget)
 % Calculate the outer bound of minimum values of the dataset
-% target QOI subject to the constraints within the dataset through sedumi
+% target QOI subject to the constraints within the dataset through cvx
 % QOIobj - A B2BDC.B2Bmodel.Model object specifies the QOI
 % frac - Fraction of extra constraints used in the optimization
 %        0 < frac < 100, if frac == -1, then automatically linear paris
@@ -8,61 +8,100 @@ function [minout,s] = sedumiminouterbound(obj, QOIobj, frac,abE,rflag)
 %        will be included
 % Qtarget - The model object of predicting QoI
 
-% Created: August 7, 2015    Wenyu Li
-%  Modified: Feb 16, 2016  Wenyu Li (Normalized sensitivity calculated)
+% Created: June 15, 2015   Wenyu Li
+%  Modified: July 5, 2015    Wenyu Li (Sensitivity added)
+%  Modified: July 14, 2015    Wenyu Li (Extra combination for linear
+%                                       constraints added)
 
+units = obj.DatasetUnits.Values;
 bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
 bds(:,2) = bds(:,2) + abE;
 d = bds(:,2)-bds(:,1);
+name2 = obj.VarNames;
+vu = [obj.Variables.Values.UpperBound]';
+vl = [obj.Variables.Values.LowerBound]';
+vd = vu - vl;
 if rflag
    n_units = obj.DatasetUnits.Length-1;
 else
    n_units = obj.DatasetUnits.Length;
 end
-units = obj.DatasetUnits.Values;
-name2 = obj.VarNames;
-% for n1 = 1:n_units
-%    my = obj.DatasetUnits.Values(n1).SurrogateModel.yScale.my;
-%    dy = obj.DatasetUnits.Values(n1).SurrogateModel.yScale.dy;
-%    bds(n1,:) = (bds(n1,:) - my) / dy;
-%    d(n1) = d(n1)/dy;
-% end
-vu = [obj.Variables.Values.UpperBound]';
-vl = [obj.Variables.Values.LowerBound]';
-vd = vu - vl;
 n_variable = obj.Variables.Length;
-% vd = 2*ones(n_variable,1);
-[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
-s = [];
+[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac,Qtarget);
 nL = length(Qx) - n_variable;
-n_opt = 1+2*n_units+n_variable+nL+n_extra;
 if nL > 0
    tlb = obj.Variables.ExtraLinConstraint.LB;
    tub = obj.Variables.ExtraLinConstraint.UB;
    tdb = tub-tlb;
    L2 = L(n_variable+1:end,:);
 end
-
-[A,b,c,K] = setSedumi;
-pars.fid = 0;
-[xopt,yopt,info] = sedumi(A,b,c,K,pars);
-S = reshape(xopt(n_opt:end),n_variable+1,n_variable+1);
-S = 0.5*(S+S');
-
-if info.pinf ~= 0 || info.dinf ~= 0
-   disp('Not both primal/dual problem are feasible, please review the results with cautions')
-end
-minout = yopt(end);
-lamEU = -yopt(1:n_units);
-lamEL = -yopt(n_units+1:2*n_units);
-lamV = -yopt(2*n_units+1:2*n_units+n_variable);
+cvx_begin sdp quiet
+% cvx_solver sedumi
+cvx_precision('best');
+variable tmin
+variable lamEL(n_units)
+variable lamEU(n_units)
+variable lamV(n_variable)
 if nL > 0
-   lamL = -yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
+   variable lamL(nL)
 end
 if n_extra ~= 0
-   lamExtra = -yopt(2*(n_units+nL+n_variable)+1:end-1);
+   variable lamExtra(n_extra)
 end
+dual variable S
+model0 = QOIobj;
+model0Var = model0.VarNames;
+varName = obj.VarNames;
+[~,~,id] = intersect(model0Var,varName,'stable');
+if isa(model0,'B2BDC.B2Bmodels.RQModel')
+   N0 = model0.Numerator;
+   D0 = model0.Denominator;
+   targetN = zeros(n_variable+1);
+   targetD = zeros(n_variable+1);
+   targetN([1;id+1],[1;id+1]) = N0;
+   targetD([1;id+1],[1;id+1]) = D0;
+   cvxconstr = targetN-tmin*targetD;
+elseif isa(model0,'B2BDC.B2Bmodels.QModel')
+   Coef0 = model0.CoefMatrix;
+   targetMatrix1 = zeros(n_variable+1);
+   targetMatrix2 = zeros(n_variable+1);
+   targetMatrix2(1,1) = 1;
+   targetMatrix1([1;id+1],[1;id+1]) = Coef0;
+   cvxconstr = targetMatrix1-tmin*targetMatrix2;
+end
+for i = 1:n_units
+   cvxconstr = cvxconstr + lamEU(i)*Qunits{2*i-1}+...
+      lamEL(i)*Qunits{2*i};
+end
+for i = 1:n_variable
+   cvxconstr = cvxconstr + lamV(i)*Qx{i};
+end
+if nL > 0
+   for i = 1:nL
+      cvxconstr = cvxconstr + lamL(i) * Qx{n_variable+i};
+   end
+end
+if n_extra ~= 0
+   for k = 1:n_extra
+      cvxconstr = cvxconstr + lamExtra(k)*Qextra{k};
+   end
+end
+maximize tmin
+subject to
+S: cvxconstr >= zeros(n_variable+1,n_variable+1);
+lamEL >= 0;
+lamEU >= 0;
+lamV >= 0;
+if nL > 0
+   lamL >= 0
+end
+if n_extra ~= 0
+   lamExtra >= 0;
+end
+cvx_end
+minout = cvx_optval;
+xs = S(2:n_variable+1,1);
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);
 s.expu(~idRQ) = lamEU(~idRQ).*d(~idRQ)*S(1,1);
@@ -195,73 +234,4 @@ if n_extra ~= 0
          end
       end
    end
-end
-
-
-
-
-
-
-
-   function [A,b,c,K] = setSedumi()
-      Alam = [-speye(n_opt-1), spalloc(n_opt-1,1,0)];
-      clam = spalloc(n_opt-1,1,0);
-      As = zeros((n_variable+1)^2,n_opt);
-      model0 = QOIobj;
-      model0Var = model0.VarNames;
-      varName = obj.VarNames;
-      [~,id1,id2] = intersect(varName,model0Var);
-      id1 = [1;id1+1];
-      id2 = [1;id2+1];
-      if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         N0 = model0.Numerator;
-         D0 = model0.Denominator;
-         targetN = zeros(n_variable+1,n_variable+1);
-         targetD = zeros(n_variable+1,n_variable+1);
-         for j = 1:length(id2)
-            for k = 1:length(id2)
-               targetN(id1(j),id1(k)) = N0(id2(j),id2(k));
-               targetD(id1(j),id1(k)) = D0(id2(j),id2(k));
-            end
-         end
-         targetMatrix = targetN;
-      elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-         Coef0 = model0.CoefMatrix;
-         targetMatrix = zeros(n_variable+1,n_variable+1);
-         for j = 1:length(id2)
-            for k = 1:length(id2)
-               targetMatrix(id1(j),id1(k)) = Coef0(id2(j),id2(k));
-            end
-         end
-      end
-      cs = targetMatrix(:);
-      for i = 1:n_units
-         As(:,i) = -Qunits{2*i-1}(:);
-         As(:,i+n_units) = -Qunits{2*i}(:);
-      end
-      for i = 1:n_variable
-         As(:,2*n_units+i) = -Qx{i}(:);
-      end
-      for i = 1:nL
-         As(:,2*n_units+n_variable+i) = -Qx{n_variable+i}(:);
-      end
-      if n_extra ~= 0
-         for k = 1:n_extra
-            As(:,2*n_units+n_variable+nL+k) = -Qextra{k}(:);
-         end
-      end          
-      if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         As(:,end) = targetD;
-      elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-         As(1,end) = 1;
-      end
-      At = [Alam; As];
-      c = [clam; cs];
-      b = spalloc(n_opt,1,1);
-      b(end) = 1;
-      K.l = n_opt-1;
-      K.s = n_variable+1;
-      A = At';    
-   end
-
 end

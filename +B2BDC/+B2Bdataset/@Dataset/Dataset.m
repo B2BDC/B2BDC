@@ -16,6 +16,7 @@ classdef Dataset < handle
       DatasetUnits = [];   % B2BDC.B2Bdataset.DatasetUnitList object 
       Variables = [];      % B2BDC.B2Bvariables.VariableList object
       FeasiblePoint = [];  % Feasible point if the dataset is consistent
+      ExtraQscore = [];    % The score matrix for extra quadratic constraints
    end
    
    properties (Dependent)

@@ -13,6 +13,11 @@ nPC = nVar - sOpt.TruncatedPC;
 if nPC < 1
    nPC = 1;
 end
+if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
+   savePath = sopt.DataStorePath;
+else
+   savePath = [];
+end
 % t1 = toc;
 if isempty(Dinfo)
    if isempty(xF)
@@ -29,6 +34,11 @@ if isempty(Dinfo)
    Ddiag = diag(D);
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
+   if ~isempty(savePath)
+      sampledPC.V = V;
+      sampledPC.D = diag(Ddiag);
+      save(fullfile(savePath,'PCinfo'),'sampledPC');
+   end
 else
    uqD = Dinfo.uq;
    xAve = 0.5*(uqD(:,1)+uqD(:,2))';
@@ -96,7 +106,7 @@ end
 ic = 1;
 n1 = size(xVal,1);
 ns = sOpt.BatchMaxSample;
-% h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
+h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
 while n1 < N
    xmin = uq(:,1)';
    dx = uq(:,2)-uq(:,1);
@@ -108,11 +118,17 @@ while n1 < N
    xtmp = xtmp*vv'+repmat(xAve,ns,1);
    iF = obj.isFeasiblePoint(xtmp);
    xVal = [xVal; xtmp(iF,:)];
+   if ~isempty(savePath)
+      save(fullfile(savePath,'xSample'),'xVal');
+   end
    n1 = size(xVal,1);
-%    waitbar(min(n1/N,1),h);
+   waitbar(min(n1/N,1),h);
    if n1 >= N
       eff = n1/ic/ns;
-%       close(h);
+      if ~isempty(savePath)
+         save(fullfile(savePath,'efficiency'),'eff');
+      end
+      close(h);
       break
    end
    if ic == 5

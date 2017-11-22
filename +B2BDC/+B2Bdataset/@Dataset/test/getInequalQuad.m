@@ -1,4 +1,4 @@
-function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bds,frac)
+function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bds,frac,Qtarget)
 % Return the quadratic form of inequality constraints of the
 % B2BDC.B2Bdataset.Dataset object. The returned quadratic form matrix is
 % with respect to all the active variables of the dataset.
@@ -9,6 +9,7 @@ function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bd
 %          0 < frac < 100, if frac == -1, then automatically linear paris
 %          with influence factor greater than 5% of the most influential pair
 %          will be included
+%  Qtarget - The model object of the predicting QoI
 % Output:
 %  Qunits - Inequality quadratic form of the observation QOI to be within
 %           the uncertainty bounds
@@ -80,7 +81,7 @@ end
 for i = 1:n_variable
    lx = LB(i);
    ux = UB(i);
-   tmpQ = zeros(n_variable+1);
+   tmpQ = zeros(n_variable);
    tmpQ(1,1) = lx*ux;
    tmpQ(1,i+1) = -0.5*(lx+ux);
    tmpQ(i+1,1) = -0.5*(lx+ux);
@@ -114,36 +115,39 @@ if frac == 0
    extraIdx = [];
    nextra = 0;
 elseif frac < 1 && frac > 0
-   if isempty(obj.ExtraQscore)
-      Js = getScore;
-      obj.ExtraQscore = Js;
-   else
-      Js = obj.ExtraQscore;
-   end
+   qTarget = zeros(n_variable+1);
+   [~,~,idq] = intersect(Qtarget.VarNames,varName,'stable');
+   qTarget([1;idq+1],[1;idq+1]) = Qtarget.CoefMatrix;
+   qTarget = qTarget/norm(qTarget);
+   Js = getScore;
    nextra = round(frac*nchoosek(nlX+n_variable,2));
    Qextra = cell(2*nextra,1);
-   extraIdx = zeros(2*nextra,3);
+   extraIdx = cell(2*nextra,1);
    [~,idJ] = sort(Js(:),'ascend');
    for ii = 1:nextra
       [I,J] = ind2sub(size(Js),idJ(ii));
       LI = L(I,:);
       LJ = L(J,:);
+      lI = eLB(I);
+      lJ = eLB(J);
+      uI = eUB(I);
+      uJ = eUB(J);
       E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(I)*eUB(J);
-      E(1,2:end) = -0.5*(eLB(I)*LJ+eUB(J)*LI);
+      E(1,1) = 0.5*lI*uJ;
+      E(1,2:end) = -0.5*(lI*LJ+uJ*LI);
       E(2:end,2:end) = 0.5*LI' * LJ;
       E = E+E';
       Qextra{2*ii-1} = E;
       extraIdx(2*ii-1,:) = [I,J,2];
       E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(J)*EUB(I);
-      E(1,2:end) = -0.5*(eUB(I)*LJ+eLB(J)*LI);
+      E(1,1) = 0.5*lJ*uI;
+      E(1,2:end) = -0.5*(lJ*LJ+uI*LI);
       E(2:end,2:end) = 0.5*LI' * LJ;
       E = E+E';
       Qextra{2*ii} = E;
       extraIdx(2*ii,:) = [I,J,3];
    end
-   nextra = length(Qextra);
+   nextra = 2*nextra;
 else
    [Qextra, extraIdx] = getExtraQ;
    nextra = length(Qextra);
@@ -215,30 +219,30 @@ end
 
    function Js = getScore()
       Js = ones(nlX+n_variable);
-      n1 = length(Qunits);
-      n2 = length(Qx);
-      Score = zeros(nlX+n_variable, nlX+n_variable, n1+n2);
-      for k1 = 1:n1
-         tmpQ = Qunits{k1}(2:end,2:end);
-         tmpQ = tmpQ/norm(tmpQ);
+%       n1 = length(Qunits);
+%       n2 = length(Qx);
+%       Score = zeros(nlX+n_variable, nlX+n_variable, n1+n2);
+%       for k1 = 1:n1
+%          tmpQ = Qunits{k1}(2:end,2:end);
+%          tmpQ = tmpQ/norm(tmpQ);
          for i1 = 1:nlX+n_variable
             for j1 = i1+1:nlX+n_variable
                LL = L(i1,:)' * L(j1,:);
-               Score(i1,j1,k1) = norm(LL-tmpQ)/norm(LL);
+               Js(i1,j1) = norm(LL-qTarget)/norm(LL);
             end
          end
-      end
-      for k2 = 1:n2
-         tmpQ = Qx{k2}(2:end,2:end);
-         tmpQ = tmpQ/norm(tmpQ);
-         for i1 = 1:nlX+n_variable
-            for j1 = i1+1:nlX+n_variable
-               LL = L(i1,:)' * L(j1,:);
-               Score(i1,j1,k2+k1) = norm(LL-tmpQ)/norm(LL);
-            end
-         end
-      end
-      Js = mean(Js,3);
+%       end
+%       for k2 = 1:n2
+%          tmpQ = Qx{k2}(2:end,2:end);
+%          tmpQ = tmpQ/norm(tmpQ);
+%          for i1 = 1:nlX+n_variable
+%             for j1 = i1+1:nlX+n_variable
+%                LL = L(i1,:)' * L(j1,:);
+%                Score(i1,j1,k2+k1) = norm(LL-tmpQ)/norm(LL);
+%             end
+%          end
+%       end
+%       Js = mean(Js,3);
    end
 
 end

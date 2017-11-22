@@ -1,5 +1,5 @@
-function [minout,s] = sedumiminouterbound(obj, QOIobj, frac,abE,rflag)
-% Calculate the outer bound of minimum values of the dataset
+function [maxout,s] = sedumimaxouterbound(obj,QOIobj, frac, abE, rflag,Qtarget)
+% Calculate the outer bound of maximum values of the dataset
 % target QOI subject to the constraints within the dataset through sedumi
 % QOIobj - A B2BDC.B2Bmodel.Model object specifies the QOI
 % frac - Fraction of extra constraints used in the optimization
@@ -8,8 +8,8 @@ function [minout,s] = sedumiminouterbound(obj, QOIobj, frac,abE,rflag)
 %        will be included
 % Qtarget - The model object of predicting QoI
 
-% Created: August 7, 2015    Wenyu Li
-%  Modified: Feb 16, 2016  Wenyu Li (Normalized sensitivity calculated)
+% Created: August 7, 2015   Wenyu Li
+%  Modified: Feb 16, 2016  Wenyu Li (Normalized sensitivity calculated) 
 
 bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
@@ -33,7 +33,7 @@ vl = [obj.Variables.Values.LowerBound]';
 vd = vu - vl;
 n_variable = obj.Variables.Length;
 % vd = 2*ones(n_variable,1);
-[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
+[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac,Qtarget);
 s = [];
 nL = length(Qx) - n_variable;
 n_opt = 1+2*n_units+n_variable+nL+n_extra;
@@ -53,15 +53,15 @@ S = 0.5*(S+S');
 if info.pinf ~= 0 || info.dinf ~= 0
    disp('Not both primal/dual problem are feasible, please review the results with cautions')
 end
-minout = yopt(end);
-lamEU = -yopt(1:n_units);
-lamEL = -yopt(n_units+1:2*n_units);
-lamV = -yopt(2*n_units+1:2*n_units+n_variable);
+maxout = yopt(end);
+lamEU = yopt(1:n_units);
+lamEL = yopt(n_units+1:2*n_units);
+lamV = yopt(2*n_units+1:2*n_units+n_variable);
 if nL > 0
-   lamL = -yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
+   lamL = yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
 end
 if n_extra ~= 0
-   lamExtra = -yopt(2*(n_units+nL+n_variable)+1:end-1);
+   lamExtra = yopt(2*n_units+nL+n_variable+1:end-1);
 end
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);
@@ -200,9 +200,6 @@ end
 
 
 
-
-
-
    function [A,b,c,K] = setSedumi()
       Alam = [-speye(n_opt-1), spalloc(n_opt-1,1,0)];
       clam = spalloc(n_opt-1,1,0);
@@ -224,13 +221,13 @@ end
                targetD(id1(j),id1(k)) = D0(id2(j),id2(k));
             end
          end
-         targetMatrix = targetN;
+         targetMatrix = -targetN;
       elseif isa(model0,'B2BDC.B2Bmodels.QModel')
          Coef0 = model0.CoefMatrix;
          targetMatrix = zeros(n_variable+1,n_variable+1);
          for j = 1:length(id2)
             for k = 1:length(id2)
-               targetMatrix(id1(j),id1(k)) = Coef0(id2(j),id2(k));
+               targetMatrix(id1(j),id1(k)) = -Coef0(id2(j),id2(k));
             end
          end
       end
@@ -251,14 +248,14 @@ end
          end
       end          
       if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         As(:,end) = targetD;
+         As(:,end) = -targetD;
       elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-         As(1,end) = 1;
+         As(1,end) = -1;
       end
       At = [Alam; As];
       c = [clam; cs];
       b = spalloc(n_opt,1,1);
-      b(end) = 1;
+      b(end) = -1;
       K.l = n_opt-1;
       K.s = n_variable+1;
       A = At';    
