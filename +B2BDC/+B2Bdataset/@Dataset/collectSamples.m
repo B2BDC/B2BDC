@@ -109,7 +109,7 @@ Xvals = quadSamples(obj,xInit,N);
       
       Xvals = zeros(N, nX);
       ic = 1;
-%       h = waitbar((ic-1)/N,'Collecting samples in the feasible set...');
+      h = waitbar((ic-1)/N,'Collecting samples in the feasible set...');
       nstep = Sopt.StepInterval;
       n2 = nstep*N;
       for i=1:n2
@@ -122,13 +122,13 @@ Xvals = quadSamples(obj,xInit,N);
          if mod(i,nstep) == 0
             Xvals(ic,:) = tmpx';
             ic = ic+1;
-%             if mod(ic,round(0.01*N)) == 1
-%                waitbar((ic-1)/N,h);
-%             end
+            if mod(ic,round(0.02*N)) == 1
+               waitbar((ic-1)/N,h);
+            end
          end
          xInit = tmpx;
       end
-%       close(h);
+      close(h);
 %       Xvals = Xvals(randperm(N,N),:);
    end
 

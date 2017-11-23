@@ -80,14 +80,14 @@ if isempty(Q)
          opt1.Display = 'none';
          x0 = linprog(zeros(size(Arw,2),1),...
             Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-%          cc = 0;
-%          while ~all(Arw*x0 < brw) && cc < cMax
-%             x0 = linprog(zeros(size(Arw,2),1),...
-%                Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-%          end
-%          if cc == cMax
-%             error('The parameter space is infeasible')
-%          end
+         cc = 0;
+         while ~all(Arw*x0 < brw) && cc < cMax
+            x0 = linprog(zeros(size(Arw,2),1),...
+               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         end
+         if cc == cMax
+            error('The parameter space is infeasible')
+         end
       end
    else
       if obj.isFeasiblePoint(xStart)
@@ -108,6 +108,14 @@ if isempty(Q)
          opt1.Display = 'none';
          x0 = linprog(zeros(size(Arw,2),1),...
             Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         cc = 0;
+         while ~all(Arw*x0 < brw) && cc < cMax
+            x0 = linprog(zeros(size(Arw,2),1),...
+               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         end
+         if cc == cMax
+            error('The parameter space is infeasible')
+         end
       end
    end
    warning('on','all');
