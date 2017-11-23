@@ -65,29 +65,29 @@ if isempty(Q)
       if isempty(A0)
          x0 = obj.makeLHSsample(1);
          x0 = x0'./s;
-         cc = 0;
-         while ~all(Arw*x0 < brw) && cc < cMax
-            x0 = obj.makeLHSsample(1);
-            x0 = x0./s;
-            cc = cc+1;
-         end
-         if cc == cMax
-            x0 = [];
-         end
+%          cc = 0;
+%          while ~all(Arw*x0 < brw) && cc < cMax
+%             x0 = obj.makeLHSsample(1);
+%             x0 = x0./s;
+%             cc = cc+1;
+%          end
+%          if cc == cMax
+%             error('The parameter space is infeasible')
+%          end
       else
          warning('off','all');
          opt1 = optimoptions('linprog');
          opt1.Display = 'none';
          x0 = linprog(zeros(size(Arw,2),1),...
             Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-         cc = 0;
-         while ~all(Arw*x0 < brw) && cc < cMax
-            x0 = linprog(zeros(size(Arw,2),1),...
-               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
-         end
-         if cc == cMax
-            x0 = [];
-         end
+%          cc = 0;
+%          while ~all(Arw*x0 < brw) && cc < cMax
+%             x0 = linprog(zeros(size(Arw,2),1),...
+%                Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+%          end
+%          if cc == cMax
+%             error('The parameter space is infeasible')
+%          end
       end
    else
       if obj.isFeasiblePoint(xStart)

@@ -32,11 +32,18 @@ if nPC < nVar  ||...
 end
 if nPC < nVar
    xAve = mean(xS);
+   if ~obj.isFeasiblePoint(xAve)
+      Xdd = xS - repmat(xAve,nS,1);
+      xdd = sqrt(sum(Xdd.^2,2));
+      [~,imin] = min(xdd);
+      xAve = xS(imin,:);
+   end
    xC = xS - repmat(xAve,nS,1);
    [V,DD] = eig((xC' * xC)/nS);
    Ddiag = diag(DD);
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
+   y0 = xAve*vv;
    if ~isempty(savePath)
       sampledPC.V = V;
       sampledPC.D = diag(Ddiag);
@@ -67,7 +74,7 @@ if nPC < nVar
       case 'Outer'
          opt.Prediction = 'outer';
          for i = 1:nPC
-            tv = [0; vv(:,i)];
+            tv = [-y0(i); vv(:,i)];
             tM = generateModel(tv,vars);
             preQ = obj.predictQOI(tM,opt);
             uqv(i,:) = [preQ.min preQ.max];
@@ -75,22 +82,22 @@ if nPC < nVar
       case 'Inner'
          opt.Prediction = 'inner';
          for i = 1:nPC
-            tv = [0; vv(:,i)];
+            tv = [-y0(i); vv(:,i)];
             tM = generateModel(tv,vars);
             preQ = obj.predictQOI(tM,opt);
             uqv(i,:) = [preQ.min preQ.max];
          end
       case 'Sample'
          for i = 1:nPC
-            f = xS * vv(:,i);
+            f = xC * vv(:,i);
             uqv(i,:) = [min(f) max(f)];
          end
       case 'Truncation'
          sf = 1-sopt.UncertaintyTruncation;
          for i = 1:nPC
             f = xC * vv(:,i);
-            f0 = xAve * vv(:,i);
-            uqv(i,:) = sf*[min(f) max(f)] + f0;
+%             f0 = xAve * vv(:,i);
+            uqv(i,:) = sf*[min(f) max(f)];
          end
    end
    sVar = generateVar([],uqv);
@@ -125,18 +132,19 @@ if nCut > 0
             uq2(i,:) = [preQ.min preQ.max];
          end
       case 'Sample'
-         xS_pc = xS*vv(:,1:nPC);
+         xC_pc = xC*vv(:,1:nPC);
          for i = 1:nCut
-            f = xS_pc*D(:,i);
+            f = xC_pc*D(:,i);
             uq2(i,:) = [min(f) max(f)];
          end
       case 'Truncation'
-         xS_pc = xS*vv(:,1:nPC);
-         xAve_pc = mean(xS_pc);
+         xC_pc = xC*vv(:,1:nPC);
+%          xAve_pc = mean(xS_pc);
          for i = 1:nCut
-            f = xS*D(:,i);
-            mf = xAve_pc*D(:,i);
-            uq2(i,:) = [mf+(1-sf)*(min(f)-mf) mf+(1-sf)*(max(f)-mf)];
+            f = xC_pc*D(:,i);
+            mf = mean(f);
+%             mf = xAve_pc*D(:,i);
+            uq2(i,:) = [mf+(1-sf)*(min(f)-mf), mf+(1-sf)*(max(f)-mf)];
          end
    end
 else
@@ -166,8 +174,8 @@ h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
 while n1 < N
    xcand = sVar.collectSamples(ns,[],opt.SampleOption);
    if nPC < nVar
-      xtmp = [zeros(ns,nPC) repmat(xAve*vv(:,nPC+1:end),ns,1)];
-      xtmp(:,1:nPC) = xcand;
+      xtmp = repmat(y0,ns,1);
+      xtmp(:,1:nPC) = xtmp(:,1:nPC)+xcand;
       xtmp = xtmp*vv';
    else
       xtmp = xcand;

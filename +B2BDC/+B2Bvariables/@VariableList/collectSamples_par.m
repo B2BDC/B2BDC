@@ -67,7 +67,6 @@ if isempty(Q)
          x0 = x0./s;
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
-            disp('LOL')
             x0 = obj.makeLHSsample(1);
             x0 = x0./s;
             cc = cc+1;
@@ -83,7 +82,6 @@ if isempty(Q)
             Arw,brw,Aeq,Beq,tLB,tUB,opt1);
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
-            disp('LOL')
             x0 = linprog(zeros(size(Arw,2),1),...
                Arw,brw,Aeq,Beq,tLB,tUB,opt1);
          end

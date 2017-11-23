@@ -28,6 +28,12 @@ if isempty(Dinfo)
 end
 if isempty(Dinfo)
    xAve = mean(xF);
+   if ~obj.isFeasiblePoint(xAve)
+      Xdd = xF - repmat(xAve,nS,1);
+      xdd = sqrt(sum(Xdd.^2,2));
+      [~,imin] = min(xdd);
+      xAve = xF(imin,:);
+   end
    xC = xF - repmat(xAve,nS,1);
    [V,D] = eig((xC' * xC)/nS);
    Ddiag = diag(D);

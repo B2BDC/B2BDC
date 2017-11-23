@@ -413,8 +413,8 @@ classdef VariableList < B2BDC.Util.IContainer
             return
          end
          if [1;x0]'*Q*[1;x0] <= UB
-            newVar.ExtraQuaConstraint.Q{end+1} = Q;
-            newVar.ExtraQuaConstraint.UB(end+1) = UB;
+            newVar.ExtraQuaConstraint.Q{end+1,1} = Q;
+            newVar.ExtraQuaConstraint.UB(end+1,1) = UB;
             newVar.ExtraQuaConstraint.xStart = x0;
          end
       end
