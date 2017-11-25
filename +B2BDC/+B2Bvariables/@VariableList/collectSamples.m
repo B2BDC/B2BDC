@@ -6,7 +6,7 @@ function Xvals = collectSamples(obj,N,xStart,opt)
 if nargin < 4
    opt = generateSampleOpt;
 end
-cMax = 10^2;
+cMax = 10;
 tolerance = 1e-5;
 % if opt.ParameterScaling
 %    obj = obj.calScale;
@@ -78,12 +78,14 @@ if isempty(Q)
          warning('off','all');
          opt1 = optimoptions('linprog');
          opt1.Display = 'none';
-         x0 = linprog(zeros(size(Arw,2),1),...
-            Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         tol = 1e-6;
+         [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
+            Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,tLB,tUB,opt1);
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
-            x0 = linprog(zeros(size(Arw,2),1),...
-               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+            [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
+               Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,[],[],opt1);
+            cc = cc+1;
          end
          if cc == cMax
             error('The parameter space is infeasible')
@@ -106,12 +108,14 @@ if isempty(Q)
          warning('off','all');
          opt1 = optimoptions('linprog');
          opt1.Display = 'none';
-         x0 = linprog(zeros(size(Arw,2),1),...
-            Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+         tol = 1e-6;
+         [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
+            Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,[],[],opt1);
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
-            x0 = linprog(zeros(size(Arw,2),1),...
-               Arw,brw,Aeq,Beq,tLB,tUB,opt1);
+            [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
+               Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,tLB,tUB,opt1);
+            cc = cc+1;
          end
          if cc == cMax
             error('The parameter space is infeasible')
