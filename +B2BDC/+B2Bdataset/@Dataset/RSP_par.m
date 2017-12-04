@@ -100,11 +100,20 @@ if nPC < nVar
          end
       case 'Truncation'
          sf = 1-sopt.UncertaintyTruncation;
-         parfor i = 1:nPC
-            f = xC * vv(:,i);
-%             f0 = xAve * vv(:,i);
-            uqv(i,:) = sf*[min(f) max(f)];
+         opt.Prediction = 'inner';
+         parfor i = 1:nCut
+            tv = [0; vv(:,i)];
+            tM = generateModel(tv,vars);
+            preQ = obj.predictQOI(tM,opt);
+            fmin = preQ.min;
+            fmax = preQ.max;
+            uqv(i,:) = sf*[fmin, fmax];
          end
+%          parfor i = 1:nPC
+%             f = xC * vv(:,i);
+%             f0 = xAve * vv(:,i);
+%             uqv(i,:) = sf*[min(f) max(f)];
+%          end
    end
    sVar = generateVar([],uqv);
 else
@@ -144,13 +153,23 @@ if nCut > 0
             uq2(i,:) = [min(f) max(f)];
          end
       case 'Truncation'
-         xC_pc = xC*vv(:,1:nPC);
-%          xAve_pc = mean(xS_pc);
+         opt.Prediction = 'inner';
          parfor i = 1:nCut
-            f = xC_pc*D(:,i);
-            mf = mean(f);
-            uq2(i,:) = [mf+(1-sf)*(min(f)-mf) mf+(1-sf)*(max(f)-mf)];
+            tv = [0; D(:,i)];
+            tM = generateModel(tv,sVar);
+            preQ = subDS.predictQOI(tM,opt);
+            fmin = preQ.min;
+            fmax = preQ.max;
+            uq2(i,:) = sf*[fmin, fmax];
          end
+         
+%          xC_pc = xC*vv(:,1:nPC);
+% %          xAve_pc = mean(xS_pc);
+%          parfor i = 1:nCut
+%             f = xC_pc*D(:,i);
+%             mf = mean(f);
+%             uq2(i,:) = [mf+(1-sf)*(min(f)-mf) mf+(1-sf)*(max(f)-mf)];
+%          end
    end
 else
    D = [];

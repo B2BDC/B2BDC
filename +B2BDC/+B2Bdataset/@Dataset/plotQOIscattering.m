@@ -6,7 +6,7 @@ function [err,id] = plotQOIscattering(obj,x0,logFlag,opt)
 
 nQ = obj.Length;
 if nargin < 3 || isempty(logFlag)
-   logFlag = false(nQ,1);
+   logFlag = true(nQ,1);
 end
 if nargin<4
    opt = generateOpt;

@@ -4,6 +4,9 @@ function [xopt,yopt] = optimize_Parameter(obj,logFlag,opt,weight)
 
 %  Created: Oct 25, 2017
 
+if nargin < 2 || isempty(logFlag)
+   logFlag = true(obj.Length+obj.Variables.Length,1);
+end
 if nargin < 3
    opt = generateOpt;
 end
