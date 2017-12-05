@@ -81,7 +81,10 @@ if opt.Display
       'Units','normalized','Position',[0.1,0.1,0.8,0.8],...
       'Name','Posterior parameter bounds');
    bds = vars.calBound;
-   errorbar(id,zeros(length(id),1),abs(bds(id,1)),abs(bds(id,2)),'ok','MarkerSize',1e-5,'LineWidth',2);
+   obs = vars.calNominal;
+   dub = bds(:,2)-obs;
+   dlb = obs-bds(:,1);
+   errorbar(id,obs(id),dlb(id),dub(id),'ok','MarkerSize',1e-5,'LineWidth',2);
    hold on
    switch pflag
       case 'inner'
@@ -101,7 +104,7 @@ if opt.Display
          dx2 = xbd2(:,2)-mbd2;
          errorbar(id-0.2,mbd2,dx2,'ob','MarkerSize',1e-5,'LineWidth',2);
          errorbar(id+0.2,mbd1,dx1,'or','MarkerSize',1e-5,'LineWidth',2);
-         legend('Original variable bounds','B2B predicted inner bounds','B2B predicted outer bounds','LineWidth',2)
+         legend('Original variable bounds','B2B predicted inner bounds','B2B predicted outer bounds')
    end
    hold off
    xlabel('Variable index')

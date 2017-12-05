@@ -21,7 +21,7 @@ end
 if nargin < 3
    opt = generateOpt;
    opt.Display = false;
-   opt.ExtraLinFraction = -1;
+   opt.ExtraLinFraction = 1;
 end
 pflag = opt.Prediction;
 nUnit = obj.Length;
@@ -38,7 +38,7 @@ elseif isnumeric(index)
 else
    error('Wrong input index format')
 end
-selectName = allName(id-1);
+selectName = allName(id);
 qbd1 = zeros(length(id),2);
 qbd2 = zeros(length(id),2);
 % if opt.Display
@@ -72,4 +72,40 @@ switch pflag
       qoiPos.InnerBound = qbd1;
    case 'outer'
       qoiPos.OuterBound = qbd1;
+end
+
+if opt.Display
+   figure('NumberTitle','off',...
+      'Units','normalized','Position',[0.1,0.1,0.8,0.8],...
+      'Name','Posterior QoI bounds');
+   bds = obj.calBound;
+   obs = obj.calObserve;
+   dub = bds(:,2)-obs;
+   dlb = obs-bds(:,1);
+   errorbar(id,obs(id),dlb(id),dub(id),'ok','MarkerSize',1e-5,'LineWidth',2);
+   hold on
+   switch pflag
+      case 'inner'
+         mbd = mean(qbd1,2);
+         dx = qbd1(:,2)-mbd;
+         errorbar(id-0.2,mbd,dx,'ob','MarkerSize',1e-5,'LineWidth',2);
+         legend('Original QoI bounds','B2B predicted inner bounds')
+      case 'outer'
+         mbd = mean(qbd1,2);
+         dx = qbd1(:,2)-mbd;
+         errorbar(id+0.2,mbd,dx,'or','MarkerSize',1e-5,'LineWidth',2);
+         legend('Original QoI bounds','B2B predicted outer bounds')
+      otherwise
+         mbd1 = mean(qbd1,2);
+         dx1 = qbd1(:,2)-mbd1;
+         mbd2 = mean(qbd2,2);
+         dx2 = qbd2(:,2)-mbd2;
+         errorbar(id-0.2,mbd2,dx2,'ob','MarkerSize',1e-5,'LineWidth',2);
+         errorbar(id+0.2,mbd1,dx1,'or','MarkerSize',1e-5,'LineWidth',2);
+         legend('Original QoI bounds','B2B predicted inner bounds','B2B predicted outer bounds')
+   end
+   hold off
+   xlabel('QoI index')
+   ylabel('Uncertainty bounds')
+   set(gca,'XLim',[0,max(id)+1],'FontSize',17,'FontWeight','Bold','Position',[0.08,0.15,0.85,0.75]);
 end

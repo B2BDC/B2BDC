@@ -140,6 +140,14 @@ classdef VariableList < B2BDC.Util.IContainer
          varVal = obj.Values;
          varBD = [[varVal.LowerBound]', [varVal.UpperBound]'];
       end
+      
+      function varOB = calNominal(obj)
+         %   VARBD = CALNOMINAL(OBJ) returns a nVar-by-1 array containing 
+         %   the Nominal values of all Variables (nVar) in the
+         %   VariablesList OBJ.
+         
+         varOB = [obj.Values.NominalValue]';
+      end
   
       function nVar = length(obj)
          %   NVAR = LENGTH(OBJ) returns the number of Variables in the 
