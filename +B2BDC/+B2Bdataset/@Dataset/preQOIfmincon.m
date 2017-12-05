@@ -52,6 +52,7 @@ else
 end
 abE = zeros(length(units),1);
 bds = obj.calBound;
+bds = bds(1:n_units,:);
 bds = diff(bds,[],2);
 if b2bopt.AddFitError
    for j = 1:length(units)

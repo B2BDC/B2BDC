@@ -15,7 +15,11 @@ function [QOIrange, QOISensitivity, xOpt] = predictQOI(obj, QOIobj, B2Bopt)
 %  Modified: July 5, 2015   Wenyu Li (Sensitivity added)
 %  Modified: July 14, 2015   Wenyu Li  (Gradient and hessian added)
 
-
+if nargin < 3
+   B2Bopt = generateOpt;
+elseif ~isa(B2Bopt,'B2BDC.Option.Option')
+   error('Wrong option object')
+end
 name1 = QOIobj.VarNames;
 name2 = obj.VarNames;
 [~,id] = intersect(name1,name2);
@@ -23,12 +27,6 @@ if length(id) < length(name1)
    rflag = true;
 else
    rflag = false;
-end
-xOpt = zeros(obj.Variables.Length,2);
-if nargin < 3
-   B2Bopt = generateOpt;
-elseif ~isa(B2Bopt,'B2BDC.Option.Option')
-   error('Wrong option object')
 end
 if ~obj.isConsistent(B2Bopt)
    error('The dataset is inconsistent')
@@ -38,6 +36,7 @@ else
    tmpFlag = obj.FeasibleFlag;
    tmpx0 = obj.FeasiblePoint;
 end
+xOpt = zeros(obj.Variables.Length,2);
 pFlag = B2Bopt.Prediction;
 if rflag
    tVar = QOIobj.Variables;
@@ -47,6 +46,9 @@ if rflag
    tM = B2BDC.B2Bmodels.QModel(tCoef,tVar);
    tUnit = generateDSunit('redundant',tM,[0,2]);
    obj.addDSunit(tUnit);
+   if ~obj.isConsistent(B2Bopt)
+      error('The dataset is inconsistent')
+   end
 end
 polyflag = polytest(obj);
 if polyflag
@@ -90,8 +92,8 @@ if ~strcmp(pFlag,'inner')
       disp('=======================================================');
    end
    frac = B2Bopt.ExtraLinFraction;
-   % [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
-   % [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
+%    [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
+%    [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
    warning('off','all');
    [minout,minSens,xs_min] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
    [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
@@ -140,7 +142,7 @@ switch pFlag
       end
 end
 if rflag
-   obj.deleteUnit(n_units);
+   obj.deleteUnit(obj.Length);
 end
 
 obj.ConsistencyMeasure = tmpCM;

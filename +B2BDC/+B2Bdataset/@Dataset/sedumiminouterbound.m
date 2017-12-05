@@ -14,7 +14,6 @@ function [minout,s] = sedumiminouterbound(obj, QOIobj, frac,abE,rflag)
 bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
 bds(:,2) = bds(:,2) + abE;
-d = bds(:,2)-bds(:,1);
 if rflag
    n_units = obj.DatasetUnits.Length-1;
 else
@@ -34,6 +33,9 @@ vd = vu - vl;
 n_variable = obj.Variables.Length;
 % vd = 2*ones(n_variable,1);
 [Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
+idRQ = idRQ(1:n_units);
+bds = bds(1:n_units,:);
+d = bds(:,2)-bds(:,1);
 s = [];
 nL = length(Qx) - n_variable;
 n_opt = 1+2*n_units+n_variable+nL+n_extra;
@@ -61,7 +63,7 @@ if nL > 0
    lamL = -yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
 end
 if n_extra ~= 0
-   lamExtra = -yopt(2*(n_units+nL+n_variable)+1:end-1);
+   lamExtra = -yopt(2*n_units+nL+n_variable+1:end-1);
 end
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);

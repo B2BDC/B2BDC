@@ -16,7 +16,7 @@ units = obj.DatasetUnits.Values;
 bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
 bds(:,2) = bds(:,2) + abE;
-d = bds(:,2)-bds(:,1);
+
 name2 = obj.VarNames;
 vu = [obj.Variables.Values.UpperBound]';
 vl = [obj.Variables.Values.LowerBound]';
@@ -28,6 +28,9 @@ else
 end
 n_variable = obj.Variables.Length;
 [Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
+bds = bds(1:n_units,:);
+d = bds(:,2)-bds(:,1);
+idRQ = idRQ(1:n_units);
 nL = length(Qx) - n_variable;
 if nL > 0
    tlb = obj.Variables.ExtraLinConstraint.LB;
