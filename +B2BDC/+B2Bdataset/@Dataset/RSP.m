@@ -185,12 +185,13 @@ end
 % end
 % t2 =toc;
 % tt = t2-t1;
-ic = 1;
+ic = 0;
 n1 = size(xVal,1);
 ns = sopt.BatchMaxSample;
 h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
 while n1 < N
    xcand = sVar.collectSamples(ns,[],opt.SampleOption);
+   ic = ic+1;
    if nPC < nVar
       xtmp = repmat(y0,ns,1);
       xtmp(:,1:nPC) = xtmp(:,1:nPC)+xcand;
