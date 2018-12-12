@@ -116,7 +116,7 @@ classdef SampleOption < handle
             obj.BatchMaxSample = 10^6;
          end
          if isempty(obj.StepInterval)
-            obj.StepInterval = 10;
+            obj.StepInterval = 1;
          end
          if isempty(obj.TruncatedPC)
             obj.TruncatedPC = 0;

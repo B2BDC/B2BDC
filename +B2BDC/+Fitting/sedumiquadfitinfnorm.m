@@ -15,6 +15,8 @@ if ~isvector(Y) || n_sample ~= length(Y)
 end
 my = mean(Y);
 dy = 0.5*(max(Y)-min(Y));
+yScale.my = my;
+yScale.dy = dy;
 if nCV == 1
    % mx = mean(vars.calBound')';
    % dx = 0.5*diff(vars.calBound')';
@@ -44,8 +46,6 @@ if nCV == 1
    [x,y,info] = sedumi(A,b,c,k,pars);
    coefVec = x(1:n_Coef);
    c1 = B2BDC.Fitting.vec2coef(coefVec,n_variable);
-   yScale.my = my;
-   yScale.dy = dy;
    y = B2BDC.B2Bmodels.QModel(c1,vars,yScale);
    yhat = xNew * coefVec;
    err = abs(yhat-Y);
@@ -115,8 +115,6 @@ else
    [x,y,info] = sedumi(A,b,c,k,pars);
    coefVec = x(1:n_Coef);
    c1 = B2BDC.Fitting.vec2coef(coefVec,n_variable);
-   yScale.my = my;
-   yScale.dy = dy;
    y = B2BDC.B2Bmodels.QModel(c1,vars,yScale);
    y.ErrorStats.absMax = err.absMax;
    y.ErrorStats.absAvg = err.absAvg/nCV;

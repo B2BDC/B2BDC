@@ -59,6 +59,7 @@ rr.GroupIndex = GroupIndex;
 rr.CorrectionDimension = nmd;
 rr.Basis = Basis;
 rr.FeasiblePoint = [];
+rr.BasisFunction = fMD;
 obj.ModelDiscrepancy = rr;
 obj.ModelDiscrepancyFlag = true;
 

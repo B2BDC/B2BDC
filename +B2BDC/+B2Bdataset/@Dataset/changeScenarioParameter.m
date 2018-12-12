@@ -1,4 +1,4 @@
-function ds = changeScenarioParameter(obj,Svalue,Sname,QOIindex)
+function changeScenarioParameter(obj,Svalue,Sname,QOIindex)
 % SETSCENARIOPARAMETER(OBJ,SVALUE,SNAME) changes the scenario parameters of
 % the dataset units, specified by QOIindex.
 
@@ -21,9 +21,16 @@ if length(id) ~= length(Sname)
 end
 dsUnits = obj.DatasetUnits.Values;
 for i = 1:length(QOIindex)
-   dsUnits(QOIindex(i)).ScenarioParameter.Value(id) = Svalue(i,:);
+   tmpsv = dsUnits(QOIindex(i)).ScenarioParameter;
+   tmpsv.Value(id) = Svalue(i,:);
+   oldUnit = dsUnits(QOIindex(i));
+   dsName = oldUnit.Name;
+   newUnit = B2BDC.B2Bdataset.DatasetUnit(oldUnit.Name,oldUnit.SurrogateModel,oldUnit.LowerBound,...
+      oldUnit.UpperBound,oldUnit.ObservedValue,tmpsv);
+   obj.DatasetUnits = obj.DatasetUnits.replace('Name',dsName,newUnit);
+%    dsUnits(QOIindex(i)).ScenarioParameter.Value(id) = Svalue(i,:);
 end
-ds = generateDataset(obj.Name);
-for i = 1:numel(dsUnits)
-   ds.addDSunit(dsUnits(i));
-end
+% ds = generateDataset(obj.Name);
+% for i = 1:numel(dsUnits)
+%    ds.addDSunit(dsUnits(i));
+% end

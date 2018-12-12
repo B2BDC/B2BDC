@@ -1,4 +1,4 @@
-function [idall,Qall,Nall,Dall,APD,bPD] = getQ_RQ_expansion(obj)
+function [idall,Qall,Nall,Dall,APD,bPD] = getQ_RQ_expansion(obj,Qpred)
 % [IDALL,QALL,NALL,DALL] = GETQ_RQ_EXPANSION(OBJ) calculates the corresponding
 % variable index, quadratic coefficient matrix, rational quadratic numerator 
 % coefficient matrix and rational quadratic denumenator coefficient matrix for
@@ -11,6 +11,12 @@ allVarnames = obj.VarNames;
 n_variable = length(allVarnames);
 units = obj.DatasetUnits.Values;
 n_units = length(units);
+if nargin > 1
+   n_units = n_units+1;
+   model0 = Qpred.Model;
+   predGroup = Qpred.Correction.GroupIndex;
+   sv0 = Qpred.Correction.Value;
+end
 idall = cell(n_units,1);
 Nall = cell(n_units,1);
 Dall = cell(n_units,1);
@@ -21,6 +27,10 @@ if obj.ModelDiscrepancyFlag
    MDinfo = obj.ModelDiscrepancy;
    MDBasis = MDinfo.Basis;
    nmd = MDinfo.CorrectionDimension;
+   if nargin > 1 && predGroup > 0
+      fMD = MDinfo.BasisFunction;
+      MDBasis{end+1} = fMD{predGroup}(sv0);
+   end
    GroupIndex = MDinfo.GroupIndex;
    nMD = sum(nmd);
    if obj.ParameterDiscrepancyFlag
@@ -29,10 +39,28 @@ if obj.ModelDiscrepancyFlag
       Hv = PDinfo.VariableRange;
       npd = PDinfo.CorrectionDimension;
       nPD = sum(npd);
+      fPD = PDinfo.BasisFunction;
       for j = 1:n_units
-         tmodel = units(j).SurrogateModel;
+         if j==n_units && nargin>1
+            tmodel = model0;
+         else
+            tmodel = units(j).SurrogateModel;
+         end
          [~,~,id1] = intersect(tmodel.VarNames,allVarnames,'stable');
-         gid = GroupIndex(j);
+         if j==n_units && nargin>1
+            gid = predGroup;
+            vBasis = cell(length(id1),1);
+            correctID = find(npd~=0);
+            for k = 1:length(id1)
+               [~,vid] = intersect(correctID,id1(k));
+               if ~isempty(vid)
+                  vBasis{k} = fPD{vid}(sv0);
+               end
+            end
+            PDBasis{end+1} = vBasis;
+         else
+            gid = GroupIndex(j);
+         end
          if gid > 0
             id2 = (sum(nmd(1:gid-1))+1:sum(nmd(1:gid)))';
          else
@@ -99,9 +127,17 @@ if obj.ModelDiscrepancyFlag
       end
    else
       for j = 1:n_units
-         tmodel = units(j).SurrogateModel;
+         if j==n_units && nargin > 1
+            tmodel = model0;
+         else
+            tmodel = units(j).SurrogateModel;
+         end
          [~,~,id1] = intersect(tmodel.VarNames,allVarnames,'stable');
-         gid = GroupIndex(j);
+         if j==n_units && nargin>1
+            gid = predGroup;
+         else
+            gid = GroupIndex(j);
+         end
          if gid > 0
             id2 = (sum(nmd(1:gid-1))+1:sum(nmd(1:gid)))';
          else
@@ -130,9 +166,25 @@ elseif obj.ParameterDiscrepancyFlag
    Hv = PDinfo.VariableRange;
    npd = PDinfo.CorrectionDimension;
    nPD = sum(npd);
+   fPD = PDinfo.BasisFunction;
    for j = 1:n_units
-      tmodel = units(j).SurrogateModel;
+      if j==n_units && nargin>1
+         tmodel = model0;
+      else
+         tmodel = units(j).SurrogateModel;
+      end
       [~,~,id1] = intersect(tmodel.VarNames,allVarnames,'stable');
+      if j==n_units && nargin>1
+         vBasis = cell(length(id1),1);
+         correctID = find(npd~=0);
+         for k = 1:length(id1)
+            [~,vid] = intersect(correctID,id1(k));
+            if ~isempty(vid)
+               vBasis{k} = fPD{vid}(sv0);
+            end
+         end
+         PDBasis{end+1} = vBasis;
+      end
       id3 = [];
       for k = 1:length(id1)
          if npd(id1(k)) ~= 0
@@ -189,7 +241,11 @@ elseif obj.ParameterDiscrepancyFlag
    end
 else
    for j = 1:n_units
-      tmodel = units(j).SurrogateModel;
+      if j == n_units && nargin > 1
+         tmodel = model0;
+      else
+         tmodel = units(j).SurrogateModel;
+      end
       [~,~,idall{j}] = intersect(tmodel.VarNames,allVarnames,'stable');
       if isa(tmodel,'B2BDC.B2Bmodels.RQModel')
          Nall{j} = tmodel.Numerator;

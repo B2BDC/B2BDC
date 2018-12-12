@@ -1,4 +1,4 @@
-classdef Option < handle
+classdef Option<handle
    % A B2BDC.Option.Option object that specifies the optimization crieteria.
    % The syntax of the input and the meaning of each property are in the
    % following:
@@ -71,7 +71,6 @@ classdef Option < handle
       TolConsis = [];
       Display = [];
       AddFitError = [];
-      LocalStart = [];
       Prediction = [];
       ModelDiscrepancy = [];
       ParameterDiscrepancy = [];
@@ -84,8 +83,8 @@ classdef Option < handle
       function  obj = Option(inputCell)
          % To generate a B2BDC.Option object
          p = {'ConsistencyMeasure','ExtraLinFraction','TolConsis','Display',...
-            'AddFitError','LocalStart','Prediction','ModelDiscrepancy',...
-            'ParameterDiscrepancy','SampleOption','POPOption','OptimOption'};
+            'AddFitError','Prediction','ModelDiscrepancy','ParameterDiscrepancy',...
+            'SampleOption','POPOption','OptimOption'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -111,18 +110,16 @@ classdef Option < handle
                      case 5
                         obj.AddFitError = inputCell{2*i};
                      case 6
-                        obj.LocalStart = inputCell{2*i};
-                     case 7
                         obj.Prediction = inputCell{2*i};
-                     case 8
+                     case 7
                         obj.ModelDiscrepancy = inputCell{2*i};
-                     case 9
+                     case 8
                         obj.ParameterDiscrepancy = inputCell{2*i};
-                     case 10
+                     case 9
                         obj.SampleOption = inputCell{2*i};
-                     case 11
+                     case 10
                         obj.POPOption = inputCell{2*i};
-                     case 12
+                     case 11
                         obj.OptimOption = inputCell{2*i};
                   end
                else
@@ -144,9 +141,6 @@ classdef Option < handle
          end
          if isempty(obj.AddFitError)
             obj.AddFitError = true;
-         end
-         if isempty(obj.LocalStart)
-            obj.LocalStart = 1;
          end
          if isempty(obj.Prediction)
             obj.Prediction = 'both';
@@ -204,15 +198,7 @@ classdef Option < handle
             error('Invalid input property value')
          end
       end
-      
-      function set.LocalStart(obj,num1)
-         if num1>=1
-            obj.LocalStart = round(num1);
-         else
-            error('Invalid input property value')
-         end
-      end
-      
+
       function set.Prediction(obj,str1)
          c = {'both','inner','outer'};
          if any(strcmp(c,str1))
@@ -221,7 +207,7 @@ classdef Option < handle
             error('Invalid input property value')
          end
       end
-      
+
       function set.SampleOption(obj,opt1)
          if isa(opt1,'B2BDC.Option.SampleOption')
             obj.SampleOption = opt1;

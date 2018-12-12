@@ -1,4 +1,4 @@
-function dsUnit = generateDSunit(dsName,modelObj,QoIBD,QoIval)
+function dsUnit = generateDSunit(dsName,modelObj,QoIBD,QoIval,SV)
 %generateDSunit   Creates a DatasetUnit object
 %   DSUNIT = generateDSunit(NAME, MODELOBJ, EBOUNDS) creates a DatasetUnit
 %   object DSUNIT, with internal name NAME.  MODELOBJ is a Model object
@@ -22,10 +22,12 @@ function dsUnit = generateDSunit(dsName,modelObj,QoIBD,QoIval)
 %    QoIBD  - A length 2 vector defines the lower and upper bounds of the
 %             Quantity of interest(QoI)
 %    QoIval - Optional, a scalar value defines the observed value of QoI.
+%     SV    - Optional, a structure of scenario parameters
 
 % Created: Nov 1, 2015     Wenyu Li
-
-if nargin == 4
+if nargin == 5
+   dsUnit = B2BDC.B2Bdataset.DatasetUnit(dsName,modelObj,QoIBD(1),QoIBD(2),QoIval,SV);
+elseif nargin == 4
    dsUnit = B2BDC.B2Bdataset.DatasetUnit(dsName,modelObj,QoIBD(1),QoIBD(2),QoIval);
 elseif nargin == 3
    dsUnit = B2BDC.B2Bdataset.DatasetUnit(dsName,modelObj,QoIBD(1),QoIBD(2));

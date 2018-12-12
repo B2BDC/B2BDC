@@ -1,4 +1,4 @@
-function [minout,s,xs] = cvxminouterbound(obj,QOIobj, frac,abE,rflag)
+function [minout,s,xs] = cvxminouterbound(obj,q, frac,abE,rflag)
 % Calculate the outer bound of minimum values of the dataset
 % target QOI subject to the constraints within the dataset through cvx
 % QOIobj - A B2BDC.B2Bmodel.Model object specifies the QOI
@@ -17,25 +17,44 @@ bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
 bds(:,2) = bds(:,2) + abE;
 name2 = obj.VarNames;
+[idall,Qall,Nall,Dall,APD,bPD] = obj.getQ_RQ_expansion(q);
+id0 = idall{end};
+Q0 = Qall{end};
+N0 = Nall{end};
+D0 = Dall{end};
 vu = [obj.Variables.Values.UpperBound]';
 vl = [obj.Variables.Values.LowerBound]';
+if obj.ModelDiscrepancyFlag
+   nMD = obj.ModelDiscrepancy.Variables.Length;
+   HMD = obj.ModelDiscrepancy.Variables.calBound;
+   vu = [vu; HMD(:,2)];
+   vl = [vl; HMD(:,1)];
+else
+   nMD = 0;
+end
+if obj.ParameterDiscrepancyFlag
+   nPD = obj.ParameterDiscrepancy.Variables.Length;
+   HPD = obj.ParameterDiscrepancy.Variables.calBound;
+   vu = [vu; HPD(:,2)];
+   vl = [vl; HPD(:,1)];
+else
+   nPD = 0;
+end
 vd = vu - vl;
 if rflag
-   n_units = obj.DatasetUnits.Length-1;
+   error('Predicted QOI has variables not in the dataset');
 else
-   n_units = obj.DatasetUnits.Length;
+   n_units = obj.Length;
 end
 n_variable = obj.Variables.Length;
-[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
-bds = bds(1:n_units,:);
+[Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ,LBD]  = obj.getInequalQuad(bds,frac);
 d = bds(:,2)-bds(:,1);
-idRQ = idRQ(1:n_units);
-nL = length(Qx) - n_variable;
+nL = length(Qx) - n_variable -nMD -nPD;
 if nL > 0
-   tlb = obj.Variables.ExtraLinConstraint.LB;
-   tub = obj.Variables.ExtraLinConstraint.UB;
+   tlb = LBD(:,1);
+   tub = LBD(:,2);
    tdb = tub-tlb;
-   L2 = L(n_variable+1:end,:);
+   L2 = L(n_variable+nMD+nPD+1:end,:);
 end
 cvx_begin sdp quiet
 % cvx_solver sedumi
@@ -43,7 +62,7 @@ cvx_precision('best');
 variable tmin
 variable lamEL(n_units)
 variable lamEU(n_units)
-variable lamV(n_variable)
+variable lamV(n_variable+nMD+nPD)
 if nL > 0
    variable lamL(nL)
 end
@@ -51,36 +70,29 @@ if n_extra ~= 0
    variable lamExtra(n_extra)
 end
 dual variable S
-model0 = QOIobj;
-model0Var = model0.VarNames;
-varName = obj.VarNames;
-[~,~,id] = intersect(model0Var,varName,'stable');
-if isa(model0,'B2BDC.B2Bmodels.RQModel')
-   N0 = model0.Numerator;
-   D0 = model0.Denominator;
-   targetN = zeros(n_variable+1);
-   targetD = zeros(n_variable+1);
-   targetN([1;id+1],[1;id+1]) = N0;
-   targetD([1;id+1],[1;id+1]) = D0;
+if ~isempty(N0)
+   targetN = zeros(n_variable+nMD+nPD+1);
+   targetD = zeros(n_variable+nMD+nPD+1);
+   targetN([1;id0+1],[1;id0+1]) = N0;
+   targetD([1;id0+1],[1;id0+1]) = D0;
    cvxconstr = targetN-tmin*targetD;
-elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-   Coef0 = model0.CoefMatrix;
-   targetMatrix1 = zeros(n_variable+1);
-   targetMatrix2 = zeros(n_variable+1);
+elseif ~isempty(Q0)
+   targetMatrix1 = zeros(n_variable+nMD+nPD+1);
+   targetMatrix2 = zeros(n_variable+nMD+nPD+1);
    targetMatrix2(1,1) = 1;
-   targetMatrix1([1;id+1],[1;id+1]) = Coef0;
+   targetMatrix1([1;id0+1],[1;id0+1]) = Q0;
    cvxconstr = targetMatrix1-tmin*targetMatrix2;
 end
 for i = 1:n_units
    cvxconstr = cvxconstr + lamEU(i)*Qunits{2*i-1}+...
       lamEL(i)*Qunits{2*i};
 end
-for i = 1:n_variable
+for i = 1:n_variable+nMD+nPD
    cvxconstr = cvxconstr + lamV(i)*Qx{i};
 end
 if nL > 0
    for i = 1:nL
-      cvxconstr = cvxconstr + lamL(i) * Qx{n_variable+i};
+      cvxconstr = cvxconstr + lamL(i) * Qx{n_variable+nMD+nPD+i};
    end
 end
 if n_extra ~= 0
@@ -90,7 +102,7 @@ if n_extra ~= 0
 end
 maximize tmin
 subject to
-S: cvxconstr >= zeros(n_variable+1,n_variable+1);
+S: cvxconstr >= zeros(n_variable+nMD+nPD+1,n_variable+nMD+nPD+1);
 lamEL >= 0;
 lamEU >= 0;
 lamV >= 0;
@@ -102,7 +114,7 @@ if n_extra ~= 0
 end
 cvx_end
 minout = cvx_optval;
-xs = S(2:n_variable+1,1);
+xs = S(2:n_variable+nMD+nPD+1,1);
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);
 s.expu(~idRQ) = lamEU(~idRQ).*d(~idRQ)*S(1,1);
@@ -236,3 +248,4 @@ if n_extra ~= 0
       end
    end
 end
+s.expu = s.expu;

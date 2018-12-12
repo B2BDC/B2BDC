@@ -23,9 +23,12 @@ A = obj.ExtraLinConstraint.A;
 if isempty(A)
    x = mean(H,2);
    return
+else
+   A = [eye(nVar); A];
+   LB = [H(:,1) obj.ExtraLinConstraint.LB];
+   UB = [H(:,2) obj.ExtraLinConstraint.UB];
 end
-LB = obj.ExtraLinConstraint.LB;
-UB = obj.ExtraLinConstraint.UB;
+
 
 [nC,nVar] = size(A);
 

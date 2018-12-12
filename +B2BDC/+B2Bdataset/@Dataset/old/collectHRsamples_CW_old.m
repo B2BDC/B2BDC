@@ -1,4 +1,4 @@
-function [xSample,flag,CC] = collectHRsamples(obj,N,x0,opt,PC)
+function [xSample,flag] = collectHRsamples_CW(obj,N,x0,opt)
 %   XHR = COLLECTHRSAMPLES(OBJ, N, X0,OPT) returns a n-by-nVariable matrix of
 %   feasible points of the dataset OBJ, where nVariable is the number of
 %   variables of the B2BDC.B2Bdataset.Dataset object and N is the number of
@@ -8,7 +8,6 @@ function [xSample,flag,CC] = collectHRsamples(obj,N,x0,opt,PC)
 %  Modified: Oct 15, 2018     Wenyu Li
 
 flag = 0;
-CC = 0;
 if ~quadratictest(obj)
    error('HR sampling is now only available for quadratic models')
 end
@@ -113,31 +112,17 @@ nUnit = length(UB);
 % UB = UB;
 % LB = LB;
 nStep = opt.SampleOption.StepInterval;
-mu = zeros(1,nV);
-if nargin < 5
-   sigma = eye(nV);
-   d = mvnrnd(mu,sigma,nStep*N);
-   d = d';
-else
-   sigma = PC.sigma;
-   vPC = PC.vv;
-   d = mvnrnd(mu,sigma,nStep*N);
-   d = vPC*d';
-end
-% d = randn(nV,nStep*N);
-d = normc(d);
-% ts = (1-0.5*tolerance)*rand(nStep*N,1)+0.5*tolerance;
-ts = rand(nStep*N,1);
-Ad = Ax*d;
+ts = rand(nStep*N*nV,1);
 xx = xInit;
 xHR = zeros(N,nV);
 nS = 1;
 if opt.Display
    h = waitbar(0,'Collecting hit and run samples...');
    for i = 1:nStep*N
-      [tt,tcc] = calculateIntersection(d(:,i),xx);
-      CC = CC+tcc;
-      xx = xx + tt*d(:,i);
+      for j = 1:nV
+         tt = calculateIntersection(xx);
+         xx(j) = xx(j) + tt;
+      end
       if mod(i,nStep) == 0
          xHR(nS,:) = xx';
          nS = nS+1;
@@ -149,9 +134,10 @@ if opt.Display
 else
 %    yQOI = [];
    for i = 1:nStep*N
-      [tt,tcc] = calculateIntersection(d(:,i),xx);
-      CC = CC+tcc;
-      xx = xx + tt*d(:,i);
+      for j = 1:nV
+         tt = calculateIntersection(xx);
+         xx(j) = xx(j) + tt;
+      end
       if mod(i,nStep) == 0
 %          if ~obj.isFeasiblePoint(xx')
 %             keyboard;
@@ -166,12 +152,11 @@ end
 % end
 xSample.x = xHR;
 xSample.dimension = [nVar nMD nPD];
-CC = CC/nStep/N;
 
 
-   function [tt,count] = calculateIntersection(d,xx)
+   function tt = calculateIntersection(xx)
       tb = bx-Ax*xx;
-      tv = Ad(:,i);
+      tv = Ax(:,j);
       Pos = tv>0;
       Neg = tv<0;
       tLP = min(tb(Pos)./tv(Pos));
@@ -182,12 +167,19 @@ CC = CC/nStep/N;
       cLB = zeros(nUnit,1);
       for ii = 1:nUnit
          Coef = Qx{ii};
-         vv = d(idx{ii});
-         aa(ii) = vv'*Coef(2:end,2:end)*vv;
-         bb(ii) = 2*(vv'*Coef(2:end,2:end)*xx(idx{ii})+Coef(1,2:end)*vv);
-         cc = [1;xx(idx{ii})]'*Coef*[1;xx(idx{ii})];
-         cUB(ii) = cc-UB(ii);
-         cLB(ii) = cc-LB(ii);
+         iid = find(idx{ii}==j,1);
+         if ~isempty(iid)
+            aa(ii) = Coef(iid+1,iid+1);
+            bb(ii) = 2*(Coef(iid+1,2:end)*xx(idx{ii})+Coef(1,iid+1))-Coef(iid+1,iid+1)*xx(iid);
+            cc = xx(iid)^2*Coef(iid+1,iid+1)+Coef(1,1)+2*Coef(1,iid+1)*xx(iid);
+            cUB(ii) = cc-UB(ii);
+            cLB(ii) = cc-LB(ii);
+         else
+            aa(ii) = inf;
+            bb(ii) = 0;
+            cUB(ii) = 1;
+            cLB(ii) = 1;
+         end
       end
       f = @QuickEval;
       delta_UB = bb.^2-4*aa.*cUB;
@@ -222,151 +214,108 @@ CC = CC/nStep/N;
       else
          tQNm = 0.5*tLN;
       end
-      count = 0;
       % positive t
-      tp = [0 0];
+      tp = [0 min(tQP)];
       idp = 1;
-      if nP == 0
-         tp(end,2) = tQP;
-      else
-         while idp <= nP
-            % search for infeasible right end
-            while idp <= nP && f(tQPm(idp))<0
-               idp = idp+1;
-               count = count+1;
-            end
-            count = count+1;
-            if idp > nP
-               tp(end,2) = tQP(end);
-               break
-            else
-               tp(end,2) = tQP(idp);
-            end
-            % find next candidate feasible left end point
-            [ti,tj] = find(tQ==tp(end,2));
-            if aa(ti) > 0
-               if tj == 3
-                  if tQ(ti,1) > tQ(ti,tj) && tQ(ti,1) < tQ(ti,4) && ~isempty(find(tQP == tQ(ti,1),1))
-                     idp = find(tQP == tQ(ti,1),1);
-                  elseif ~isempty(find(tQP == tQ(ti,4),1))
-                     idp = find(tQP == tQ(ti,4),1);
-                  else
-                     break;
-                  end
+      while idp < nP
+         [ti,tj] = find(tQ==tp(end,2));
+         if aa(ti) > 0
+            if tj == 3
+               if tQ(ti,1) > tQ(ti,tj) && tQ(ti,1) < tQ(ti,4) && ~isempty(find(tQP == tQ(ti,1),1))
+                  idp = find(tQP == tQ(ti,1),1);
+               elseif ~isempty(find(tQP == tQ(ti,4),1))
+                  idp = find(tQP == tQ(ti,4),1);
                else
                   break
                end
             else
-               if tj == 1
-                  if tQ(ti,3) > tQ(ti,tj) && tQ(ti,3) < tQ(ti,2) && ~isempty(find(tQP == tQ(ti,3),1))
-                     idp = find(tQP == tQ(ti,3),1);
-                  elseif ~isempty(find(tQP == tQ(ti,2),1))
-                     idp = find(tQP == tQ(ti,2),1);
-                  else
-                     break;
-                  end
+               break
+            end
+         else
+            if tj == 1
+               if tQ(ti,3) > tQ(ti,tj) && tQ(ti,3) < tQ(ti,2) && ~isempty(find(tQP == tQ(ti,3),1))
+                  idp = find(tQP == tQ(ti,3),1);
+               elseif ~isempty(find(tQP == tQ(ti,2),1))
+                  idp = find(tQP == tQ(ti,2),1);
                else
                   break;
                end
-            end
-            % find a feasible left end point
-            id0 = idp;
-            for jj = idp:nP-1
-               yy = f(tQPm(jj));
-               count = count+1;
-               if yy<0
-                  tp(end+1,1) = tQP(jj);
-                  idp = jj+1;
-                  break
-               end
-            end
-            if idp > id0
-               continue
-            elseif f(tQPm(end))<0
-               tp(end+1,:) = tQP(end-1:end);
-               count = count+1;
-               break
             else
+               break;
+            end
+         end
+         yy = [];
+         for jj = idp:nP-1
+            yy = f(tQPm(jj));
+            if all(yy<0)
+               idp = jj+1;
+               tp = [tp; tQP(jj:jj+1)'];
                break
             end
          end
+         if isempty(yy) || any(yy>0)
+            break
+         end
       end
-      
+      yy = f(tQPm(end));
+      if nP > 0 && all(yy<0)
+         tp = [tp; tQP(end-1:end)'];
+      end
       % negative t
-      tn = [0 0];
+      tn = [max(tQN) 0];
       idn = 1;
-      if nN == 0
-         tn(end,1) = tQN;
-      else
-         while idn <= nN
-            % search for infeasible left end
-            while idn <= nN && f(tQNm(idn))<0
-               idn = idn+1;
-               count = count+1;
-            end
-            count = count+1;
-            if idn > nN
-               tn(end,1) = tQN(end);
-               break
-            else
-               tn(end,1) = tQN(idn);
-            end
-            % find next candidate feasible right end point
-            [ti,tj] = find(tQ==tn(end,1));
-            if aa(ti) > 0
-               if tj == 4
-                  if tQ(ti,2) < tQ(ti,tj) && tQ(ti,2) > tQ(ti,3) && ~isempty(find(tQN == tQ(ti,2),1))
-                     idn = find(tQN == tQ(ti,2),1);
-                  elseif ~isempty(find(tQN == tQ(ti,3),1))
-                     idn = find(tQN == tQ(ti,3),1);
-                  else
-                     break;
-                  end
+      while idn < nN
+         [ti,tj] = find(tQ==tn(end,1));
+         if aa(ti) > 0
+            if tj == 4
+               if tQ(ti,2) < tQ(ti,tj) && tQ(ti,2) > tQ(ti,3) && ~isempty(find(tQN == tQ(ti,2),1))
+                  idn = find(tQN == tQ(ti,2),1);
+               elseif ~isempty(find(tQN == tQ(ti,3),1))
+                  idn = find(tQN == tQ(ti,3),1);
                else
                   break;
                end
             else
-               if tj == 2
-                  if tQ(ti,4) < tQ(ti,tj) && tQ(ti,4) > tQ(ti,1) && ~isempty(find(tQN == tQ(ti,4),1))
-                     idn = find(tQN == tQ(ti,4),1);
-                  elseif ~isempty(find(tQP == tQ(ti,1),1))
-                     idn = find(tQP == tQ(ti,1),1);
-                  else
-                     break
-                  end
+               break;
+            end
+         else
+            if tj == 2
+               if tQ(ti,4) < tQ(ti,tj) && tQ(ti,4) > tQ(ti,1) && ~isempty(find(tQN == tQ(ti,4),1))
+                  idn = find(tQN == tQ(ti,4),1);
+               elseif ~isempty(find(tQP == tQ(ti,1),1))
+                  idn = find(tQP == tQ(ti,1),1);
                else
                   break
                end
-            end
-            % find a feasible right end point
-            id0 = idn;
-            for jj = idn:nN-1
-               yy = f(tQNm(jj));
-               count = count+1;
-               if yy<0
-                  tn(end+1,2) = tQN(jj);
-                  idn = jj+1;
-                  break
-               end
-            end
-            if idn > id0
-               continue
-            elseif f(tQNm(end))<0
-               tn(end+1,:) = flipud(tQN(end-1:end));
-               count = count+1;
-               break
             else
                break
             end
          end
+         yy = [];
+         for jj = idn:nN-1
+            yy = f(tQNm(jj));
+            if all(yy<0)
+               idn = jj+1;
+               tn = [tn; tQN([jj+1,jj])'];
+               break
+            end
+         end
+         if isempty(yy) || any(yy>0)
+            break;
+         end
       end
+      yy = f(tQNm(end));
+      if nN > 0 && all(yy<0)
+         tn = [tn; tQN([end,end-1])'];
+      end
+      tcand = [tp; tn];
       tn(1,2) = tp(1,2);
       tcand = [tp(2:end,:); tn];
       dt = diff(tcand,[],2);
       tsum = [0;cumsum(dt)/sum(dt)];
-      it = find(tsum>ts(i),1);
+      it = find(tsum>ts((i-1)*(nV)+j),1);
       if ~isempty(it)
-         frac = (ts(i)-tsum(it-1))/(tsum(it)-tsum(it-1));
+         frac = (ts((i-1)*(nV)+j)-tsum(it-1))/(tsum(it)-tsum(it-1));
          % not too close to the boundary
          if frac < 0.5*tolX
             frac = 0.5*tolX;
@@ -380,9 +329,9 @@ CC = CC/nStep/N;
       tt = tcand(it-1,1)+dt(it-1)*frac;
         
          function y = QuickEval(t)
-            y = repmat(aa*t^2+bb*t,2,1) + [cUB; cLB];
-            y(nUnit+1:end) = -y(nUnit+1:end);
-            y = max(y);
+            y = zeros(2*nUnit,1);
+            y(1:nUnit) = aa*t^2+bb*t+cUB;
+            y(nUnit+1:end) = -(aa*t^2+bb*t+cLB);
          end
    end
 end

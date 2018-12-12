@@ -38,26 +38,45 @@ d = bds(:,2)-bds(:,1);
 %    unitsUB(j) = unitsUB(j) / dy;
 %    unitsLB(j) = unitsLB(j) / dy;
 % end
-[Qunits, Qx, Qextra, n_extra, extraIdx, L]  = obj.getInequalQuad(bds,frac);
-nL = length(Qx) - n_variable;
-n_opt = 1+2*n_units+n_variable+nL+n_extra;
+[Qunits, Qx, Qextra, n_extra, extraIdx, L,~,LBD]  = obj.getInequalQuad(bds,frac);
 vu = [obj.Variables.Values.UpperBound]';
 vl = [obj.Variables.Values.LowerBound]';
+if obj.ModelDiscrepancyFlag
+   nMD = obj.ModelDiscrepancy.Variables.Length;
+   HMD = obj.ModelDiscrepancy.Variables.calBound;
+   vu = [vu; HMD(:,2)];
+   vl = [vl; HMD(:,1)];
+else
+   nMD = 0;
+   HMD = [];
+end
+if obj.ParameterDiscrepancyFlag
+   nPD = obj.ParameterDiscrepancy.Variables.Length;
+   HPD = obj.ParameterDiscrepancy.Variables.calBound;
+   vu = [vu; HPD(:,2)];
+   vl = [vl; HPD(:,1)];
+else
+   nPD = 0;
+   HPD = [];
+end
+nL = length(Qx) - n_variable -nMD-nPD;
+n_opt = 1+2*n_units+n_variable+nMD+nPD+nL+n_extra;
+
 % vu = 0.5*ones(n_variable,1);
 % vl = -0.5*vu;
 % vd = 2*ones(n_variable,1);
 vd = vu - vl;
 if nL > 0
-   tlb = obj.Variables.ExtraLinConstraint.LB;
-   tub = obj.Variables.ExtraLinConstraint.UB;
+   tlb = LBD(:,1);
+   tub = LBD(:,2);
    tdb = tub-tlb;
-   L2 = L(n_variable+1:end,:);
+   L2 = L(n_variable+nMD+nPD+1:end,:);
 end
 
 [A,b,c,K] = setSedumi;
 pars.fid = 0;
 [xopt,yopt,info] = sedumi(A,b,c,K,pars);
-S = reshape(xopt(n_opt+2:end),n_variable+1,n_variable+1);
+S = reshape(xopt(n_opt+2:end),n_variable+nMD+nPD+1,n_variable+nMD+nPD+1);
 S = 0.5*(S+S');
 if info.pinf ~= 0 || info.dinf ~= 0 || info.numerr ~= 0
    disp('Not both primal/dual problem are feasible or there exsit')
@@ -66,12 +85,12 @@ end
 y = yopt(end);
 lamEU = yopt(1:n_units);
 lamEL = yopt(n_units+1:2*n_units);
-lamV = yopt(2*n_units+1:2*n_units+n_variable);
+lamV = yopt(2*n_units+1:2*n_units+n_variable+nMD+nPD);
 if nL > 0
-   lamL = yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
+   lamL = yopt(2*n_units+n_variable+nMD+nPD+1:2*n_units+n_variable+nMD+nPD+nL);
 end
 if n_extra ~= 0
-   lamExtra = yopt(2*n_units+n_variable+nL+1:end-1);
+   lamExtra = yopt(2*n_units+n_variable+nMD+nPD+nL+1:end-1);
 end
 
 s.expu = lamEU.*d*S(1,1)*(1+xopt(1)-xopt(2));
@@ -215,30 +234,30 @@ s.linl(abs(s.linl)<1e-5) = 0;
       cc = [1;-1];
       Alam = [-speye(n_opt-1), spalloc(n_opt-1,1,0)];
       clam = spalloc(n_opt-1,1,0);
-      As = zeros((n_variable+1)^2,n_opt);
+      As = zeros((n_variable+nMD+nPD+1)^2,n_opt);
       for i = 1:n_units
          As(:,i) = -Qunits{2*i-1}(:);
          As(:,i+n_units) = -Qunits{2*i}(:);
       end
-      for i = 1:n_variable
+      for i = 1:n_variable+nMD+nPD
          As(:,2*n_units+i) = -Qx{i}(:);
       end
       for i = 1:nL
-         As(:,2*n_units+n_variable+i) = -Qx{n_variable+i}(:);
+         As(:,2*n_units+n_variable+nMD+nPD+i) = -Qx{n_variable+nMD+nPD+i}(:);
       end
       if n_extra ~= 0
          for k = 1:n_extra
-            As(:,2*n_units+n_variable+nL+k) = -Qextra{k}(:);
+            As(:,2*n_units+n_variable+nMD+nPD+nL+k) = -Qextra{k}(:);
          end
       end           
       As(1,end) = -1;
-      cs = spalloc((n_variable+1)^2,1,0);
+      cs = spalloc((n_variable+nMD+nPD+1)^2,1,0);
       At = [Ac; Alam; As];
       c = [cc; clam; cs];
       b = spalloc(n_opt,1,1);
       b(end) = -1;
-      K.l = 2*n_units+n_variable+nL+n_extra+2;
-      K.s = n_variable+1;
+      K.l = 2*n_units+n_variable+nMD+nPD+nL+n_extra+2;
+      K.s = n_variable+nMD+nPD+1;
       A = At';    
    end
 

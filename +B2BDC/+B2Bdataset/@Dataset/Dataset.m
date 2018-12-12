@@ -11,6 +11,11 @@ classdef Dataset < handle
    %                                       for QOI added)
    %  Modified: Oct 22, 2015    Wenyu Li  (feasible point stored)
    
+   properties (SetAccess = public, GetAccess = public, Hidden = true)
+      ExtraQscore = [];    % The score matrix for extra quadratic constraints
+      FeasibleFlag = false; % Whether the feasibility includes fitting error
+   end
+   
    properties
       Name                 % Descriptive name for the dataset
       DatasetUnits = [];   % B2BDC.B2Bdataset.DatasetUnitList object 
@@ -33,11 +38,6 @@ classdef Dataset < handle
       ParameterDiscrepancy = []; % Information of parameter discrepancy correction
    end
    
-   properties (SetAccess = public, GetAccess = public, Hidden = true)
-      ExtraQscore = [];    % The score matrix for extra quadratic constraints
-      FeasibleFlag = false; % Whether the feasibility includes fitting error
-   end
-   
    properties (SetAccess = private, GetAccess = public, Hidden = true)
       ModelDiscrepancyFlag = false; % Whether model discrepancy is considered in the analysis
       ParameterDiscrepancyFlag = false; % Whether parameter discrepancy is considered in the analysis
@@ -58,6 +58,22 @@ classdef Dataset < handle
          obj.Variables = B2BDC.B2Bvariables.VariableList();
       end
       
+%       function b = loadobj(a)
+%          % modified loading process of object
+%          b = B2BDC.B2Bdataset.Dataset(a.Name);
+%          b.DatasetUnits = a.DatasetUnits;
+%          b.Variables = a.Variables;
+%          b.ModelDiscrepancy = a.ModelDiscrepancy;
+%          b.ParameterDiscrepancy = a.ParameterDiscrepancy;
+%          b.FeasibleFlag = a.FeasibleFlag;
+%          b.ExtraQscore = a.ExtraQscore;
+%          b.ConsistencyMeasure = a.ConsistencyMeasure;
+%          b.ConsistencySensitivity = a.ConsistencySensitivity;
+%          b.ModelDiscrepancyFlag = a.ModelDiscrepancyFlag;
+%          b.ParameterDiscrepancyFlag = a.ParameterDiscrepancyFlag;
+%          b.FeasiblePoint = a.FeasiblePoint;
+%       end
+      
       function addDSunit(obj,dsUnitObj)
          %   ADDDSUNIT(OBJ, DSUNITOBJ) adds a dataset unit object DSUNITOBJ
          %   to the dataset OBJ. DSUNITOBJ can be a single DatasetUnit 
@@ -76,15 +92,17 @@ classdef Dataset < handle
                      error(['The dataset unit ' allName{id} ' is already exsit in the dataset'])
                   end
                   sold = obj.DatasetUnits.Values(1).ScenarioParameter;
-                  snew = dsUnitObj(i).ScenarioParameter;
-                  n1 = sold.Name;
-                  n2 = snew.Name;
-                  [~,~,id] = intersect(n1,n2,'stable');
-                  if length(id) ~= length(n1)
-                     error('Dataset units have different sets of scenario parameter!');
-                  elseif ~isempty(id)
-                     dsUnitObj(i).ScenarioParameter.Value = dsUnitObj(i).ScenarioParameter.Value(id);
-                     dsUnitObj(i).ScenarioParameter.Name = dsUnitObj(i).ScenarioParameter.Name(id);
+                  if ~isempty(sold)
+                     snew = dsUnitObj(i).ScenarioParameter;
+                     n1 = sold.Name;
+                     n2 = snew.Name;
+                     [~,~,id] = intersect(n1,n2,'stable');
+                     if length(id) ~= length(n1)
+                        error('Dataset units have different sets of scenario parameter!');
+                     elseif ~isempty(id)
+                        dsUnitObj(i).ScenarioParameter.Value = dsUnitObj(i).ScenarioParameter.Value(id);
+                        dsUnitObj(i).ScenarioParameter.Name = dsUnitObj(i).ScenarioParameter.Name(id);
+                     end
                   end
                end
                obj.DatasetUnits = add(obj.DatasetUnits,dsUnitObj(i));
@@ -342,11 +360,27 @@ classdef Dataset < handle
          %   indicies of the nUnit number of DatasetsUnits to be calculated.
          
          if nargin > 0
-            if size(X,2) ~= obj.Variables.Length
+            if nargin < 3
+               DSIdx = 1:obj.Length;
+            end
+            if obj.ModelDiscrepancyFlag
+               nMD = obj.ModelDiscrepancy.Variables.Length;
+            else
+               nMD = 0;
+            end
+            if obj.ParameterDiscrepancyFlag
+               nPD = obj.ParameterDiscrepancy.Variables.Length;
+            else
+               nPD = 0;
+            end
+            if size(X,2) ~= obj.Variables.Length && size(X,2) ~= obj.Variables.Length+nMD+nPD
                X = X';
             end
-            if size(X,2) ~= obj.Variables.Length
+            if size(X,2) ~= obj.Variables.Length && size(X,2) ~= obj.Variables.Length+nMD+nPD
                error('The input number of variables does not match the number of variables in the dataset')
+            elseif size(X,2) == obj.Variables.Length+nMD+nPD && nMD+nPD > 0
+               y = obj.eval_with_discrepancy(X,DSIdx);
+               return;
             end
             nSample = size(X,1);
             vObj = obj.Variables;
@@ -367,6 +401,7 @@ classdef Dataset < handle
                   end
                elseif iscell(DSIdx)
                   nUnit = length(DSIdx);
+                  allDS = {obj.DatasetUnits.Values.Name}';
                   y = zeros(nSample, nUnit);
                   for i = 1:nUnit
                      [~,dsID] = intersect(allDS, DSIdx{i});
@@ -390,24 +425,17 @@ classdef Dataset < handle
          if isempty(x0)
             obj.FeasiblePoint = [];
          else
-            if size(x0,1) == 1
-               x0 = x0';
-            end
-            if obj.isFeasiblePoint(x0')
-               obj.FeasiblePoint = x0;
-            else
-               error('The input point is infeasible')
-            end
+            obj.FeasiblePoint = obj.findFeasiblePoint(x0);
          end
       end
-      
+
       function clearConsis(obj)
          %   CLEARCONSIS(OBJ) removes all properties of consistency of
          %   the dataset OBJ
          
          obj.ConsistencyMeasure = [];
          obj.ConsistencySensitivity = [];
-         obj.FeasiblePoint = [];
+         obj.clearFeasiblePoint;
          obj.FeasibleFlag = false;
       end
       
@@ -426,6 +454,16 @@ classdef Dataset < handle
          for i = 1:obj.Length
             sv(i,:) = ss(i).Value;
          end         
+      end
+      
+      function clearFeasiblePoint(obj)
+         obj.FeasiblePoint = [];
+         if obj.ModelDiscrepancyFlag
+            obj.ModelDiscrepancy.FeasiblePoint = [];
+         end
+         if obj.ParameterDiscrepancyFlag
+            obj.ParameterDiscrepancy.FeasiblePoint = [];
+         end
       end
       
       function clearParameterDiscrepancy(obj)
@@ -492,13 +530,66 @@ classdef Dataset < handle
            end
        end
        
+       function xx0 = findFeasiblePoint(obj,x0)
+          if size(x0,1) == 1
+             x0 = x0';
+          end
+          nVar = obj.Variables.Length;
+          if obj.ModelDiscrepancyFlag
+             nMD = obj.ModelDiscrepancy.Variables.Length;
+             xMD = obj.ModelDiscrepancy.FeasiblePoint;
+             x0 = [x0; xMD];
+          else
+             nMD = 0;
+          end
+          if obj.ParameterDiscrepancyFlag
+             nPD = obj.ParameterDiscrepancy.Variables.Length;
+             xPD = obj.ParameterDiscrepancy.FeasiblePoint;
+             x0 = [x0; xPD];
+          else
+             nPD = 0;
+          end
+          nx = length(x0);
+          if nx == nVar+nMD+nPD
+             if obj.isFeasiblePoint(x0')
+                xx0 = x0(1:nVar);
+                if nMD > 0
+                   obj.ModelDiscrepancy.FeasiblePoint = x0(nVar+1:nVar+nMD);
+                end
+                if nPD > 0
+                   obj.ParameterDiscrepancy.FeasiblePoint = x0(nVar+nMD+1:end);
+                end
+             else
+                error('The input point is infeasible')
+             end
+          elseif nx == nVar
+             [~,xnew] = obj.isFeasiblePoint(x0');
+             if ~isempty(xnew)
+                xx0 = x0;
+                if nMD > 0
+                   obj.ModelDiscrepancy.FeasiblePoint = xnew(nVar+1:nVar+nMD)';
+                end
+                if nPD > 0
+                   obj.ParameterDiscrepancy.FeasiblePoint = xnew(nVar+nMD+1:end)';
+                end
+             else
+                error('The input point is infeasible')
+             end
+          else
+             error('The input point has a wrong dimension')
+          end
+       end
+       
+       
        evalConsistencyabs(obj,b2bopt)
        evalConsistencyDClab(obj)
        evalConsistencyrel(obj,b2bopt)
        [Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ, LBD] = getInequalQuad(obj,bds,frac)
        J = getJacobian(obj)
        directionSearch(obj,theta,x0,B2Bopt)
-       
+       y = eval_with_discrepancy(obj,X,DSIdx);
+       [d,xopt] = calculateDistanceCurve(obj,x,opt,C)
+
        %CVX Functions
        [y,s] = cvxconsisabs(obj,yin,frac,abE)
        [y,s] = cvxconsisquadrel(obj,b2bopt,frac)
@@ -515,6 +606,19 @@ classdef Dataset < handle
        [y,s] = sedumiconsisquadrel(obj,opt,abE)
        [minout,minSensitivity] = sedumiminouterbound(obj,QOIobj,frac,abE,rflag)
        [maxout,maxSensitivity] = sedumimaxouterbound(obj,QOIobj,frac,abE,rflag)
+       
+       % nonlinear functions
+       [Qmin, Qmax, ss, xOpt, alpha] = preQOIfmincon_minB(obj,q,disflag,rflag,b2bopt,alpha)
+       [Qmin, Qmax, s, xOpt, abE] = preQOIopti(obj,QOIobj,disflag,rflag,b2bopt)
+       [Qmin, Qmax, s, xOpt, abE] = preQOIfmincon(obj,q,disflag,rflag,b2bopt)
+       [yin_result,s,xopt,abE,flag] = relCMfmincon(obj,disflag,b2bopt)
+       [yin_result,s,xopt] = relCMfminconNN(obj,disflag,b2bopt)
+       [yin_result,s,xopt,abE,flag] = relCMopti(obj,disflag,b2bopt)
+       [yin_result,s,xopt,abE,flag] = absCMfmincon(obj,disflag,b2bopt)
+       [yin_result,s,xopt] = absCMfminconNN(obj,disflag,b2bopt)
+       [yin_result,s,xopt,abE,flag] = absCMopti(obj,disflag,b2bopt)
+       
+       % optimization
        
        
        % Matlab Functions

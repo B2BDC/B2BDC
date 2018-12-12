@@ -26,6 +26,8 @@ classdef OptimOption < handle
       OptimizationMethod = [];
       PenaltyWeight = [];
       RandomStart = [];
+      PredictionTol = [];
+      VariableTol = [];
    end
    
    methods
@@ -52,6 +54,10 @@ classdef OptimOption < handle
                         obj.PenaltyWeight = inputCell{2*i};
                      case 3
                         obj.RandomStart = inputCell{2*i};
+                     case 4
+                        obj.PredictionTol = inputCell{2*i};
+                     case 5
+                        obj.VariableTol = inputCell{2*i};
                   end
                else
                   error('Invalid input property names')
@@ -66,6 +72,15 @@ classdef OptimOption < handle
          end
          if isempty(obj.RandomStart)
             obj.RandomStart = 10;
+         end
+         if isempty(obj.RandomStart)
+            obj.RandomStart = 1;
+         end
+         if isempty(obj.PredictionTol)
+            obj.PredictionTol = 0;
+         end
+         if isempty(obj.VariableTol)
+            obj.VariableTol = 0;
          end
       end
       
@@ -92,6 +107,22 @@ classdef OptimOption < handle
             obj.RandomStart = 1;
          else
             obj.RandomStart = round(c1);
+         end
+      end
+      
+      function set.VariableTol(obj,c)
+         if c>=0 && c<1
+            obj.VariableTol = c;
+         else
+            error('Invalid input property value')
+         end
+      end
+      
+      function set.PredictionTol(obj,c)
+         if c>=0 && c<1
+            obj.PredictionTol = c;
+         else
+            error('Invalid input property value')
          end
       end
       

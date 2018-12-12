@@ -78,5 +78,6 @@ end
 rr.Basis = Basis;
 rr.VariableRange = Hv;
 rr.FeasiblePoint = [];
+rr.BasisFunction = fPD;
 obj.ParameterDiscrepancy = rr;
 obj.ParameterDiscrepancyFlag = true;

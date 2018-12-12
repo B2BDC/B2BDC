@@ -8,7 +8,7 @@ function ds = generateRandomDataset(nQOI,nVar,actVar,seedID)
 if nargin > 3
    rng(seedID);
 end
-if nargin < 3
+if nargin < 3 || isempty(actVar)
    actVar = nVar;
 end
 tVar = generateVar([],repmat([-1,1],nVar,1));

@@ -236,7 +236,7 @@ classdef VariableList < B2BDC.Util.IContainer
             if size(b,1) == 1
                b = b';
             end
-            newVar = obj;
+            newVar = obj.clearExtraConstraint;
             [nC, nVar] = size(A);
             if nVar ~= obj.Length
                error('Invalid input matrix dimension')
@@ -250,7 +250,7 @@ classdef VariableList < B2BDC.Util.IContainer
             A0 = zeros(nint+nuni,nVar);
             LB = zeros(nint+nuni,1);
             UB = zeros(nint+nuni,1);
-            if ~isempty(idA)
+            if ~isempty(idA)s
                count = 1;
                for i = 1:2*nint
                   idx = find(idA(i,:),1);
@@ -315,9 +315,18 @@ classdef VariableList < B2BDC.Util.IContainer
             A0 = obj.ExtraLinConstraint.A;
             b0 = obj.ExtraLinConstraint.LB;
             c0 = obj.ExtraLinConstraint.UB;
-            newVar.ExtraLinConstraint.A = [A;A0];
-            newVar.ExtraLinConstraint.LB = [b;b0];
-            newVar.ExtraLinConstraint.UB = [c;c0];
+            if ~isempty(A0)
+               [~,id] = setdiff(A,A0,'rows');
+               if ~isempty(id)
+                  newVar.ExtraLinConstraint.A = [A0;A(id,:)];
+                  newVar.ExtraLinConstraint.LB = [b0;b(id)];
+                  newVar.ExtraLinConstraint.UB = [c0;c(id)];
+               end
+            else
+               newVar.ExtraLinConstraint.A = A;
+               newVar.ExtraLinConstraint.LB = b;
+               newVar.ExtraLinConstraint.UB = c;
+            end
          end
          newVar.ScalingVector = [];
          if ~newVar.checkFeasibility

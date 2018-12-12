@@ -27,9 +27,9 @@ if ~isempty(vList.ExtraLinConstraint.A)
       B1 = [Aub; -Alb];
       Beq = [];
    end
-   n1 = size(A1,1);
+   n1 = 0.5*size(A1,1);
    n2 = size(Aeq,1);
-   A1 = [zeros(n1,1), A1];
+   A1 = [zeros(2*n1,1), A1];
    if n2 ~= 0
       Aeq = [zeros(n2,1), Aeq];
    end
@@ -102,8 +102,8 @@ end
 %       'user-supplied','HessFcn',@hessianfcn,'TolFun',1e-6,'TolCon',1e-6);
 % else
    opt = optimoptions('fmincon','Display','none','GradObj','on',...
-      'GradConstr','on','Algorithm','interior-point','MaxIter',1500,...
-      'TolFun',1e-6,'TolCon',1e-6,'DerivativeCheck','on');
+      'GradConstr','on','Algorithm','interior-point','MaxIter',5000,...
+      'TolFun',1e-6,'TolCon',1e-6,'DerivativeCheck','off');
 % end
 if disflag
    disp('=======================================================');
@@ -111,13 +111,13 @@ if disflag
    disp('=======================================================');
 end
 if isempty(obj.FeasiblePoint)
-   nStart = b2bopt.LocalStart;
+   nStart = b2bopt.OptimOption.RandomStart;
    xStart = zeros(nStart,n_variable+nMD+nPD+1);
    xStart(:,2:n_variable+1) = vList.makeLHSsample(nStart);
    for j = 1:nStart
-      [x0,yin_result,~,~,ilam] = fmincon(@funxmin,xStart(j,:)',...
+      [x0,yin_result,exitflag,~,ilam] = fmincon(@funxmin,xStart(j,:)',...
          [A1;APD],[B1;bPD],Aeq,Beq,[-Inf;LB],[Inf;UB],@neq,opt);
-      if yin_result<0
+      if yin_result<0 && exitflag>0
          break
       end
    end
@@ -126,27 +126,32 @@ else
    xStart(2:n_variable+1) = obj.FeasiblePoint;
    xStart(n_variable+1+1:n_variable+1+nMD) = obj.ModelDiscrepancy.FeasiblePoint;
    xStart(n_variable+1+nMD+1:n_variable+1+nMD+nPD) = obj.ParameterDiscrepancy.FeasiblePoint;
-   [x0,yin_result,exitflag,~,ilam] = fmincon(@funxmin,xStart,...
+   [x0,yin_result,~,~,ilam] = fmincon(@funxmin,xStart,...
       [A1;APD],[B1;bPD],Aeq,Beq,[0;LB],[Inf;UB],@neq,opt);
 end
 xopt = x0(2:n_variable+1);
-yin_result = -yin_result;
-if nMD > 0
-   obj.ModelDiscrepancy.FeasiblePoint = x0(n_variable+2:n_variable+nMD+1);
+if exitflag>0
+   yin_result = -yin_result;
+else
+   yin_result = -inf;
 end
-if nPD > 0
-   obj.ParameterDiscrepancy.FeasiblePoint = x0(n_variable+nMD+2:end);
+if yin_result > 0
+   if nMD > 0
+      obj.ModelDiscrepancy.FeasiblePoint = x0(n_variable+2:n_variable+nMD+1);
+   end
+   if nPD > 0
+      obj.ParameterDiscrepancy.FeasiblePoint = x0(n_variable+nMD+2:end);
+   end
 end
 s.expu = ilam.ineqnonlin(1:2:2*n_units).*bds;
 s.expl = ilam.ineqnonlin(2:2:2*n_units).*bds;
 s.varu = ilam.upper(2:end).*xbd;
 s.varl = ilam.lower(2:end).*xbd;
-n3 = size(A1,1);
 if ~isempty(A1)
    s.linu = zeros(n1+n2,1);
    s.linl = zeros(n1+n2,1);
-   s.linu(~ieq) = ilam.ineqlin(1:n3).*dA(~ieq);
-   s.linl(~ieq) = ilam.ineqlin(n3+1:2*n3).*dA(~ieq);
+   s.linu(~ieq) = ilam.ineqlin(1:n1).*dA(~ieq);
+   s.linl(~ieq) = ilam.ineqlin(n1+1:2*n1).*dA(~ieq);
 else
    s.linu = [];
    s.linl = [];
@@ -154,13 +159,13 @@ end
 if ~isempty(APD)
    n4 = 0.5*size(APD,1);
    dAPD = bPD(1:2:end)+bPD(2:2:end);
-   s.linu = [s.linu ; ilam.ineqlin(2*n3+1:2:2*(n3+n4)).*dAPD];
-   s.linl = [s.linl ; ilam.ineqlin(2*n3+2:2:2*(n3+n4)).*dAPD];
+   s.linu = [s.linu ; ilam.ineqlin(2*n1+1:2:2*(n1+n4)).*dAPD];
+   s.linl = [s.linl ; ilam.ineqlin(2*n1+2:2:2*(n1+n4)).*dAPD];
 end
 
 
 
-function [y,gy] = funxmin(x)
+   function [y,gy] = funxmin(x)
       y = -x(1);
       gy = [-1;zeros(n_variable+nMD+nPD,1)];
    end

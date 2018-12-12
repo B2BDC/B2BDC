@@ -34,4 +34,4 @@ Qcorrect.Value = sv(end,:);
 [x,y] = calculatePrediction(ds1,QQ,QOIindex,f1,f2,sv(1:end-1,:),10,Hv);
 ds1.setModelDiscrepancy(QOIindex,f1,10);
 ds1.setParameterDiscrepancy(varIndex,f2(varIndex),Hv,10);
-[yy,~,xx] = ds1.predictQOI(QQ.model,opt,Qcorrect);
+[yy,ss,xx] = ds1.predictQOI(QQ.model,opt,Qcorrect);

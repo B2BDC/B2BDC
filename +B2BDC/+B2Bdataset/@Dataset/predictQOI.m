@@ -1,4 +1,4 @@
-function [QOIrange, QOISensitivity, xOpt] = predictQOI(obj, QOIobj, B2Bopt)
+function [QOIrange, QOISensitivity, xOpt] = predictQOI(obj, QOIobj, B2Bopt, QOIcorrection)
 % Returns the inner and outer bounds, the feasible points of maximum and minimum 
 % values of the QOI model subject to the constraints that both dataset units and
 % variables are within their respective bounds. The sensitivity of the
@@ -7,9 +7,10 @@ function [QOIrange, QOISensitivity, xOpt] = predictQOI(obj, QOIobj, B2Bopt)
 % The input arguments are:
 %    QOIobj - A B2BDC.B2Bmodel.Model object that defines the QOI
 %    B2Bopt - B2BDC.Option object (optional)
+%    QOIcorrection - structure with GroupIndex and Value (scenario value)
 % The output are:
 %    QOIrange - A structure defines the range of QOI subject to the dataset
-%    Xopt - A nVar-by-2 double matrix 
+%    Xopt - A nVar-by-2 double matrix
 
 % Created: June 15, 2015   Wenyu Li
 %  Modified: July 5, 2015   Wenyu Li (Sensitivity added)
@@ -19,6 +20,14 @@ if nargin < 3
    B2Bopt = generateOpt;
 elseif ~isa(B2Bopt,'B2BDC.Option.Option')
    error('Wrong option object')
+end
+if nargin > 3 && ~isempty(QOIcorrection)
+   q.Model = QOIobj;
+   q.Correction = QOIcorrection;
+else
+   q.Model = QOIobj;
+   q.Correction.GroupIndex = 0;
+   q.Correction.Value = [];
 end
 name1 = QOIobj.VarNames;
 name2 = obj.VarNames;
@@ -36,7 +45,7 @@ else
    tmpFlag = obj.FeasibleFlag;
    tmpx0 = obj.FeasiblePoint;
 end
-xOpt = zeros(obj.Variables.Length,2);
+% xOpt = zeros(obj.Variables.Length,2);
 pFlag = B2Bopt.Prediction;
 if rflag
    tVar = QOIobj.Variables;
@@ -82,8 +91,8 @@ end
 
 if ~strcmp(pFlag,'outer')
 %    tic;
-   [minin, maxin, s, xOpt, abE] = obj.preQOIfmincon(QOIobj,B2Bopt.Display,rflag,B2Bopt,obj.FeasiblePoint,obj.FeasiblePoint);
-%    [minin, maxin, s, xOpt, abE] = obj.preQOIopti(QOIobj,B2Bopt.Display,rflag,B2Bopt);
+   [minin, maxin, s, xOpt, abE] = obj.preQOIfmincon(q,B2Bopt.Display,rflag,B2Bopt);
+%    [minin, maxin, s, xOpt, abE] = obj.preQOIopti(q,B2Bopt.Display,rflag,B2Bopt);
 %    toc;
    QOISensitivity.Inner = s;
 else
@@ -106,24 +115,24 @@ if ~strcmp(pFlag,'inner')
       disp('=======================================================');
    end
    frac = B2Bopt.ExtraLinFraction;
-   [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
-   [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
-%    warning('off','all');
-%    [minout,minSens,xs_min] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
-%    [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
-%    warning('on','all');
-%    minSens.expu = -minSens.expu;
-%    minSens.expl = -minSens.expl;
-%    minSens.varu = -minSens.varu;
-%    minSens.varl = -minSens.varl;
-%    minSens.linu = -minSens.linu;
-%    minSens.linl = -minSens.linl;
-   maxSens.expu = maxSens.expu;
-   maxSens.expl = maxSens.expl;
-   maxSens.varu = maxSens.varu;
-   maxSens.varl = maxSens.varl;
-   maxSens.linu = maxSens.linu;
-   maxSens.linl = maxSens.linl;
+%    [minout,minSens] = obj.sedumiminouterbound(q,frac,abE,rflag);
+%    [maxout,maxSens] = obj.sedumimaxouterbound(q,frac,abE,rflag);
+   warning('off','all');
+   [minout,minSens,xs_min] = obj.cvxminouterbound(q,frac,abE,rflag);
+   [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(q,frac,abE,rflag);
+   warning('on','all');
+   minSens.expu = -minSens.expu;
+   minSens.expl = -minSens.expl;
+   minSens.varu = -minSens.varu;
+   minSens.varl = -minSens.varl;
+   minSens.linu = -minSens.linu;
+   minSens.linl = -minSens.linl;
+%    maxSens.expu = maxSens.expu;
+%    maxSens.expl = maxSens.expl;
+%    maxSens.varu = maxSens.varu;
+%    maxSens.varl = maxSens.varl;
+%    maxSens.linu = maxSens.linu;
+%    maxSens.linl = maxSens.linl;
    QOISensitivity.Outer.min = minSens;
    QOISensitivity.Outer.max = maxSens;
 else

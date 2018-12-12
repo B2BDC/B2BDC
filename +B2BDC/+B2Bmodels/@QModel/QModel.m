@@ -35,7 +35,8 @@ classdef QModel < B2BDC.B2Bmodels.Model
             if issymmetric(coef)
                obj.CoefMatrix = coef;
             else
-               error('Coefficient matrix must be symmetric')
+               obj.CoefMatrix = 0.5*(coef+coef');
+               warning('Coefficient matrix must be symmetric')
             end
          end
          if nargin > 1
@@ -96,9 +97,9 @@ classdef QModel < B2BDC.B2Bmodels.Model
          if size(obj.CoefMatrix,1) ~= size(X,2)+1
             error('Wrong input dimension of variables')
          else
-            nSample = size(X,1);
-            x1 = [ones(nSample,1), X];
-            xNew = B2BDC.Fitting.expandBasis(x1(:,2:end));
+%             nSample = size(X,1);
+%             x1 = [ones(nSample,1), X];
+            xNew = B2BDC.Fitting.expandBasis(X);
             covec = B2BDC.Fitting.coef2vec(obj.CoefMatrix);
             y = xNew*covec;
 %             coef = obj.CoefMatrix;

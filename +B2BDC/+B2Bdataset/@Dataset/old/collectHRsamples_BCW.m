@@ -1,4 +1,4 @@
-function [xSample,flag,CC] = collectHRsamples(obj,N,x0,opt,PC)
+function [xSample,flag,CC] = collectHRsamples_BCW(obj,N,x0,opt,nB)
 %   XHR = COLLECTHRSAMPLES(OBJ, N, X0,OPT) returns a n-by-nVariable matrix of
 %   feasible points of the dataset OBJ, where nVariable is the number of
 %   variables of the B2BDC.B2Bdataset.Dataset object and N is the number of
@@ -9,6 +9,8 @@ function [xSample,flag,CC] = collectHRsamples(obj,N,x0,opt,PC)
 
 flag = 0;
 CC = 0;
+tolX = 0;
+% tolY = 1e-4;
 if ~quadratictest(obj)
    error('HR sampling is now only available for quadratic models')
 end
@@ -56,8 +58,6 @@ else
    error('collectSamples:Inconclusive',...
       'Dataset cannot be shown to be Consistent');
 end
-tolX = 0;
-% tolY = 1e-4;
 [idx,Qx,~,~,APD,bPD] = obj.getQ_RQ_expansion;
 bounds = obj.calBound;
 LB = bounds(:,1);
@@ -113,31 +113,45 @@ nUnit = length(UB);
 % UB = UB;
 % LB = LB;
 nStep = opt.SampleOption.StepInterval;
-mu = zeros(1,nV);
-if nargin < 5
-   sigma = eye(nV);
-   d = mvnrnd(mu,sigma,nStep*N);
-   d = d';
-else
-   sigma = PC.sigma;
-   vPC = PC.vv;
-   d = mvnrnd(mu,sigma,nStep*N);
-   d = vPC*d';
+sB = ceil(nV/nB);
+ts = rand(nStep*N*sB,1);
+aFlag = cell(sB,1);
+tmpID = 1:nUnit;
+d = cell(sB,1);
+for i1 = 1:sB
+   if i1 == sB && mod(nV,nB) ~= 0
+      tID = nV-mod(nV,nB)+1:nV;
+      dd = randn(mod(nV,nB),nStep*N);
+   else
+      tID = (1:nB)+nB*(i1-1);
+      dd = randn(nB,nStep*N);
+   end
+   d{i1} = normc(dd);
+   tmpFlag = true(nUnit,1);
+   for i2 = 1:nUnit
+      [~,iid] = intersect(idx{i2},tID);
+      if isempty(iid)
+         tmpFlag(i2) = false;
+      end
+   end
+   aFlag{i1} = tmpID(tmpFlag);
 end
-% d = randn(nV,nStep*N);
-d = normc(d);
-% ts = (1-0.5*tolerance)*rand(nStep*N,1)+0.5*tolerance;
-ts = rand(nStep*N,1);
-Ad = Ax*d;
 xx = xInit;
 xHR = zeros(N,nV);
 nS = 1;
 if opt.Display
    h = waitbar(0,'Collecting hit and run samples...');
    for i = 1:nStep*N
-      [tt,tcc] = calculateIntersection(d(:,i),xx);
-      CC = CC+tcc;
-      xx = xx + tt*d(:,i);
+      for j = 1:sB
+         if j == sB && mod(nV,nB) ~= 0
+            tID = nV-mod(nV,nB)+1:nV;
+         else
+            tID = (1:nB)+(j-1)*nB;
+         end
+         [tt,tcc] = calculateIntersection(xx);
+         CC = CC+tcc;
+         xx(tID) = xx(tID) + tt*d{j}(:,i);
+      end
       if mod(i,nStep) == 0
          xHR(nS,:) = xx';
          nS = nS+1;
@@ -147,49 +161,58 @@ if opt.Display
       end
    end
 else
-%    yQOI = [];
+   %    yQOI = [];
    for i = 1:nStep*N
-      [tt,tcc] = calculateIntersection(d(:,i),xx);
-      CC = CC+tcc;
-      xx = xx + tt*d(:,i);
+      for j = 1:sB
+         if j == sB && mod(nV,nB) ~= 0
+            tID = nV-mod(nV,nB)+1:nV;
+         else
+            tID = (1:nB)+(j-1)*nB;
+         end
+         [tt,tcc] = calculateIntersection(xx);
+         CC = CC + tcc;
+         xx(tID) = xx(tID) + tt*d{j}(:,i);
+      end
       if mod(i,nStep) == 0
-%          if ~obj.isFeasiblePoint(xx')
-%             keyboard;
-%          end
+         %          if ~obj.isFeasiblePoint(xx')
+         %             keyboard;
+         %          end
          xHR(nS,:) = xx';
          nS = nS+1;
       end
    end
 end
+CC = CC/nStep/N/sB;
 % if sum(obj.isFeasiblePoint(xHR)) < N
 %    disp('Errors');
 % end
 xSample.x = xHR;
 xSample.dimension = [nVar nMD nPD];
-CC = CC/nStep/N;
 
 
-   function [tt,count] = calculateIntersection(d,xx)
+   function [tt,count] = calculateIntersection(xx)
+      D = zeros(nV,1);
+      D(tID) = d{j}(:,i);
       tb = bx-Ax*xx;
-      tv = Ad(:,i);
+      tv = Ax*D;
       Pos = tv>0;
       Neg = tv<0;
       tLP = min(tb(Pos)./tv(Pos));
       tLN = max(tb(Neg)./tv(Neg));
-      aa = zeros(nUnit,1);
+      aa = inf(nUnit,1);
       bb = zeros(nUnit,1);
-      cUB = zeros(nUnit,1);
-      cLB = zeros(nUnit,1);
-      for ii = 1:nUnit
+      cUB = ones(nUnit,1);
+      cLB = ones(nUnit,1);
+      for ii = aFlag{j}
          Coef = Qx{ii};
-         vv = d(idx{ii});
+         vv = D(idx{ii});
          aa(ii) = vv'*Coef(2:end,2:end)*vv;
          bb(ii) = 2*(vv'*Coef(2:end,2:end)*xx(idx{ii})+Coef(1,2:end)*vv);
          cc = [1;xx(idx{ii})]'*Coef*[1;xx(idx{ii})];
          cUB(ii) = cc-UB(ii);
          cLB(ii) = cc-LB(ii);
       end
-      f = @QuickEval;
+      f = @(t) QuickEval(t,aFlag{j});
       delta_UB = bb.^2-4*aa.*cUB;
       delta_LB = bb.^2-4*aa.*cLB;
       flag_UB = find(delta_UB <= 0);
@@ -281,7 +304,7 @@ CC = CC/nStep/N;
                end
             end
             if idp > id0
-               continue
+               continue;
             elseif f(tQPm(end))<0
                tp(end+1,:) = tQP(end-1:end);
                count = count+1;
@@ -364,9 +387,9 @@ CC = CC/nStep/N;
       tcand = [tp(2:end,:); tn];
       dt = diff(tcand,[],2);
       tsum = [0;cumsum(dt)/sum(dt)];
-      it = find(tsum>ts(i),1);
+      it = find(tsum>ts((i-1)*(sB)+j),1);
       if ~isempty(it)
-         frac = (ts(i)-tsum(it-1))/(tsum(it)-tsum(it-1));
+         frac = (ts((i-1)*(sB)+j)-tsum(it-1))/(tsum(it)-tsum(it-1));
          % not too close to the boundary
          if frac < 0.5*tolX
             frac = 0.5*tolX;
@@ -378,11 +401,12 @@ CC = CC/nStep/N;
          flag = flag+1;
       end
       tt = tcand(it-1,1)+dt(it-1)*frac;
-        
-         function y = QuickEval(t)
-            y = repmat(aa*t^2+bb*t,2,1) + [cUB; cLB];
-            y(nUnit+1:end) = -y(nUnit+1:end);
-            y = max(y);
-         end
+      
+      function y = QuickEval(t,flag)
+         nn = length(flag);
+         y = repmat(aa(flag)*t^2+bb(flag)*t,2,1)+[cUB(flag); cLB(flag)];
+         y(nn+1:end) = -y(nn+1:end);
+         y = max(y);
+      end
    end
 end

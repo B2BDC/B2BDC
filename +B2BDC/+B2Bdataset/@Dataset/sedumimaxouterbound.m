@@ -1,4 +1,4 @@
-function [maxout,s] = sedumimaxouterbound(obj,QOIobj, frac, abE, rflag)
+function [maxout,s] = sedumimaxouterbound(obj,q, frac, abE, rflag)
 % Calculate the outer bound of maximum values of the dataset
 % target QOI subject to the constraints within the dataset through sedumi
 % QOIobj - A B2BDC.B2Bmodel.Model object specifies the QOI
@@ -14,41 +14,57 @@ bds = obj.calBound;
 bds(:,1) = bds(:,1) - abE;
 bds(:,2) = bds(:,2) + abE;
 if rflag
-   n_units = obj.DatasetUnits.Length-1;
+   error('Predicted QOI has variables not in the dataset');
 else
-   n_units = obj.DatasetUnits.Length;
+   n_units = obj.Length;
 end
 units = obj.DatasetUnits.Values;
 name2 = obj.VarNames;
-% for n1 = 1:n_units
-%    my = obj.DatasetUnits.Values(n1).SurrogateModel.yScale.my;
-%    dy = obj.DatasetUnits.Values(n1).SurrogateModel.yScale.dy;
-%    bds(n1,:) = (bds(n1,:) - my) / dy;
-%    d(n1) = d(n1)/dy;
-% end
+[idall,Qall,Nall,Dall,APD,bPD] = obj.getQ_RQ_expansion(q);
+id0 = idall{end};
+Q0 = Qall{end};
+N0 = Nall{end};
+D0 = Dall{end};
+[Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ, LBD]  = obj.getInequalQuad(bds,frac);
 vu = [obj.Variables.Values.UpperBound]';
 vl = [obj.Variables.Values.LowerBound]';
+if obj.ModelDiscrepancyFlag
+   nMD = obj.ModelDiscrepancy.Variables.Length;
+   HMD = obj.ModelDiscrepancy.Variables.calBound;
+   vu = [vu; HMD(:,2)];
+   vl = [vl; HMD(:,1)];
+else
+   nMD = 0;
+   HMD = [];
+end
+if obj.ParameterDiscrepancyFlag
+   nPD = obj.ParameterDiscrepancy.Variables.Length;
+   HPD = obj.ParameterDiscrepancy.Variables.calBound;
+   vu = [vu; HPD(:,2)];
+   vl = [vl; HPD(:,1)];
+else
+   nPD = 0;
+   HPD = [];
+end
 vd = vu - vl;
 n_variable = obj.Variables.Length;
-% vd = 2*ones(n_variable,1);
 [Qunits, Qx, Qextra, n_extra, extraIdx,L,idRQ]  = obj.getInequalQuad(bds,frac);
 bds = bds(1:n_units,:);
 d = bds(:,2)-bds(:,1);
-idRQ = idRQ(1:n_units);
 s = [];
-nL = length(Qx) - n_variable;
-n_opt = 1+2*n_units+n_variable+nL+n_extra;
+nL = length(Qx) - n_variable -nMD-nPD;
+n_opt = 1+2*n_units+n_variable+nMD+nPD+nL+n_extra;
 if nL > 0
-   tlb = obj.Variables.ExtraLinConstraint.LB;
-   tub = obj.Variables.ExtraLinConstraint.UB;
+   tlb = LBD(:,1);
+   tub = LBD(:,2);
    tdb = tub-tlb;
-   L2 = L(n_variable+1:end,:);
+   L2 = L(n_variable+nMD+nPD+1:end,:);
 end
 
 [A,b,c,K] = setSedumi;
 pars.fid = 0;
 [xopt,yopt,info] = sedumi(A,b,c,K,pars);
-S = reshape(xopt(n_opt:end),n_variable+1,n_variable+1);
+S = reshape(xopt(n_opt:end),n_variable+nMD+nPD+1,n_variable+nMD+nPD+1);
 S = 0.5*(S+S');
 
 if info.pinf ~= 0 || info.dinf ~= 0
@@ -57,12 +73,12 @@ end
 maxout = yopt(end);
 lamEU = yopt(1:n_units);
 lamEL = yopt(n_units+1:2*n_units);
-lamV = yopt(2*n_units+1:2*n_units+n_variable);
+lamV = yopt(2*n_units+1:2*n_units+n_variable+nMD+nPD);
 if nL > 0
-   lamL = yopt(2*n_units+n_variable+1:2*n_units+n_variable+nL);
+   lamL = yopt(2*n_units+n_variable+nMD+nPD+1:2*n_units+n_variable+nMD+nPD+nL);
 end
 if n_extra ~= 0
-   lamExtra = yopt(2*n_units+nL+n_variable+1:end-1);
+   lamExtra = yopt(2*n_units+nL+n_variable+nMD+nPD+1:end-1);
 end
 s.expu = zeros(n_units,1);
 s.expl = zeros(n_units,1);
@@ -204,53 +220,36 @@ end
    function [A,b,c,K] = setSedumi()
       Alam = [-speye(n_opt-1), spalloc(n_opt-1,1,0)];
       clam = spalloc(n_opt-1,1,0);
-      As = zeros((n_variable+1)^2,n_opt);
-      model0 = QOIobj;
-      model0Var = model0.VarNames;
-      varName = obj.VarNames;
-      [~,id1,id2] = intersect(varName,model0Var);
-      id1 = [1;id1+1];
-      id2 = [1;id2+1];
-      if isa(model0,'B2BDC.B2Bmodels.RQModel')
-         N0 = model0.Numerator;
-         D0 = model0.Denominator;
-         targetN = zeros(n_variable+1,n_variable+1);
-         targetD = zeros(n_variable+1,n_variable+1);
-         for j = 1:length(id2)
-            for k = 1:length(id2)
-               targetN(id1(j),id1(k)) = N0(id2(j),id2(k));
-               targetD(id1(j),id1(k)) = D0(id2(j),id2(k));
-            end
-         end
+      As = zeros((n_variable+nMD+nPD+1)^2,n_opt);
+      if ~isempty(N0)
+         targetN = zeros(n_variable+nMD+nPD+1);
+         targetD = zeros(n_variable+nMD+nPD+1);
+         targetN([1;id0+1],[1;id0+1]) = N0;
+         targetD([1;id0+1],[1;id0+1]) = D0;
          targetMatrix = -targetN;
-      elseif isa(model0,'B2BDC.B2Bmodels.QModel')
-         Coef0 = model0.CoefMatrix;
-         targetMatrix = zeros(n_variable+1,n_variable+1);
-         for j = 1:length(id2)
-            for k = 1:length(id2)
-               targetMatrix(id1(j),id1(k)) = -Coef0(id2(j),id2(k));
-            end
-         end
+      elseif ~isempty(Q0)
+         targetMatrix = zeros(n_variable+nMD+nPD+1);
+         targetMatrix([1;id0+1],[1;id0+1]) = -Q0;
       end
       cs = targetMatrix(:);
       for i = 1:n_units
          As(:,i) = -Qunits{2*i-1}(:);
          As(:,i+n_units) = -Qunits{2*i}(:);
       end
-      for i = 1:n_variable
+      for i = 1:n_variable+nMD+nPD
          As(:,2*n_units+i) = -Qx{i}(:);
       end
       for i = 1:nL
-         As(:,2*n_units+n_variable+i) = -Qx{n_variable+i}(:);
+         As(:,2*n_units+n_variable+nMD+nPD+i) = -Qx{n_variable+nMD+nPD+i}(:);
       end
       if n_extra ~= 0
          for k = 1:n_extra
-            As(:,2*n_units+n_variable+nL+k) = -Qextra{k}(:);
+            As(:,2*n_units+n_variable+nMD+nPD+nL+k) = -Qextra{k}(:);
          end
       end          
-      if isa(model0,'B2BDC.B2Bmodels.RQModel')
+      if ~isempty(N0)
          As(:,end) = -targetD;
-      elseif isa(model0,'B2BDC.B2Bmodels.QModel')
+      elseif ~isempty(Q0)
          As(1,end) = -1;
       end
       At = [Alam; As];
@@ -258,8 +257,7 @@ end
       b = spalloc(n_opt,1,1);
       b(end) = -1;
       K.l = n_opt-1;
-      K.s = n_variable+1;
+      K.s = n_variable+nMD+nPD+1;
       A = At';    
    end
-
 end

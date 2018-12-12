@@ -28,6 +28,15 @@ if nargin < 5
    nCV = 1;
 end
 if nargin > 3 && ~isempty(mtype)
+   id1 = isinf(Y);
+   id2 = isnan(Y);
+   id = id1 | id2;
+   if sum(id)/length(id) > 0.1
+      error('Too many data are INF or NAN')
+   else
+      X(id,:) = [];
+      Y(id) = [];
+   end
    switch mtype
       case 'qinf'
          y = B2BDC.Fitting.sedumiquadfitinfnorm(X,Y,vars,nCV);

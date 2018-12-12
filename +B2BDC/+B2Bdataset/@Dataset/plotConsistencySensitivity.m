@@ -105,6 +105,7 @@ if ~sflag
    else
       s11 = [s.expl, s.expu];
    end
+   s11(abs(s11)<=1e-5) = 0;
    subplot(1,2,1,'Parent',p1,'Units','normalized',...
       'Position',[0.08 0.1 0.38 0.8]);
    h1 = barh(s11);
@@ -125,6 +126,7 @@ if ~sflag
    
    
    s12 = [s.varl, s.varu; s.linl, s.linu];
+   s12(abs(s12)<=1e-5) = 0;
    subplot(1,2,2,'Parent',p1,'Units','normalized',...
       'Position',[0.54 0.1 0.38 0.8]);
    h2 = barh(s12);
@@ -145,6 +147,8 @@ if ~sflag
    
    sexp = [s.expl;s.expu];
    svar = [s.varl;s.varu;s.linl;s.linu];
+   sexp(abs(sexp)<=1e-5) = 0;
+   svar(abs(svar)<=1e-5) = 0;
    [sexp_sort,expidx] = sort(sexp,'descend');
    [svar_sort,varidx] = sort(svar,'descend');
    nexp_select = min(10,length(sexp_sort));
@@ -304,11 +308,19 @@ end
 for i = 1:nvar_select
    if varidx_high(i) <= n_variable
       id = varidx_high(i);
-      Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+      if id <= ndsVar
+         Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+      else
+         Xvar{i} = varNames{id};
+      end
       Yvar(i,1) = svar_high(i);
    elseif varidx_high(i) <= 2*n_variable
       id = varidx_high(i) - n_variable;
-      Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+      if id <= ndsVar
+         Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+      else
+         Xvar{i} = varNames{id};
+      end
       Yvar(i,2) = svar_high(i);
    elseif varidx_high(i) <= 2*n_variable + nL
       id = varidx_high(i) - 2*n_variable;
