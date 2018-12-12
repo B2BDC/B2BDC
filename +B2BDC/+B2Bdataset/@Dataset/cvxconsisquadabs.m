@@ -17,23 +17,41 @@ bds(:,2) = bds(:,2) + abE;
 d = bds(:,2)-bds(:,1);
 vu = [obj.Variables.Values.UpperBound]';
 vl = [obj.Variables.Values.LowerBound]';
-vd = vu - vl;
 frac = opt.ExtraLinFraction;
 n_units = obj.DatasetUnits.Length;
 n_variable = obj.Variables.Length;
-[Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ] = obj.getInequalQuad(bds,frac);
-nL = length(Qx) - n_variable;
+[Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ, LBD] = obj.getInequalQuad(bds,frac);
+if obj.ModelDiscrepancyFlag
+   nMD = obj.ModelDiscrepancy.Variables.Length;
+   HMD = obj.ModelDiscrepancy.Variables.calBound;
+   vu = [vu; HMD(:,2)];
+   vl = [vl; HMD(:,1)];
+else
+   nMD = 0;
+   HMD = [];
+end
+if obj.ParameterDiscrepancyFlag
+   nPD = obj.ParameterDiscrepancy.Variables.Length;
+   HPD = obj.ParameterDiscrepancy.Variables.calBound;
+   vu = [vu; HPD(:,2)];
+   vl = [vl; HPD(:,1)];
+else
+   nPD = 0;
+   HPD = [];
+end
+vd = vu - vl;
+nL = length(Qx) - n_variable - nMD - nPD;
 if nL > 0
-   tlb = obj.Variables.ExtraLinConstraint.LB;
-   tub = obj.Variables.ExtraLinConstraint.UB;
+   tlb = LBD(:,1);
+   tub = LBD(:,2);
    tdb = tub-tlb;
-   L2 = L(n_variable+1:end,:);
+   L2 = L(n_variable+nMD+nPD+1:end,:);
 end
 cvx_begin sdp quiet
 cvx_precision('best');
 variable lamEL(n_units)
 variable lamEU(n_units)
-variable lamV(n_variable)
+variable lamV(n_variable+nMD+nPD)
 if nL > 0
    variable lamL(nL)
 end
@@ -42,7 +60,7 @@ if n_extra ~= 0
 end
 variable ro
 dual variable S
-cvxconstr = zeros(n_variable+1,n_variable+1);
+cvxconstr = zeros(n_variable+nMD+nPD+1);
 cvxconstr(1,1) = 1;
 cvxconstr = ro*cvxconstr;
 for i = 1:n_units
@@ -64,7 +82,7 @@ if n_extra ~= 0
 end
 minimize ro
 subject to
-S: cvxconstr >= zeros(n_variable+1,n_variable+1);
+S: cvxconstr >= zeros(n_variable+nMD+nPD+1);
 lamEL >= 0;
 lamEU >= 0;
 lamV >= 0;

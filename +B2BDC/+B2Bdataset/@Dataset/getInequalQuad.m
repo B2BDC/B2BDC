@@ -1,4 +1,4 @@
-function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bds,frac)
+function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ ,LBD] = getInequalQuad(obj,bds,frac)
 % Return the quadratic form of inequality constraints of the
 % B2BDC.B2Bdataset.Dataset object. The returned quadratic form matrix is
 % with respect to all the active variables of the dataset.
@@ -24,132 +24,253 @@ function [Qunits, Qx, Qextra, nextra, extraIdx, L, idRQ] = getInequalQuad(obj,bd
 %  Updated: Nov 16, 2017    Wenyu Li (using matrix norm to select extraQ)
 
 % eps = 1e-7;
-vars = obj.Variables;
-A0 = vars.ExtraLinConstraint.A;
-if ~isempty(A0)
-   lLB = vars.ExtraLinConstraint.LB;
-   lUB = vars.ExtraLinConstraint.UB;
-end
-nlX = size(A0,1);
-varName = obj.VarNames;
-n_variable = vars.Length;
-xbds = vars.calBound;
-LB = xbds(:,1);
-UB = xbds(:,2);
-units = obj.DatasetUnits.Values;
-n_units = length(units);
-Qunits = cell(2*n_units,1);
-Qx = cell(n_variable+nlX,1);
-idRQ = false(n_units,1);
-for i = 1:n_units
-   model = units(i).SurrogateModel;
-   modelVar = model.VarNames;
-   [~,id1,id2] = intersect(varName,modelVar);
-   id1 = [1;id1+1];
-   id2 = [1;id2+1];
-   if isa(model,'B2BDC.B2Bmodels.RQModel')
-      idRQ(i) = true;
-      N = model.Numerator;
-      D = model.Denominator;
-      constrN = zeros(n_variable+1,n_variable+1);
-      constrD = zeros(n_variable+1,n_variable+1);
-      for j = 1:length(id2)
-         for k = 1:length(id2)
-            constrN(id1(j),id1(k)) = N(id2(j),id2(k));
-            constrD(id1(j),id1(k)) = D(id2(j),id2(k));
+
+if ~obj.ModelDiscrepancyFlag && ~obj.ParameterDiscrepancyFlag
+   vars = obj.Variables;
+   A0 = vars.ExtraLinConstraint.A;
+   if ~isempty(A0)
+      lLB = vars.ExtraLinConstraint.LB;
+      lUB = vars.ExtraLinConstraint.UB;
+   else
+      lLB = [];
+      lUB = [];
+   end
+   nlX = size(A0,1);
+   varName = obj.VarNames;
+   n_variable = vars.Length;
+   xbds = vars.calBound;
+   LB = xbds(:,1);
+   UB = xbds(:,2);
+   units = obj.DatasetUnits.Values;
+   n_units = length(units);
+   Qunits = cell(2*n_units,1);
+   Qx = cell(n_variable+nlX,1);
+   idRQ = false(n_units,1);
+   for i = 1:n_units
+      model = units(i).SurrogateModel;
+      modelVar = model.VarNames;
+      [~,id1,id2] = intersect(varName,modelVar);
+      id1 = [1;id1+1];
+      id2 = [1;id2+1];
+      if isa(model,'B2BDC.B2Bmodels.RQModel')
+         idRQ(i) = true;
+         N = model.Numerator;
+         D = model.Denominator;
+         constrN = zeros(n_variable+1,n_variable+1);
+         constrD = zeros(n_variable+1,n_variable+1);
+         for j = 1:length(id2)
+            for k = 1:length(id2)
+               constrN(id1(j),id1(k)) = N(id2(j),id2(k));
+               constrD(id1(j),id1(k)) = D(id2(j),id2(k));
+            end
          end
-      end
-      Qunits{2*i-1} = constrN-bds(i,2)*constrD;
-      Qunits{2*i} = bds(i,1)*constrD-constrN;
-   elseif isa(model,'B2BDC.B2Bmodels.QModel')
-      Coef = model.CoefMatrix;
-      constrMatrix1 = zeros(n_variable+1,n_variable+1);
-      constrMatrix2 = zeros(n_variable+1,n_variable+1);
-      for j = 1:length(id2)
-         for k = 1:length(id2)
-            constrMatrix1(id1(j),id1(k)) = Coef(id2(j),id2(k));
-            constrMatrix2(id1(j),id1(k)) = -Coef(id2(j),id2(k));
+         Qunits{2*i-1} = constrN-bds(i,2)*constrD;
+         Qunits{2*i} = bds(i,1)*constrD-constrN;
+      elseif isa(model,'B2BDC.B2Bmodels.QModel')
+         Coef = model.CoefMatrix;
+         constrMatrix1 = zeros(n_variable+1,n_variable+1);
+         constrMatrix2 = zeros(n_variable+1,n_variable+1);
+         for j = 1:length(id2)
+            for k = 1:length(id2)
+               constrMatrix1(id1(j),id1(k)) = Coef(id2(j),id2(k));
+               constrMatrix2(id1(j),id1(k)) = -Coef(id2(j),id2(k));
+            end
          end
+         constrMatrix1(1,1) = constrMatrix1(1,1)-bds(i,2);
+         constrMatrix2(1,1) = constrMatrix2(1,1)+bds(i,1);
+         Qunits{2*i-1} = constrMatrix1;
+         Qunits{2*i} = constrMatrix2;
       end
+   end
+   for i = 1:n_variable
+      lx = LB(i);
+      ux = UB(i);
+      tmpQ = zeros(n_variable+1);
+      tmpQ(1,1) = lx*ux;
+      tmpQ(1,i+1) = -0.5*(lx+ux);
+      tmpQ(i+1,1) = -0.5*(lx+ux);
+      tmpQ(i+1,i+1) = 1;
+      Qx{i} = tmpQ;
+   end
+   for i = 1:nlX
+      ai = A0(i,:);
+      E = zeros(n_variable+1);
+      E(2:end,2:end) = ai'*ai;
+      E(1,1) = lLB(i)*lUB(i);
+      E(1,2:end) = -0.5*(lLB(i)+lUB(i))*ai;
+      E(2:end,1) = -0.5*(lLB(i)+lUB(i))*ai';
+      Qx{n_variable+i} = E;
+   end
+   if ~isempty(A0)
+      Le = A0;
+   end
+   Lv = eye(n_variable);
+   if ~isempty(A0)
+      L = [Lv;Le];
+      eLB = [LB; lLB];
+      eUB = [UB; lUB];
+   else
+      L = Lv;
+      eLB = LB;
+      eUB = UB;
+   end
+   if frac == 0
+      Qextra = {};
+      extraIdx = [];
+      nextra = 0;
+   elseif frac < 1 && frac > 0
+      if isempty(obj.ExtraQscore)
+         Js = getScore;
+         obj.ExtraQscore = Js;
+      else
+         Js = obj.ExtraQscore;
+      end
+      nextra = round(frac*nchoosek(nlX+n_variable,2));
+      Qextra = cell(2*nextra,1);
+      extraIdx = zeros(2*nextra,3);
+      [~,idJ] = sort(Js(:),'ascend');
+      for ii = 1:nextra
+         [I,J] = ind2sub(size(Js),idJ(ii));
+         LI = L(I,:);
+         LJ = L(J,:);
+         E = zeros(n_variable+1);
+         E(1,1) = 0.5*eLB(I)*eUB(J);
+         E(1,2:end) = -0.5*(eLB(I)*LJ+eUB(J)*LI);
+         E(2:end,2:end) = 0.5*LI' * LJ;
+         E = E+E';
+         Qextra{2*ii-1} = E;
+         extraIdx(2*ii-1,:) = [I,J,2];
+         E = zeros(n_variable+1);
+         E(1,1) = 0.5*eLB(J)*EUB(I);
+         E(1,2:end) = -0.5*(eUB(I)*LJ+eLB(J)*LI);
+         E(2:end,2:end) = 0.5*LI' * LJ;
+         E = E+E';
+         Qextra{2*ii} = E;
+         extraIdx(2*ii,:) = [I,J,3];
+      end
+      nextra = length(Qextra);
+   else
+      [Qextra, extraIdx] = getExtraQ;
+      nextra = length(Qextra);
+   end
+   LBD = [lLB lUB];
+else
+   if ~obj.ModelDiscrepancyFlag
+      nMD = 0;
+   else
+      nMD = obj.ModelDiscrepancy.Variables.Length;
+      HMD = obj.ModelDiscrepancy.Variables.calBound;
+   end
+   if ~obj.ParameterDiscrepancyFlag
+      nPD = 0;
+   else
+      nPD = obj.ParameterDiscrepancy.Variables.Length;
+      HPD = obj.ParameterDiscrepancy.Variables.calBound;
+   end
+   vars = obj.Variables;
+   A0 = vars.ExtraLinConstraint.A;
+   if ~isempty(A0)
+      lLB = vars.ExtraLinConstraint.LB;
+      lUB = vars.ExtraLinConstraint.UB;
+   else
+      lLB = [];
+      lUB = [];
+   end
+   [idall,Qall,~,~,APD,bPD] = getQ_RQ_expansion(obj);
+   nlX = size(A0,1);
+   nlPD = 0.5*size(APD,1);
+   n_variable = vars.Length;
+   xbds = vars.calBound;
+   LB = xbds(:,1);
+   UB = xbds(:,2);
+   n_units = obj.Length;
+   Qunits = cell(2*n_units,1);
+   Qx = cell(n_variable+nMD+nPD+nlX+nlPD,1);
+   idRQ = false(n_units,1);
+   for i = 1:n_units
+      constrMatrix1 = zeros(n_variable+nMD+nPD+1);
+      constrMatrix2 = zeros(n_variable+nMD+nPD+1);
+      constrMatrix1([1;idall{i}+1],[1;idall{i}+1]) = Qall{i};
+      constrMatrix2([1;idall{i}+1],[1;idall{i}+1]) = -Qall{i};
       constrMatrix1(1,1) = constrMatrix1(1,1)-bds(i,2);
       constrMatrix2(1,1) = constrMatrix2(1,1)+bds(i,1);
       Qunits{2*i-1} = constrMatrix1;
       Qunits{2*i} = constrMatrix2;
    end
-end
-for i = 1:n_variable
-   lx = LB(i);
-   ux = UB(i);
-   tmpQ = zeros(n_variable+1);
-   tmpQ(1,1) = lx*ux;
-   tmpQ(1,i+1) = -0.5*(lx+ux);
-   tmpQ(i+1,1) = -0.5*(lx+ux);
-   tmpQ(i+1,i+1) = 1;
-   Qx{i} = tmpQ;
-end
-for i = 1:nlX
-   ai = A0(i,:);
-   E = zeros(n_variable+1);
-   E(2:end,2:end) = ai'*ai;
-   E(1,1) = lLB(i)*lUB(i);
-   E(1,2:end) = -0.5*(lLB(i)+lUB(i))*ai;
-   E(2:end,1) = -0.5*(lLB(i)+lUB(i))*ai';
-   Qx{n_variable+i} = E;
-end
-if ~isempty(A0)
-   Le = A0;
-end
-Lv = eye(n_variable);
-if ~isempty(A0)
+   for i = 1:n_variable
+      lx = LB(i);
+      ux = UB(i);
+      tmpQ = zeros(n_variable+nMD+nPD+1);
+      tmpQ(1,1) = lx*ux;
+      tmpQ(1,i+1) = -0.5*(lx+ux);
+      tmpQ(i+1,1) = -0.5*(lx+ux);
+      tmpQ(i+1,i+1) = 1;
+      Qx{i} = tmpQ;
+   end
+   for i = 1:nMD
+      lx = HMD(i,1);
+      ux = HMD(i,2);
+      tmpQ = zeros(n_variable+nMD+nPD+1);
+      tmpQ(1,1) = lx*ux;
+      tmpQ(1,i+n_variable+1) = -0.5*(lx+ux);
+      tmpQ(i+n_variable+1,1) = -0.5*(lx+ux);
+      tmpQ(i+n_variable+1,i+n_variable+1) = 1;
+      Qx{i+n_variable} = tmpQ;
+   end
+   for i = 1:nPD
+      lx = HPD(i,1);
+      ux = HPD(i,2);
+      tmpQ = zeros(n_variable+nMD+nPD+1);
+      tmpQ(1,1) = lx*ux;
+      tmpQ(1,i+n_variable+nMD+1) = -0.5*(lx+ux);
+      tmpQ(i+n_variable+nMD+1,1) = -0.5*(lx+ux);
+      tmpQ(i+n_variable+nMD+1,i+n_variable+nMD+1) = 1;
+      Qx{i+n_variable+nMD} = tmpQ;
+   end
+   for i = 1:nlX
+      ai = A0(i,:);
+      E = zeros(n_variable+nMD+nPD+1);
+      E(2:n_variable+1,2:n_variable+1) = ai'*ai;
+      E(1,1) = lLB(i)*lUB(i);
+      E(1,2:n_variable+1) = -0.5*(lLB(i)+lUB(i))*ai;
+      E(2:n_variable+1,1) = -0.5*(lLB(i)+lUB(i))*ai';
+      Qx{n_variable+nMD+nPD+i} = E;
+   end
+   if ~isempty(A0)
+      Le = [A0 zeros(nlX,nMD+nPD)];
+   else
+      Le = [];
+   end
+   for i = 1:nlPD
+      ai = APD(2*i-1,:);
+      E = zeros(n_variable+nMD+nPD+1);
+      E(2:end,2:end) = ai'*ai;
+      E(1,1) = -bPD(2*i)*bPD(2*i-1);
+      E(1,2:end) = -0.5*(bPD(2*i-1)-bPD(2*i))*ai;
+      E(2:end,1) = -0.5*(bPD(2*i-1)-bPD(2*i))*ai';
+      Qx{n_variable+nMD+nPD+nlX+i} = E;
+   end
+   if ~isempty(APD)
+      Le = [Le; APD(1:2:end,:)];
+   end
+   Lv = eye(n_variable+nMD+nPD);
    L = [Lv;Le];
-   eLB = [LB; lLB];
-   eUB = [UB; lUB];
-else
-   L = Lv;
-   eLB = LB;
-   eUB = UB;
-end
-if frac == 0
+   if nMD ~= 0
+      LB = [LB; HMD(:,1)];
+      UB = [UB; HMD(:,2)];
+   end
+   if nPD ~= 0
+      LB = [LB; HPD(:,1)];
+      UB = [UB; HPD(:,2)];
+   end
+   eLB = [LB; lLB; -bPD(2:2:end)];
+   eUB = [UB; lUB; bPD(1:2:end)];
+   LBD = [eLB eUB];
+   LBD(1:n_variable+nMD+nPD,:) = [];
    Qextra = {};
    extraIdx = [];
    nextra = 0;
-elseif frac < 1 && frac > 0
-   if isempty(obj.ExtraQscore)
-      Js = getScore;
-      obj.ExtraQscore = Js;
-   else
-      Js = obj.ExtraQscore;
-   end
-   nextra = round(frac*nchoosek(nlX+n_variable,2));
-   Qextra = cell(2*nextra,1);
-   extraIdx = zeros(2*nextra,3);
-   [~,idJ] = sort(Js(:),'ascend');
-   for ii = 1:nextra
-      [I,J] = ind2sub(size(Js),idJ(ii));
-      LI = L(I,:);
-      LJ = L(J,:);
-      E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(I)*eUB(J);
-      E(1,2:end) = -0.5*(eLB(I)*LJ+eUB(J)*LI);
-      E(2:end,2:end) = 0.5*LI' * LJ;
-      E = E+E';
-      Qextra{2*ii-1} = E;
-      extraIdx(2*ii-1,:) = [I,J,2];
-      E = zeros(n_variable+1);
-      E(1,1) = 0.5*eLB(J)*EUB(I);
-      E(1,2:end) = -0.5*(eUB(I)*LJ+eLB(J)*LI);
-      E(2:end,2:end) = 0.5*LI' * LJ;
-      E = E+E';
-      Qextra{2*ii} = E;
-      extraIdx(2*ii,:) = [I,J,3];
-   end
-   nextra = length(Qextra);
-else
-   [Qextra, extraIdx] = getExtraQ;
-   nextra = length(Qextra);
 end
-
-
 
 
    function [Qe, idx] = getExtraQ

@@ -18,7 +18,12 @@ if yin >= 0
    if b2bopt.AddFitError
       obj.FeasibleFlag = true;
    end
-   obj.FeasiblePoint = xf;
+%    obj.FeasiblePoint = xf;
+elseif disflag
+   savexf = input('Do you want to save the optimization point? (y/n) \n','s');
+   if strcmpi(savexf,'y')
+      save('xopt','xopt');
+   end
 end
 
 if disflag
@@ -27,7 +32,7 @@ if disflag
    disp('=======================================================');
 end
 if flag
-%     [yout,sensitivity] = obj.sedumiconsisquadrel(b2bopt, abE);
+%    [yout,sensitivity] = obj.sedumiconsisquadrel(b2bopt, abE);
    warning('off','all');
    [yout,sensitivity] = obj.cvxconsisquadrel(b2bopt, abE);
    warning('on','all');

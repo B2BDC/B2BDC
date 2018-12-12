@@ -16,24 +16,31 @@ classdef Dataset < handle
       DatasetUnits = [];   % B2BDC.B2Bdataset.DatasetUnitList object 
       Variables = [];      % B2BDC.B2Bvariables.VariableList object
       FeasiblePoint = [];  % Feasible point if the dataset is consistent
-      ExtraQscore = [];    % The score matrix for extra quadratic constraints
    end
    
    properties (Dependent)
-      Length     % Number of dataset units in the dataset  
+      Length     % Number of dataset units in the dataset
    end
    
-   properties (Dependent, Hidden = true)
+   properties (Dependent, Hidden = false)
       VarNames   % Cell array containing all variable names in the dataset
    end
    
    properties (SetAccess = private, GetAccess = public)
       ConsistencyMeasure = [];      % Lower and upper bounds to the consistency measure, [lowerBound upperBound]                
       ConsistencySensitivity = [];  % Structure array of sensitivity to consistency measure
+      ModelDiscrepancy = []; % Information of model discrepancy correction
+      ParameterDiscrepancy = []; % Information of parameter discrepancy correction
+   end
+   
+   properties (SetAccess = public, GetAccess = public, Hidden = true)
+      ExtraQscore = [];    % The score matrix for extra quadratic constraints
+      FeasibleFlag = false; % Whether the feasibility includes fitting error
    end
    
    properties (SetAccess = private, GetAccess = public, Hidden = true)
-      FeasibleFlag = false; % Whether the feasibility includes fitting error
+      ModelDiscrepancyFlag = false; % Whether model discrepancy is considered in the analysis
+      ParameterDiscrepancyFlag = false; % Whether parameter discrepancy is considered in the analysis
    end
    
    methods
@@ -68,11 +75,24 @@ classdef Dataset < handle
                   if ~isempty(id)
                      error(['The dataset unit ' allName{id} ' is already exsit in the dataset'])
                   end
+                  sold = obj.DatasetUnits.Values(1).ScenarioParameter;
+                  snew = dsUnitObj(i).ScenarioParameter;
+                  n1 = sold.Name;
+                  n2 = snew.Name;
+                  [~,~,id] = intersect(n1,n2,'stable');
+                  if length(id) ~= length(n1)
+                     error('Dataset units have different sets of scenario parameter!');
+                  elseif ~isempty(id)
+                     dsUnitObj(i).ScenarioParameter.Value = dsUnitObj(i).ScenarioParameter.Value(id);
+                     dsUnitObj(i).ScenarioParameter.Name = dsUnitObj(i).ScenarioParameter.Name(id);
+                  end
                end
                obj.DatasetUnits = add(obj.DatasetUnits,dsUnitObj(i));
                obj.Variables = obj.Variables.addList(dsUnitObj(i).VariableList);
             end
             obj.clearConsis;
+            obj.clearModelDiscrepancy;
+            obj.clearParameterDiscrepancy;
          else
             error(['A DatasetUnit object is required as an input. Use '...
                 'generateDSunit to create a DatasetUnit object before adding'])
@@ -127,6 +147,8 @@ classdef Dataset < handle
                if isempty(obj.ConsistencyMeasure)
                   if polytest(obj)
                      obj.polyConsisrel(opt);
+                  elseif networktest(obj)
+                     obj.networkConsisrel(opt);
                   else
                      obj.evalConsistencyrel(opt);
                   end
@@ -135,6 +157,8 @@ classdef Dataset < handle
                if isempty(obj.ConsistencyMeasure)
                   if polytest(obj)
                      obj.polyConsisabs(opt);
+                  elseif networktest(obj)
+                     obj.networkConsisabs(opt);
                   else
                      obj.evalConsistencyabs(opt);
                   end
@@ -387,6 +411,47 @@ classdef Dataset < handle
          obj.FeasibleFlag = false;
       end
       
+      function clearModelDiscrepancy(obj)
+         %  CLEARPARAMETERDISCREPANCY(OBJ) reset the model discrepancy to
+         %  default (no correction)
+         obj.ModelDiscrepancy = [];
+         obj.ModelDiscrepancyFlag = false;
+         obj.clearConsis;
+      end
+      
+      function [sv,sname] = getScenarioParameter(obj)
+         ss = [obj.DatasetUnits.Values.ScenarioParameter]';
+         sname = ss(1).Name;
+         sv = zeros(obj.Length,length(sname));
+         for i = 1:obj.Length
+            sv(i,:) = ss(i).Value;
+         end         
+      end
+      
+      function clearParameterDiscrepancy(obj)
+         %  CLEARMODELDISCREPANCY(OBJ) reset the model discrepancy to
+         %  default (no correction)
+         obj.ParameterDiscrepancy = [];
+         obj.ParameterDiscrepancyFlag = false;
+         obj.clearConsis;
+      end
+      
+      function makeSubset(obj,idx)
+         % MAKESUBSET(OBJ,IDX) makes a new dataset object, containing only
+         % dataset units specified by idx.
+         
+         if iscell(idx)
+            name1 = {obj.DatasetUnits.Values.Name}';
+            [~,~,idx] = intersect(idx,name1,'stable');
+         end
+         units = obj.DatasetUnits.Values;
+         obj.clearDataset;
+         if ~isempty(idx)
+            remainUnits = units(idx);
+         end
+         obj.addDSunit(remainUnits);
+      end
+      
    end
    
    methods (Static, Hidden = true)
@@ -430,14 +495,14 @@ classdef Dataset < handle
        evalConsistencyabs(obj,b2bopt)
        evalConsistencyDClab(obj)
        evalConsistencyrel(obj,b2bopt)
-       [Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ] = getInequalQuad(obj,bds,frac)
+       [Qunits, Qx, Qextra, n_extra, extraIdx, L, idRQ, LBD] = getInequalQuad(obj,bds,frac)
        J = getJacobian(obj)
        directionSearch(obj,theta,x0,B2Bopt)
        
        %CVX Functions
        [y,s] = cvxconsisabs(obj,yin,frac,abE)
        [y,s] = cvxconsisquadrel(obj,b2bopt,frac)
-       [yout,sensitivity] = obj.sedumiconsisquadrel_old(b2bopt, abE);
+%        [yout,sensitivity] = obj.sedumiconsisquadrel_old(b2bopt, abE);
        [minout,minSensitivity,xs] = cvxminouterbound(obj,QOIobj,frac,abE,rflag)
        [maxout,maxSensitivity,xs] = cvxmaxouterbound(obj,QOIobj,frac,abE,rflag)
        [y,s] = cvxconsisrel(obj,yin,frac,abE)

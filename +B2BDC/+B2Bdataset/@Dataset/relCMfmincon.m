@@ -8,11 +8,9 @@ vList = obj.Variables;
 n_variable = length(vars);
 LB = [vars.LowerBound]';
 UB = [vars.UpperBound]';
-xbd = UB-LB;
 if ~isempty(vList.ExtraLinConstraint.A)
    tolerance = 1e-5;
    A0 = vList.ExtraLinConstraint.A;
-   n3 = size(A0,1);
    Aub = vList.ExtraLinConstraint.UB;
    Alb = vList.ExtraLinConstraint.LB;
    eqTest = (Aub-Alb)./sum(abs(A0),2);
@@ -54,68 +52,122 @@ if b2bopt.AddFitError
    end
 end
 flag = quadratictest(obj);
-allVarnames = obj.VarNames;
-idall = cell(n_units,1);
-Nall = cell(n_units,1);
-Dall = cell(n_units,1);
-Qall = cell(n_units,1);
-for j = 1:n_units
-   tmodel = units(j).SurrogateModel;
-   [~,~,idall{j}] = intersect(tmodel.VarNames,allVarnames,'stable');
-   if isa(tmodel,'B2BDC.B2Bmodels.RQModel')
-      Nall{j} = tmodel.Numerator;
-      Dall{j} = tmodel.Denominator;
-   elseif isa(tmodel,'B2BDC.B2Bmodels.QModel')
-      Qall{j} = tmodel.CoefMatrix;
+
+[idall,Qall,Nall,Dall,APD,bPD] = obj.getQ_RQ_expansion;
+
+if obj.ModelDiscrepancyFlag
+   MDvar = obj.ModelDiscrepancy.Variables;
+   nMD = MDvar.Length;
+   MDbd = MDvar.calBound;
+   LB = [LB; MDbd(:,1)];
+   UB = [UB; MDbd(:,2)];
+   if obj.ParameterDiscrepancyFlag
+      PDvar = obj.ParameterDiscrepancy.Variables;
+      nPD = PDvar.Length;
+      PDbd = PDvar.calBound;
+      LB = [LB; PDbd(:,1)];
+      UB = [UB; PDbd(:,2)];
+   else
+      nPD = 0;
+   end
+else
+   nMD = 0;
+   if obj.ParameterDiscrepancyFlag
+      PDvar = obj.ParameterDiscrepancy.Variables;
+      nPD = PDvar.Length;
+      PDbd = PDvar.calBound;
+      LB = [LB; PDbd(:,1)];
+      UB = [UB; PDbd(:,2)];
+   else
+      nPD = 0;
    end
 end
-if flag
-   opt = optimoptions('fmincon','Display','none','GradObj','on',...
-      'GradConstr','on','Algorithm','interior-point','Hessian',...
-      'user-supplied','HessFcn',@hessianfcn,'TolFun',1e-6,'TolCon',1e-6);
-else
-   opt = optimoptions('fmincon','Display','none','GradObj','on',...
-      'GradConstr','on','Algorithm','interior-point','MaxIter',1500,'TolFun',1e-6,'TolCon',1e-6);
+xbd = UB-LB;
+if ~isempty(A1)
+   A1 = [A1 zeros(size(A1,1),nMD+nPD)]; 
 end
+if ~isempty(Aeq)
+   Aeq = [Aeq zeros(size(Aeq,1),nMD+nPD)];
+end
+if ~isempty(APD)
+   infFlag = bPD == inf;
+   APD(infFlag,:) = [];
+   bPD(infFlag) = [];
+   APD = [zeros(size(APD,1),1) APD];
+end
+
+% if flag
+%    opt = optimoptions('fmincon','Display','none','GradObj','on',...
+%       'GradConstr','on','Algorithm','interior-point','Hessian',...
+%       'user-supplied','HessFcn',@hessianfcn,'TolFun',1e-6,'TolCon',1e-6);
+% else
+   opt = optimoptions('fmincon','Display','none','GradObj','on',...
+      'GradConstr','on','Algorithm','interior-point','MaxIter',1500,...
+      'TolFun',1e-6,'TolCon',1e-6,'DerivativeCheck','off');
+% end
 if disflag
    disp('=======================================================');
    disp('Searching inner bound...');
    disp('=======================================================');
 end
 if isempty(obj.FeasiblePoint)
-   [x0,yin_result,~,~,ilam] = fmincon(@funxmin,[0;LB+(UB-LB).*lhsdesign(length(allVarnames),1)],...
-      A1,B1,Aeq,Beq,[-Inf;LB],[Inf;UB],@neq,opt);
+   nStart = b2bopt.LocalStart;
+   xStart = zeros(nStart,n_variable+nMD+nPD+1);
+   xStart(:,2:n_variable+1) = vList.makeLHSsample(nStart);
+   for j = 1:nStart
+      [x0,yin_result,~,~,ilam] = fmincon(@funxmin,xStart(j,:)',...
+         [A1;APD],[B1;bPD],Aeq,Beq,[-Inf;LB],[Inf;UB],@neq,opt);
+      if yin_result<0
+         break
+      end
+   end
 else
-   [x0,yin_result,~,~,ilam] = fmincon(@funxmin,[0;obj.FeasiblePoint],...
-      A1,B1,Aeq,Beq,[-Inf;LB],[Inf;UB],@neq,opt);
+   xStart = zeros(1,n_variable+nMD+nPD+1);
+   xStart(2:n_variable+1) = obj.FeasiblePoint;
+   xStart(n_variable+1+1:n_variable+1+nMD) = obj.ModelDiscrepancy.FeasiblePoint;
+   xStart(n_variable+1+nMD+1:n_variable+1+nMD+nPD) = obj.ParameterDiscrepancy.FeasiblePoint;
+   [x0,yin_result,~,~,ilam] = fmincon(@funxmin,xStart,...
+      [A1;APD],[B1;bPD],Aeq,Beq,[0;LB],[Inf;UB],@neq,opt);
 end
-xopt = x0(2:end);
+xopt = x0(2:n_variable+1);
 yin_result = -yin_result;
+if nMD > 0
+   obj.ModelDiscrepancy.FeasiblePoint = x0(n_variable+2:n_variable+nMD+1);
+end
+if nPD > 0
+   obj.ParameterDiscrepancy.FeasiblePoint = x0(n_variable+nMD+2:end);
+end
 s.expu = ilam.ineqnonlin(1:2:2*n_units).*bds;
 s.expl = ilam.ineqnonlin(2:2:2*n_units).*bds;
-s.varu = ilam.upper(2:end).*xbd;
-s.varl = ilam.lower(2:end).*xbd;
+s.varu = ilam.upper(2:n_variable+nMD+nPD+1).*xbd;
+s.varl = ilam.lower(2:n_variable+nMD+nPD+1).*xbd;
+n3 = size(A1,1);
 if ~isempty(A1)
-   s.linu = zeros(n3,1);
-   s.linl = zeros(n3,1);
+   s.linu = zeros(n1+n2,1);
+   s.linl = zeros(n1+n2,1);
    s.linu(~ieq) = ilam.ineqlin(1:n3).*dA(~ieq);
    s.linl(~ieq) = ilam.ineqlin(n3+1:2*n3).*dA(~ieq);
 else
    s.linu = [];
    s.linl = [];
 end
+if ~isempty(APD)
+   n4 = 0.5*size(APD,1);
+   dAPD = bPD(1:2:end)+bPD(2:2:end);
+   s.linu = [s.linu ; ilam.ineqlin(2*n3+1:2:2*(n3+n4)).*dAPD];
+   s.linl = [s.linl ; ilam.ineqlin(2*n3+2:2:2*(n3+n4)).*dAPD];
+end
 
 
 
-
-function [y,gy] = funxmin(x)
+   function [y,gy] = funxmin(x)
       y = -x(1);
-      gy = [-1;zeros(n_variable,1)];
+      gy = [-1;zeros(n_variable+nMD+nPD,1)];
    end
 
    function [c,ceq,g,geq] = neq(x)
       c = zeros(2*n_units,1);
-      g = zeros(n_variable+1,2*n_units);
+      g = zeros(n_variable+nMD+nPD+1,2*n_units);
       for i = 1:n_units
          l = units(i).LowerBound-abE(i);
          u = units(i).UpperBound+abE(i);
@@ -142,14 +194,18 @@ function [y,gy] = funxmin(x)
             quadCoef = Qall{i};
             c(2*i-1,1) = [1;x(id+1)]'*quadCoef*[1;x(id+1)]-(1-x(1))*u-x(1)*d;
             c(2*i,1) =  (1-x(1))*l+x(1)*d-[1;x(id+1)]'*quadCoef*[1;x(id+1)];
-            grad1 = zeros(n_variable+1,1);
-            grad2 = zeros(n_variable+1,1);
-            grad1(id+1) = 2*quadCoef(2:end,2:end)*x(id+1)+2*quadCoef(2:end,1);
-            grad1(1) = u-d;
-            grad2(id+1) = -2*quadCoef(2:end,2:end)*x(id+1)-2*quadCoef(2:end,1);
-            grad2(1) = d-l;
-            g(:,2*i-1) = grad1;
-            g(:,2*i) = grad2;
+%             grad1 = zeros(n_variable+nMD+nPD+1,1);
+%             grad2 = zeros(n_variable+nMD+nPD+1,1);
+%             grad1(id+1) = 2*quadCoef(2:end,2:end)*x(id+1)+2*quadCoef(2:end,1);
+%             grad1(1) = u-d;
+%             grad2(id+1) = -2*quadCoef(2:end,2:end)*x(id+1)-2*quadCoef(2:end,1);
+%             grad2(1) = d-l;
+%             g(:,2*i-1) = grad1;
+%             g(:,2*i) = grad2;
+            g(id+1,2*i-1) = 2*quadCoef(2:end,2:end)*x(id+1)+2*quadCoef(2:end,1);
+            g(id+1,2*i) = -g(id+1,2*i-1);
+            g(1,2*i-1) = u-d;
+            g(1,2*i) = d-l;
          end
       end
       ceq = [];

@@ -5,7 +5,7 @@ function [xopt,yopt] = optimize_Parameter(obj,logFlag,opt,weight)
 %  Created: Oct 25, 2017
 
 if nargin < 2 || isempty(logFlag)
-   logFlag = true(obj.Length+obj.Variables.Length,1);
+   logFlag = [true(obj.Length,1); false(obj.Variables.Length,1)];
 end
 if nargin < 3
    opt = generateOpt;
@@ -17,12 +17,17 @@ ns = optimOpt.RandomStart;
 if ~strcmp(method,'LSH')
    if ~obj.isConsistent(opt)
       disp('The dataset is inconsistent!')
+      xopt = [];
       return
    else
       x0 = obj.collectSamples(ns,[],opt);
    end
+   if strcmp(method,'1NF')
+      optimOpt.PenaltyWeight = 'user-defined';
+   end
 else
-   x0 = vList.makeLHSsample(ns);
+%    x0 = vList.makeLHSsample(ns);
+   x0 = obj.collectSamples(ns,[],opt);
 end
 nVar = vList.Length;
 varNom = [vList.Values.NominalValue]';
@@ -30,7 +35,8 @@ H = vList.calBound;
 LB = H(:,1);
 UB = H(:,2);
 fminopt = optimoptions('fmincon','Display','none','GradObj','on','MaxFunctionEvaluations',3000,...
-      'GradConstr','on','Algorithm','interior-point','MaxIter',3000,'TolFun',1e-10,'TolCon',1e-10);
+      'GradConstr','on','Algorithm','interior-point','MaxIter',3000,'TolFun',1e-10,'TolCon',1e-10,...
+      'StepTolerance',1e-20);
 if ~isempty(vList.ExtraLinConstraint.A)
    tolerance = 1e-5;
    A0 = vList.ExtraLinConstraint.A;
@@ -129,7 +135,8 @@ end
    function [y,gy] = min_LS(x)
       y = 0;
       gy = zeros(nVar,1);
-      for i = 1:n_units
+      unitID = find(w(1:n_units));
+      for i = unitID'
          tw = w(i);
          id1 = idall{i};
          if isa(units(i).SurrogateModel,'B2BDC.B2Bmodels.RQModel')
@@ -169,7 +176,8 @@ end
          end
       end
       if strcmp(optimOpt.PenaltyWeight,'user-defined')
-         for i = 1:nVar
+         varID = find(w(n_units+1:end));
+         for i = varID'
             tw = w(i+n_units);
             if logFlag(i+n_units)
                y = y + tw^2*(exp(x(i))-varNom(i))^2;
@@ -185,7 +193,8 @@ end
    function [y,gy] = min_1N(x)
       y = 0;
       gy = zeros(nVar,1);
-      for i = 1:nVar
+      varID = find(w(n_units+1:end));
+      for i = varID'
          tw = w(n_units+i);
          if logFlag(i+n_units)
             y = y + tw*exp(x(i));

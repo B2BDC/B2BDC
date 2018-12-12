@@ -51,6 +51,7 @@ if rflag
    end
 end
 polyflag = polytest(obj);
+nnflag = networktest(obj);
 if polyflag
    if B2Bopt.Display
       disp('=======================================================');
@@ -58,6 +59,19 @@ if polyflag
       disp('=======================================================');
    end
    [QOIrange, QOISensitivity, xOpt] = obj.preQOIpoly(QOIobj,B2Bopt,rflag);
+   if B2Bopt.Display
+      disp('The calculation is done')
+      disp(['Minimum value of QOI is within: [' num2str(QOIrange.min(1)) ' ' num2str(QOIrange.min(2)) ']'])
+      disp(['Maximum value of QOI is within: [' num2str(QOIrange.max(1)) ' ' num2str(QOIrange.max(2)) ']'])
+   end
+   return
+elseif nnflag
+   if B2Bopt.Display
+      disp('=======================================================');
+      disp('Calculating QOI range...');
+      disp('=======================================================');
+   end
+   [QOIrange, QOISensitivity, xOpt] = obj.preQOInn(QOIobj,B2Bopt,rflag);
    if B2Bopt.Display
       disp('The calculation is done')
       disp(['Minimum value of QOI is within: [' num2str(QOIrange.min(1)) ' ' num2str(QOIrange.min(2)) ']'])
@@ -92,18 +106,18 @@ if ~strcmp(pFlag,'inner')
       disp('=======================================================');
    end
    frac = B2Bopt.ExtraLinFraction;
-%    [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
-%    [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
-   warning('off','all');
-   [minout,minSens,xs_min] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
-   [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
-   warning('on','all');
-   minSens.expu = -minSens.expu;
-   minSens.expl = -minSens.expl;
-   minSens.varu = -minSens.varu;
-   minSens.varl = -minSens.varl;
-   minSens.linu = -minSens.linu;
-   minSens.linl = -minSens.linl;
+   [minout,minSens] = obj.sedumiminouterbound(QOIobj,frac,abE,rflag);
+   [maxout,maxSens] = obj.sedumimaxouterbound(QOIobj,frac,abE,rflag);
+%    warning('off','all');
+%    [minout,minSens,xs_min] = obj.cvxminouterbound(QOIobj,frac,abE,rflag);
+%    [maxout,maxSens,xs_max] = obj.cvxmaxouterbound(QOIobj,frac,abE,rflag);
+%    warning('on','all');
+%    minSens.expu = -minSens.expu;
+%    minSens.expl = -minSens.expl;
+%    minSens.varu = -minSens.varu;
+%    minSens.varl = -minSens.varl;
+%    minSens.linu = -minSens.linu;
+%    minSens.linl = -minSens.linl;
    maxSens.expu = maxSens.expu;
    maxSens.expl = maxSens.expl;
    maxSens.varu = maxSens.varu;

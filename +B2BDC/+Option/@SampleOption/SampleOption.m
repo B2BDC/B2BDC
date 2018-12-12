@@ -54,6 +54,7 @@ classdef SampleOption < handle
       ParameterScaling = [];
       RejectionTol = [];
       DataStorePath = [];
+      DirectionAdaption = [];
    end
    
    methods
@@ -62,7 +63,7 @@ classdef SampleOption < handle
          p = {'SampleMethod','UncertaintyEstimation','BatchMaxSample',...
             'StepInterval','TruncatedPC','ExtraCut',...
             'UncertaintyTruncation','ParameterScaling',...
-            'RejectionTol','DataStorePath'};
+            'RejectionTol','DataStorePath','DirectionAdaption'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -97,6 +98,8 @@ classdef SampleOption < handle
                         obj.RejectionTol = inputCell{2*i};
                      case 10
                         obj.DataStorePath = inputCell{2*i};
+                     case 11
+                        obj.DirectionAdaption = inputCell{2*i};
                   end
                else
                   error('Invalid input property names')
@@ -128,7 +131,10 @@ classdef SampleOption < handle
             obj.ParameterScaling = false;
          end
          if isempty(obj.RejectionTol)
-            obj.RejectionTol = 1e-4;
+            obj.RejectionTol = 1e-5;
+         end
+         if isempty(obj.DirectionAdaption)
+            obj.DirectionAdaption = 0;
          end
       end
       
@@ -212,6 +218,14 @@ classdef SampleOption < handle
       function set.DataStorePath(obj,d)
          if isdir(d)
             obj.DataStorePath = d;
+         else
+            error('The directory is not existing')
+         end
+      end
+      
+      function set.DirectionAdaption(obj,c)
+         if c>=0 && c<=1
+            obj.DirectionAdaption = c;
          else
             error('The directory is not existing')
          end

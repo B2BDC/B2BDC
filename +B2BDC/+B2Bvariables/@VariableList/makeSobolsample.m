@@ -4,7 +4,7 @@ function xCand = makeSobolsample(obj,n)
 % generates the sample with sobol sequence.
 
 nVar = obj.Length;
-sob = sobolset(nVar,'Skip',1e3*ceil(100*rand(1)),'Leap',1e2*ceil(100*rand(1)));
+sob = sobolset(nVar,'Skip',1e3*randi(1e3),'Leap',1e2*randi(5e2));
 sob = scramble(sob,'MatousekAffineOwen');
 xx = net(sob,n);
 bds = obj.calBound;

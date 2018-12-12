@@ -49,6 +49,8 @@ if isempty(Q)
    B2 = [xUB; -xLB];
    Arw = [A1; A2];
    brw = [B1; B2];
+%    Arw = [A1];
+%    brw = [B1];
    if ~isempty(Aeq)
       bs1 = orth(Aeq');
       bs2 = null(Aeq);
@@ -78,13 +80,13 @@ if isempty(Q)
          warning('off','all');
          opt1 = optimoptions('linprog');
          opt1.Display = 'none';
-         tol = 1e-6;
+         tol = 1e-10;
          [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
-            Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,tLB,tUB,opt1);
+            Arw,brw-abs(brw)*tol,Aeq,Beq,[],[],opt1);
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
             [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
-               Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,[],[],opt1);
+               Arw,brw-abs(brw)*tol,Aeq,Beq,[],[],opt1);
             cc = cc+1;
          end
          if cc == cMax
@@ -108,13 +110,13 @@ if isempty(Q)
          warning('off','all');
          opt1 = optimoptions('linprog');
          opt1.Display = 'none';
-         tol = 1e-6;
+         tol = 1e-10;
          [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
-            Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,[],[],opt1);
+            Arw,brw-abs(brw)*tol,Aeq,Beq,[],[],opt1);
          cc = 0;
          while ~all(Arw*x0 < brw) && cc < cMax
             [x0,~,lflag] = linprog(zeros(size(Arw,2),1),...
-               Arw,brw.*(1-sign(brw)*tol),Aeq,Beq,tLB,tUB,opt1);
+               Arw,brw-abs(brw)*tol,Aeq,Beq,tLB,tUB,opt1);
             cc = cc+1;
          end
          if cc == cMax

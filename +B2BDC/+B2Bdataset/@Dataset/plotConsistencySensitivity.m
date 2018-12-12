@@ -7,7 +7,8 @@ function plotConsistencySensitivity(obj,opt,LCnames)
 % Modified: December 8, 2015 Jim Oreluk: Changed Default plot to 'Ranked'.
 % Will also automatically check for consistency if not already checked.
 % Modified: Nov 16, 2016     Wenyu Li
-  
+
+warning('off');
 if nargin < 2
    opt = generateOpt;
    opt.Display = false;
@@ -16,13 +17,38 @@ if isempty(obj.ConsistencySensitivity)
     disp('Calculating consistency measure:')
     obj.isConsistent(opt);
 end
-s = obj.ConsistencySensitivity.Outer;
-sflag = isempty(s);
+if obj.ModelDiscrepancyFlag
+   nMD = obj.ModelDiscrepancy.Variables.Length;
+   vMD = {obj.ModelDiscrepancy.Variables.Values.Name}';
+else
+   nMD = 0;
+   vMD = {};
+end
+if obj.ParameterDiscrepancyFlag
+   nPD = obj.ParameterDiscrepancy.Variables.Length;
+   vPD = {obj.ParameterDiscrepancy.Variables.Values.Name}';
+   Hv = obj.ParameterDiscrepancy.VariableRange;
+   idA = find(~isinf(Hv(:,2)));
+else
+   nPD = 0;
+   vPD = {};
+   idA = [];
+end
+sflag = isempty(obj.ConsistencySensitivity.Outer);
+if ~sflag
+   s = obj.ConsistencySensitivity.Outer;
+else
+   s = obj.ConsistencySensitivity.Inner;
+end
 nL = length(s.linu);
 if nargin < 3
    LCnames = cell(nL,1);
-   for i = 1:nL
+   nA = nL-length(idA);
+   for i = 1:nA
       LCnames{i} = ['Linear constraint ' num2str(i)];
+   end
+   for i = nA+1:nL
+      LCnames{i} = ['Corrected variable ' num2str(idA(i-nA))];
    end
 end
 if length(LCnames) ~= nL
@@ -34,7 +60,9 @@ f = figure('NumberTitle','off','ToolBar','none',...
 dsUnits = obj.DatasetUnits.Values;
 n_unit = obj.Length;
 n_variable = length(s.varl);
+ndsVar = n_variable-nMD-nPD;
 varNames = obj.VarNames;
+varNames = [varNames; vMD; vPD];
 p1 = uipanel('Parent',f,'Units','normalized','Position',[0.15,0,0.85,1]);
 p2 = uipanel('Parent',f,'Units','normalized','Position',[0.15,0,0.85,1]);
 p3 = uipanel('Parent',f,'Units','normalized','Position',[0.15,0,0.85,1]);
@@ -143,11 +171,19 @@ if ~sflag
    for i = 1:nvar_select
       if varidx_high(i) <= n_variable
          id = varidx_high(i);
-         Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+         if id <= ndsVar
+            Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+         else
+            Xvar{i} = varNames{id};
+         end
          Yvar(i,1) = svar_high(i);
       elseif varidx_high(i) <= 2*n_variable
          id = varidx_high(i) - n_variable;
-         Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+         if id <= ndsVar
+            Xvar{i} = [varNames{id} ' (' int2str(id) ')'];
+         else
+            Xvar{i} = varNames{id};
+         end
          Yvar(i,2) = svar_high(i);
       elseif varidx_high(i) <= 2*n_variable + nL
          id = varidx_high(i) - 2*n_variable;
@@ -198,6 +234,7 @@ if length(s.expl) == 1
 else
    s11 = [s.expl, s.expu];
 end
+s11(abs(s11)<1e-5) = 0;
 subplot(1,2,1,'Parent',p3,'Units','normalized',...
    'Position',[0.08 0.1 0.38 0.8]);
 h1 = barh(s11);
@@ -218,6 +255,7 @@ set(gca,'XLim',xlim);
 
 
 s12 = [s.varl, s.varu; s.linl, s.linu];
+s12(abs(s12)<1e-5) = 0;
 subplot(1,2,2,'Parent',p3,'Units','normalized',...
    'Position',[0.54 0.1 0.38 0.8]);
 h2 = barh(s12);
@@ -237,7 +275,9 @@ xlim(1) = 0;
 set(gca,'XLim',xlim);
 
 sexp = [s.expl;s.expu];
+sexp(abs(sexp)<1e-5) = 0;
 svar = [s.varl;s.varu;s.linl;s.linu];
+svar(abs(svar)<1e-5) = 0;
 [sexp_sort,expidx] = sort(sexp,'descend');
 [svar_sort,varidx] = sort(svar,'descend');
 nexp_select = min(10,length(sexp_sort));

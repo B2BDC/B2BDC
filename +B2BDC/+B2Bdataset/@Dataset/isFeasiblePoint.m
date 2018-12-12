@@ -68,8 +68,8 @@ dsEval = ds.eval(point);
 %       isFeas(ic) = false;
 %       continue
 %    end
-a1 = dsEval > repmat(dsBounds(:,1)',n2,1);
-a2 = dsEval < repmat(dsBounds(:,2)',n2,1);
+a1 = dsEval >= repmat(dsBounds(:,1)',n2,1);
+a2 = dsEval <= repmat(dsBounds(:,2)',n2,1);
 b1 = all(a1');
 b2 = all(a2');
 b3 = ds.Variables.isFeasiblePoint(point(1:n2,:));

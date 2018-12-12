@@ -93,7 +93,7 @@ classdef VariableList < B2BDC.Util.IContainer
          nVar = obj.Length;
          H = [[obj.Values.LowerBound]', [obj.Values.UpperBound]'];
          dH = diff(H');
-         xdesign = lhsdesign(nSample,nVar);
+         xdesign = lhsdesign(nSample,nVar,'criterion','none');
          xSample = repmat(H(:,1)',nSample,1) + repmat(dH,nSample,1).*xdesign;
       end
       
@@ -377,6 +377,8 @@ classdef VariableList < B2BDC.Util.IContainer
       end
       
       function y = checkFeasibility(obj) 
+         % check the feasibility of all constraints the current
+         % obj VariableList have
          y = true;
          if isempty(obj.ExtraQuaConstraint.Q)
             if ~isempty(obj.ExtraLinConstraint.A)
@@ -424,6 +426,23 @@ classdef VariableList < B2BDC.Util.IContainer
             newVar.ExtraQuaConstraint.Q{end+1,1} = Q;
             newVar.ExtraQuaConstraint.UB(end+1,1) = UB;
             newVar.ExtraQuaConstraint.xStart = x0;
+         end
+      end
+      
+      function xNew = changeCoordinate(obj,xOld,newVList)
+         % Change the sample Xold from the coordinate of obj to the
+         % coordinate of newVList and returned as xNew
+         name1 = {newVList.Values.Name}';
+         name2 = {obj.Values.Name}';
+         [n1,n2] = size(xOld);
+         [~,~,id] = intersect(name2,name1,'stable');
+         if length(id) < n2
+            disp('The two sets of VariableList do not overlap')
+            xNew = [];
+            return
+         else
+            xNew = zeros(n1,newVList.Length);
+            xNew(:,id) = xOld;
          end
       end
       

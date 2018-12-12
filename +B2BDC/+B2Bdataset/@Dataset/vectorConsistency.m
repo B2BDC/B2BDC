@@ -41,7 +41,7 @@ elseif ischar(wY) && strcmpi(wY, 'uwidth') %symmetric uncertainy width
     wY = repmat((yBnds(:,2) - yBnds(:,1)),1,2);
 elseif ischar(wY) && strcmpi(wY, 'unit')
     wY = ones(nExp,2);
-elseif ischar(wY) && strcmpi(wY, 'null') || norm(wY) == 0;
+elseif ischar(wY) && strcmpi(wY, 'null') || norm(wY) == 0
     wY = zeros(nExp,2);
 elseif size(wY,1) ~= nExp
     error('Improper QOI weight specification')
@@ -52,7 +52,7 @@ elseif ischar(wX) && strcmpi(wX, 'uwidth') %symmetric uncertainty width
     wX = repmat((xBnds(:,2) - xBnds(:,1)),1,2);
 elseif ischar(wX) && strcmpi(wX, 'unit')
     wX = ones(nVar,2);
-elseif ischar(wX) && strcmpi(wX, 'null') || norm(wX)==0;
+elseif ischar(wX) && strcmpi(wX, 'null') || norm(wX)==0
     wX = zeros(nVar,2);
 elseif size(wX,1) ~= nVar
     error('Improper variable weight specification')

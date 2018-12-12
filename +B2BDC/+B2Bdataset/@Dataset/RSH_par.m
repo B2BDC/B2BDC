@@ -40,8 +40,9 @@ if isempty(Dinfo)
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
    if ~isempty(savePath)
-      sampledPC.V = V;
-      sampledPC.D = diag(Ddiag);
+      sampledPC.V = vv;
+      sampledPC.D = Ddiag(id);
+      sampledPC.x0 = xAve;
       save(fullfile(savePath,'PCinfo'),'sampledPC');
    end
 else

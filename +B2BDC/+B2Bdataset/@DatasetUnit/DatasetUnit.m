@@ -17,8 +17,12 @@ classdef DatasetUnit
       VariableList  % VariableList object containing all model variables associated with this dataset unit
    end
    
+   properties (SetAccess = public)
+      ScenarioParameter % Scenario parameters of the dataset unit
+   end
+   
    methods
-      function obj = DatasetUnit(dsUnitname,modelObj,LB,UB,val)
+      function obj = DatasetUnit(dsUnitname,modelObj,LB,UB,val,sv)
          % Constructor of the B2BDC.B2Bdataset.DatasetUnit object.
             %
             % The input arguments are:
@@ -27,6 +31,7 @@ classdef DatasetUnit
             %   LowerBound - Lower bound on the ObservedValue
             %   UpperBound - Upper bound on the ObservedValue
             %   ObservedValue - Experimental observation (optional). If not defined, ObservedValue is calculated as the mean of LowerBound and UpperBound.
+            %   ScenarioParameter - A structure contains value and name of the scenario parameter
          
          if nargin > 0
             obj.Name = dsUnitname;
@@ -41,10 +46,17 @@ classdef DatasetUnit
                obj.LowerBound = LB;
                obj.UpperBound = UB;
             end
-            if nargin > 4
+            if nargin > 4 && ~isempty(val)
                obj.ObservedValue = val;
             else
                obj.ObservedValue = 0.5*(LB+UB);
+            end
+            if nargin > 5
+               obj.ScenarioParameter.Value = sv.Value;
+               obj.ScenarioParameter.Name = sv.Name;
+            else
+               obj.ScenarioParameter.Value = [];
+               obj.ScenarioParameter.Name = [];
             end
          end
       end
@@ -81,6 +93,7 @@ classdef DatasetUnit
          end
          y = B2BDC.B2Bdataset.DatasetUnit(dsName,dsMod,lb,ub,ob);
       end
+      
    end
    
    methods (Hidden = true)

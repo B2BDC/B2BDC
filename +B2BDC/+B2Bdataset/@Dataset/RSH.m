@@ -13,8 +13,8 @@ nPC = nVar - sOpt.TruncatedPC;
 if nPC < 1
    nPC = 1;
 end
-if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
-   savePath = sopt.DataStorePath;
+if ~isempty(sOpt.DataStorePath) && isdir(sOpt.DataStorePath)
+   savePath = sOpt.DataStorePath;
 else
    savePath = [];
 end
@@ -41,8 +41,9 @@ if isempty(Dinfo)
    [~,id] = sort(Ddiag,'descend');
    vv = V(:,id);
    if ~isempty(savePath)
-      sampledPC.V = V;
-      sampledPC.D = diag(Ddiag);
+      sampledPC.V = vv;
+      sampledPC.D = Ddiag(id);
+      sampledPC.x0 = xAve;
       save(fullfile(savePath,'PCinfo'),'sampledPC');
    end
 else
@@ -56,17 +57,29 @@ else
    uqD = uqD - [xAve' xAve'];
    uqD = uqD(id,:);
 end
+if nPC < nVar
+   projectDS = obj.projectDSonActiveSubspace(sampledPC,nPC);
+   xC = projectDS.collectSamples(5e5+1e5,[],opt);
+   xC = xC(1e5+1:end,:);
+   if ~isempty(savePath)
+      save(fullfile(savePath,'xF_pc'),'xC');
+   end
+else
+   projectDS = obj;
+end
+vars = projectDS.Variables;
 if isempty(Dinfo)
    uq = zeros(nPC,2);
    switch s1
       case 'Outer'
          opt.Prediction = 'outer';
-         opt.ExtraLinFraction = -1;
+         opt.ExtraLinFraction = 1;
          %       h = waitbar(0,'Calculating directional uncertainty...');
          for i = 1:nPC
-            tv = [-xAve*vv(:,i); vv(:,i)];
+            tv = zeros(nPC+1,1);
+            tv(i+1) = 1;
             tM = generateModel(tv,vars);
-            preQ = obj.predictQOI(tM,opt);
+            preQ = projectDS.predictQOI(tM,opt);
             uq(i,1) = preQ.min;
             uq(i,2) = preQ.max;
             %          waitbar(i/nPC,h);
@@ -76,9 +89,10 @@ if isempty(Dinfo)
          opt.Prediction = 'inner';
          %       h = waitbar(0,'Calculating directional uncertainty...');
          for i = 1:nPC
-            tv = [-xAve*vv(:,i); vv(:,i)];
+            tv = zeros(nPC+1,1);
+            tv(i+1) = 1;
             tM = generateModel(tv,vars);
-            preQ = obj.predictQOI(tM,opt);
+            preQ = projectDS.predictQOI(tM,opt);
             uq(i,1) = preQ.min;
             uq(i,2) = preQ.max;
             %          waitbar(i/nPC,h);
@@ -86,20 +100,27 @@ if isempty(Dinfo)
          %       close(h);
       case 'Sample'
          %       h = waitbar(0,'Calculating directional uncertainty...');
-         for i = 1:nPC
-            f = xC*vv(:,i);
-            uq(i,1) = min(f);
-            uq(i,2) = max(f);
-            %          waitbar(i/nPC,h);
-         end
+%          for i = 1:nPC
+%             f = xC*vv(:,i);
+%             uq(i,1) = min(f);
+%             uq(i,2) = max(f);
+%             %          waitbar(i/nPC,h);
+%          end
+         
+         uq = [min(xC)' max(xC)'];
          %       close(h);
       case 'Truncation'
          %       h = waitbar(0,'Calculating directional uncertainty...');
          sf = 1-sOpt.UncertaintyTruncation;
+         opt.Prediction = 'inner';
          for i = 1:nPC
-            f = xC*vv(:,i);
-            uq(i,1) = sf*min(f);
-            uq(i,2) = sf*max(f);
+            tv = zeros(nPC+1,1);
+            tv(i+1) = 1;
+            tM = generateModel(tv,vars);
+            preQ = projectDS.predictQOI(tM,opt);
+            fmin = preQ.min;
+            fmax = preQ.max;
+            uq(i,:) = sf*[fmin, fmax];
             %          waitbar(i/nPC,h);
          end
          %       close(h);
@@ -112,7 +133,9 @@ end
 ic = 1;
 n1 = size(xVal,1);
 ns = sOpt.BatchMaxSample;
-h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
+if opt.Display
+   h = waitbar(n1/N,'Collecting uniform samples of the feasible set...');
+end
 while n1 < N
    xmin = uq(:,1)';
    dx = uq(:,2)-uq(:,1);
@@ -134,12 +157,17 @@ while n1 < N
       if ~isempty(savePath)
          save(fullfile(savePath,'efficiency'),'eff');
       end
-      close(h);
+      if opt.Display
+         close(h);
+      end
       break
    end
    if ic == 5
       if n1 <= th2*ic*ns
          eff = n1/ic/ns;
+         if ~isempty(savePath)
+            save(fullfile(savePath,'efficiency'),'eff');
+         end
          disp(['Numerical efficiency of current sampling method is ' num2str(eff)])
          return
       end

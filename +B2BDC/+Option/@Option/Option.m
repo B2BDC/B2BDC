@@ -43,11 +43,8 @@ classdef Option < handle
    %           will not add maximum absolute fitting error of each surrogate
    %           model to the corresponding QOI bound.
    % ---------------------------------------------------------------------
-   % SelfInconsisFlow:
-   %    true - When doing the selfInconsisAnalysis, it will show up the
-   %           sensitivity plot for every self-inconsistent dataset unit
-   %           before showing the final stats
-   %   false - Show final stats directly
+   % LocalStart:
+   %    A number of random start used in local optimization search
    % ---------------------------------------------------------------------
    % Prediction:
    %   both - Both outer and inner bounds are returned
@@ -74,8 +71,10 @@ classdef Option < handle
       TolConsis = [];
       Display = [];
       AddFitError = [];
-      SelfInconsisFlow = [];
+      LocalStart = [];
       Prediction = [];
+      ModelDiscrepancy = [];
+      ParameterDiscrepancy = [];
       SampleOption = [];
       POPOption = [];
       OptimOption = [];
@@ -85,8 +84,8 @@ classdef Option < handle
       function  obj = Option(inputCell)
          % To generate a B2BDC.Option object
          p = {'ConsistencyMeasure','ExtraLinFraction','TolConsis','Display',...
-            'AddFitError','SelfInconsisFlow','Prediction',...
-            'SampleOption','POPOption','OptimOption'};
+            'AddFitError','LocalStart','Prediction','ModelDiscrepancy',...
+            'ParameterDiscrepancy','SampleOption','POPOption','OptimOption'};
          if nargin > 0 
             nin = length(inputCell);
          else
@@ -112,14 +111,18 @@ classdef Option < handle
                      case 5
                         obj.AddFitError = inputCell{2*i};
                      case 6
-                        obj.SelfInconsisFlow = inputCell{2*i};
+                        obj.LocalStart = inputCell{2*i};
                      case 7
                         obj.Prediction = inputCell{2*i};
                      case 8
-                        obj.SampleOption = inputCell{2*i};
+                        obj.ModelDiscrepancy = inputCell{2*i};
                      case 9
-                        obj.POPOption = inputCell{2*i};
+                        obj.ParameterDiscrepancy = inputCell{2*i};
                      case 10
+                        obj.SampleOption = inputCell{2*i};
+                     case 11
+                        obj.POPOption = inputCell{2*i};
+                     case 12
                         obj.OptimOption = inputCell{2*i};
                   end
                else
@@ -140,13 +143,23 @@ classdef Option < handle
                obj.Display = true;
          end
          if isempty(obj.AddFitError)
-            obj.AddFitError = false;
+            obj.AddFitError = true;
          end
-         if isempty(obj.SelfInconsisFlow)
-            obj.SelfInconsisFlow = true;
+         if isempty(obj.LocalStart)
+            obj.LocalStart = 1;
          end
          if isempty(obj.Prediction)
             obj.Prediction = 'both';
+         end
+         if isempty(obj.ModelDiscrepancy)
+            ss.type = 'poly';
+            ss.order = -1;
+            obj.ModelDiscrepancy = ss;
+         end
+         if isempty(obj.ParameterDiscrepancy)
+            ss.type = 'poly';
+            ss.order = -1;
+            obj.ParameterDiscrepancy = ss;
          end
          if isempty(obj.SampleOption)
             obj.SampleOption = generateSampleOpt;
@@ -192,9 +205,9 @@ classdef Option < handle
          end
       end
       
-      function set.SelfInconsisFlow(obj,logic1)
-         if islogical(logic1)
-            obj.SelfInconsisFlow = logic1;
+      function set.LocalStart(obj,num1)
+         if num1>=1
+            obj.LocalStart = round(num1);
          else
             error('Invalid input property value')
          end
@@ -228,6 +241,22 @@ classdef Option < handle
       function set.OptimOption(obj,opt1)
          if isa(opt1,'B2BDC.Option.OptimOption')
             obj.OptimOption = opt1;
+         else
+            error('Invalid input property value')
+         end
+      end
+      
+      function set.ModelDiscrepancy(obj,strct1)
+         if isa(strct1,'struct')
+            obj.ModelDiscrepancy = strct1;
+         else
+            error('Invalid input property value')
+         end
+      end
+      
+      function set.ParameterDiscrepancy(obj,strct1)
+         if isa(strct1,'struct')
+            obj.ParameterDiscrepancy = strct1;
          else
             error('Invalid input property value')
          end

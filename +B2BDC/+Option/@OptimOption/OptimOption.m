@@ -65,7 +65,7 @@ classdef OptimOption < handle
             obj.PenaltyWeight = 'relative';
          end
          if isempty(obj.RandomStart)
-            obj.RandomStart = 1;
+            obj.RandomStart = 10;
          end
       end
       

@@ -12,11 +12,11 @@ if da > 0
 else
    daFlag = false;
 end
+xVal = [];
 sopt = opt.SampleOption;
 s1 = sopt.UncertaintyEstimation;
 vars = obj.Variables;
 nVar = vars.Length;
-nCut = sopt.ExtraCut;
 nPC = nVar-opt.SampleOption.TruncatedPC;
 if ~isempty(sopt.DataStorePath) && isdir(sopt.DataStorePath)
    savePath = sopt.DataStorePath;
@@ -28,6 +28,7 @@ end
 if nPC < 1
    nPC = 1;
 end
+nCut = sopt.ExtraCut;
 if nPC < nVar  ||...
       ((strcmp(s1,'Sample') || strcmp(s1,'Truncation')) && nCut >0)
    if isempty(xS)
@@ -74,6 +75,9 @@ else
    uq = [];
 end
 if nPC < nVar
+%    if strcmp(sopt.UncertaintyEstimation,'Outer')
+%       sopt.UncertaintyEstimation = 'Inner';
+%    end
    projectDS = obj.projectDSonActiveSubspace(sampledPC,nPC);
    vars = projectDS.Variables;
    uqv = zeros(nPC,2);
@@ -97,8 +101,13 @@ if nPC < nVar
             uqv(i,:) = [preQ.min preQ.max];
          end
       case 'Sample'
+%          xC = projectDS.collectSamples(1e5+1e5,[],opt);
+%          xC = xC(1e5+1:end,:);
          xx = xS-repmat(mean(xS),size(xS,1),1);
          xC = xx*vv(:,1:nPC);
+%          if ~isempty(savePath)
+%             save(fullfile(savePath,'xF_pc'),'xC');
+%          end
          uqv = [min(xC)' max(xC)'];
       case 'Truncation'
          sf = 1-sopt.UncertaintyTruncation;
@@ -112,10 +121,18 @@ if nPC < nVar
             fmax = preQ.max;
             uqv(i,:) = sf*[fmin, fmax];
          end
+%          for i = 1:nPC
+%             f = xC * vv(:,i);
+%             f0 = xAve * vv(:,i);
+%             uqv(i,:) = sf*[min(f) max(f)];
+%          end
    end
    sVar = generateVar([],uqv);
 else
    sVar = obj.Variables;
+   if strcmp(sopt.UncertaintyEstimation,'Sample')
+      xC = xS;
+   end
 end
 if nCut > 0
    tic;
@@ -127,6 +144,7 @@ if nCut > 0
    uq2 = zeros(nCut,2);
    D = randn(nPC,nCut);
    D = normc(D);
+   opt.Display = false;
    switch sopt.UncertaintyEstimation
       case 'Outer'
          opt.Prediction = 'outer';
@@ -159,6 +177,14 @@ if nCut > 0
             fmax = preQ.max;
             uq2(i,:) = sf*[fmin, fmax];
          end
+%          xC_pc = xC*vv(:,1:nPC);
+%          xAve_pc = mean(xS_pc);
+%          for i = 1:nCut
+%             f = xC_pc*D(:,i);
+%             mf = mean(f);
+%             mf = xAve_pc*D(:,i);
+%             uq2(i,:) = [mf+(1-sf)*(min(f)-mf), mf+(1-sf)*(max(f)-mf)];
+%          end
    end
    tt = toc;
    if fid > 0
@@ -176,6 +202,9 @@ if size(A,1) > 0
       save(fullfile(savePath,'polytopeInfo'),'sVar');
    end
 end
+% if sopt.ParameterScaling
+%    sVar = sVar.calScale;
+% end
 ns = sopt.BatchMaxSample;
 tic;
 while any(daFlag)
@@ -191,7 +220,8 @@ while any(daFlag)
       end
       ic = ic+1;
       if nPC < nVar
-         xtmp = repmat(xAve,ns,1)+xcand*vv(:,1:nPC)';
+         xtmp = repmat(xAve,ns,1);
+         xtmp = xtmp+xcand*vv(:,1:nPC)';
       else
          xtmp = xcand;
       end
@@ -208,7 +238,7 @@ while any(daFlag)
    [sVar,daFlag] = sVar.DirectionalAdapt(xApp,daFlag);
 end
 tt = toc;
-if fid > 0 && da > 0
+if fid > 0
    fprintf(fid,'The CPU time to update polytope directional facets is: %5.3E \n',tt);
 end
 tic;
@@ -236,14 +266,12 @@ while n1 < N
    end
    n1 = size(xVal,1);
    if n1 >= N
-      if fid > 0
-         fprintf('Completed \n');
-      end
       eff = n1/ic/ns;
       if ~isempty(savePath)
          save(fullfile(savePath,'efficiency'),'eff');
       end
       xVal = xVal(randperm(n1,N),:);
+      xVal = xVal(1:N,:);
       if fid > 0
          fclose(fid);
       end
@@ -252,11 +280,16 @@ while n1 < N
    if ic == 5
       if n1 <= th*ic*ns
          eff = n1/ic/ns;
-         if ~isempty(savePath)
-            save(fullfile(savePath,'efficiency'),'eff');
-         end
+         disp(['Numerical efficiency of current sampling method is ' num2str(eff)]);
+%          newCut = input('How many extra cut do you want to include? \n (negative value to exit) \n' );
+%          if newCut > 0
+%             Dinfo.D = A';
+%             Dinfo.uq = uq;
+%             opt.SampleOption.ExtraCut = ceil(newCut);
+%             [xVal2,eff] = RSP(obj,N-n1,xS,Dinfo,opt);
+%             xVal = [xVal; xVal2];
+%             xVal = xVal(randperm(size(xVal,1),size(xVal,1)),:);
          if fid > 0
-            fprintf('Numerical efficiency of current sampling method is: %5.3E',eff);
             fclose(fid);
          end
          return;
